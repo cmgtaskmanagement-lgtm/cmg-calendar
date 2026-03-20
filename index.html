@@ -1,0 +1,3247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CMG Task Calendar</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Fraunces:ital,wght@0,300;0,600;1,300&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --surface2: #1a1a24;
+    --border: #2a2a3a;
+    --accent: #c8f135;
+    --accent2: #ff6b6b;
+    --accent3: #6b9fff;
+    --text: #f0f0f8;
+    --text-muted: #6b6b80;
+    --text-dim: #9090aa;
+    --social: #ff9f43;
+    --facebook: #1877f2;
+    --linkedin: #0a66c2;
+    --youtube: #ff0000;
+    --instagram: #e1306c;
+    --tiktok: #69c9d0;
+    --email: #48dbfb;
+    --blog: #ff6b6b;
+    --ad: #c8f135;
+    --event: #a29bfe;
+    --other: #fd79a8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(200,241,53,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(200,241,53,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,10,15,0.92);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+
+  .logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 1.5rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .logo-dot { 
+    width: 10px; height: 10px; 
+    background: var(--accent); 
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--accent);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .month-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 12px;
+  }
+  .month-nav button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: color 0.2s, background 0.2s;
+  }
+  .month-nav button:hover { color: var(--accent); background: rgba(200,241,53,0.08); }
+  .month-label {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    min-width: 140px;
+    text-align: center;
+    letter-spacing: 0.02em;
+  }
+
+  .btn-add {
+    background: var(--accent);
+    color: #0a0a0f;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn-add:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(200,241,53,0.35); }
+
+  /* ─── MAIN LAYOUT ─── */
+  .app {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: 260px 1fr 280px;
+    height: calc(100vh - 64px - 37px);
+    overflow: hidden;
+  }
+
+  /* ─── LEFT SIDEBAR ─── */
+  .sidebar {
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .sidebar-section h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.75rem;
+  }
+
+  /* Mini calendar */
+  .mini-cal { }
+  .mini-cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+    text-align: center;
+  }
+  .mini-cal-grid .day-header {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    padding: 4px 0;
+    letter-spacing: 0.05em;
+  }
+  .mini-cal-grid .mini-day {
+    font-size: 0.72rem;
+    padding: 5px 2px;
+    border-radius: 4px;
+    cursor: pointer;
+    color: var(--text-dim);
+    transition: all 0.15s;
+    position: relative;
+  }
+  .mini-day:hover { background: var(--surface2); color: var(--text); }
+  .mini-day.today { background: var(--accent); color: #0a0a0f; font-weight: 600; }
+  .mini-day.selected { outline: 1.5px solid var(--accent); color: var(--accent); }
+  .mini-day.has-tasks::after {
+    content: '';
+    position: absolute;
+    bottom: 2px; left: 50%; transform: translateX(-50%);
+    width: 3px; height: 3px;
+    background: var(--accent2);
+    border-radius: 50%;
+  }
+  .mini-day.other-month { color: #333340; }
+
+  /* Category legend */
+  .cat-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-size: 0.8rem;
+  }
+  .cat-item:hover { background: var(--surface2); }
+  .cat-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .cat-name { color: var(--text-dim); flex: 1; }
+  .cat-count {
+    background: var(--surface2);
+    border-radius: 4px;
+    padding: 1px 6px;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+  }
+
+  /* Stats */
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s, box-shadow 0.15s;
+    user-select: none;
+  }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.3); border-color: rgba(200,241,53,0.3); }
+  .stat-card.green:hover { border-color: rgba(46,204,113,0.4); }
+  .stat-card.blue:hover  { border-color: rgba(116,185,255,0.4); }
+  .stat-card.red:hover   { border-color: rgba(192,57,43,0.4); }
+  .stat-card .stat-val {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .stat-card.green .stat-val  { color: #2ecc71; }
+  .stat-card.blue .stat-val   { color: #74b9ff; }
+  .stat-card.red .stat-val    { color: #c0392b; }
+  .stat-card .stat-label {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  /* ─── STAT TASK LIST MODAL ─── */
+  .stat-modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(8px);
+    z-index: 600;
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .stat-modal-overlay.open { opacity: 1; pointer-events: all; }
+  .stat-modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 520px; max-width: 95vw;
+    max-height: 80vh;
+    overflow-y: auto;
+    transform: translateY(20px) scale(0.97);
+    transition: transform 0.25s;
+    position: relative;
+  }
+  .stat-modal-overlay.open .stat-modal { transform: translateY(0) scale(1); }
+  .stat-modal-header {
+    padding: 1.25rem 1.5rem 1rem;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0;
+    background: var(--surface);
+    z-index: 2;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .stat-modal-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 1rem;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .stat-modal-badge {
+    font-size: 0.75rem; padding: 2px 10px;
+    border-radius: 20px; font-weight: 700;
+    font-family: 'DM Mono', monospace;
+  }
+  .stat-modal-close {
+    background: none; border: none;
+    color: var(--text-muted); cursor: pointer;
+    font-size: 1.1rem; padding: 4px 8px;
+    border-radius: 4px; transition: color 0.15s;
+  }
+  .stat-modal-close:hover { color: var(--accent2); }
+  .stat-modal-body { padding: 1rem 1.5rem 1.5rem; }
+  .stat-task-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 11px 14px;
+    margin-bottom: 8px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .stat-task-item:hover { border-color: rgba(200,241,53,0.25); }
+  .stat-task-item.done { opacity: 0.5; }
+  .stat-task-row {
+    display: flex; align-items: center;
+    justify-content: space-between; gap: 8px;
+    margin-bottom: 5px;
+  }
+  .stat-task-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600; font-size: 0.83rem;
+    flex: 1; line-height: 1.3;
+  }
+  .stat-task-item.done .stat-task-title { color: var(--text-muted); }
+  .stat-task-date {
+    font-size: 0.68rem; color: var(--text-muted);
+    font-family: 'DM Mono', monospace;
+    white-space: nowrap;
+  }
+  .stat-task-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+  .stat-empty {
+    text-align: center; padding: 2.5rem 1rem;
+    color: var(--text-muted); font-size: 0.82rem;
+  }
+  .stat-empty .e-icon { font-size: 1.8rem; margin-bottom: 0.5rem; }
+
+  /* ─── CALENDAR MAIN ─── */
+  .cal-main {
+    overflow-y: auto;
+    padding: 1.5rem;
+  }
+
+  .cal-grid-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+  .cal-grid-header div {
+    text-align: center;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 8px 0;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+  }
+
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+  }
+
+  .cal-day {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    min-height: 110px;
+    padding: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .cal-day:hover { border-color: rgba(200,241,53,0.3); background: var(--surface2); }
+  .cal-day.today { border-color: var(--accent); }
+  .cal-day.today .day-num { 
+    background: var(--accent); 
+    color: #0a0a0f; 
+    border-radius: 50%;
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .cal-day.other-month { opacity: 0.35; }
+  .cal-day.selected { border-color: var(--accent3); background: rgba(107,159,255,0.05); }
+
+  .day-num {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-bottom: 6px;
+    width: 22px; height: 22px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .task-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.65rem;
+    padding: 3px 6px;
+    border-radius: 4px;
+    margin-bottom: 3px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    transition: filter 0.15s;
+    border: none;
+    color: #0a0a0f;
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+  }
+  .task-chip:hover { filter: brightness(1.15); }
+  .task-chip.done { opacity: 0.6; }
+  .task-chip .done-tag {
+    font-size: 0.55rem; font-weight: 700;
+    background: rgba(0,0,0,0.35);
+    color: #ffffff;
+    border-radius: 3px; padding: 1px 4px;
+    letter-spacing: 0.04em; flex-shrink: 0;
+  }
+  .task-chip .chip-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(0,0,0,0.3); flex-shrink:0; }
+
+  .more-tasks {
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    padding: 2px 4px;
+  }
+
+  /* ─── RIGHT PANEL ─── */
+  .right-panel {
+    border-left: 1px solid var(--border);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 10;
+  }
+  .panel-date {
+    font-family: 'Fraunces', serif;
+    font-size: 1.6rem;
+    font-weight: 600;
+    line-height: 1.1;
+    margin-bottom: 2px;
+  }
+  .panel-date-sub {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .panel-tasks {
+    padding: 1rem 1.5rem;
+    flex: 1;
+  }
+
+  .task-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s, transform 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .task-item::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    border-radius: 3px 0 0 3px;
+  }
+  .task-item:hover { border-color: var(--border); transform: translateX(2px); }
+  .task-item.done { opacity: 0.5; }
+
+  .task-item-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .task-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    line-height: 1.3;
+    flex: 1;
+  }
+  .task-item.done .task-title { color: var(--text-muted); }
+
+  .task-check {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem;
+    transition: all 0.15s;
+    cursor: pointer;
+    margin-top: 1px;
+  }
+  .task-check:hover { border-color: var(--accent); }
+  .task-check.checked { background: var(--accent); border-color: var(--accent); color: #0a0a0f; }
+
+  .task-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .task-tag {
+    font-size: 0.62rem;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-family: 'DM Mono', monospace;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+  .task-time {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+  }
+  .task-notes {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+    line-height: 1.5;
+    border-top: 1px solid var(--border);
+    padding-top: 6px;
+  }
+
+  .empty-day {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-muted);
+  }
+  .empty-day .empty-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+  .empty-day p { font-size: 0.8rem; }
+
+  /* ─── MODAL ─── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    z-index: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    width: 480px;
+    max-width: 95vw;
+    transform: translateY(20px) scale(0.97);
+    transition: transform 0.25s;
+    position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.2rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 4px;
+    border-radius: 4px;
+    transition: color 0.15s;
+  }
+  .modal-close:hover { color: var(--text); }
+
+  .form-group { margin-bottom: 1.25rem; }
+  .form-label {
+    display: block;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+  }
+  .form-input, .form-select, .form-textarea {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s;
+    resize: none;
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus {
+    border-color: var(--accent);
+  }
+  .form-select option { background: var(--bg); }
+
+  .cat-selector {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .cat-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: 1.5px solid var(--border);
+    background: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.75rem;
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .cat-btn.active { color: #0a0a0f; font-weight: 500; }
+
+  .platform-selector {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-top: 10px;
+    animation: fadeIn 0.2s ease;
+  }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+
+  .platform-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    padding: 10px 6px;
+    border-radius: 8px;
+    border: 1.5px solid var(--border);
+    background: none;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .platform-btn:hover { border-color: rgba(255,255,255,0.2); background: var(--surface2); }
+  .platform-btn.active { border-color: currentColor; background: rgba(255,255,255,0.06); }
+  .platform-icon { font-size: 1.3rem; line-height: 1; }
+  .platform-name { font-size: 0.6rem; font-family: 'DM Mono', monospace; color: var(--text-dim); letter-spacing: 0.04em; }
+  .platform-btn.active .platform-name { font-weight: 600; }
+
+  .social-sub-label {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-top: 8px;
+    margin-bottom: 4px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: 'Syne', sans-serif;
+    font-weight: 600;
+  }
+
+  .cat-group-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    margin-top: 4px;
+    margin-bottom: 2px;
+  }
+  .cat-group-header span { color: var(--text-muted); }
+  .cat-sub-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px 5px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-size: 0.75rem;
+  }
+  .cat-sub-item:hover { background: var(--surface2); }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+  .btn-submit {
+    width: 100%;
+    background: var(--accent);
+    color: #0a0a0f;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    transition: transform 0.15s, box-shadow 0.15s;
+    margin-top: 0.5rem;
+  }
+  .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(200,241,53,0.4); }
+
+  /* Progress bar */
+  .progress-wrap {
+    background: var(--surface2);
+    border-radius: 4px;
+    height: 4px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .progress-bar {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .edit-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: color 0.15s;
+  }
+  .edit-btn:hover { color: var(--accent3); }
+
+  .dup-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.78rem;
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: color 0.15s;
+  }
+  .dup-btn:hover { color: #a29bfe; }
+
+  .delete-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.75rem;
+    padding: 2px 4px;
+    border-radius: 3px;
+    transition: color 0.15s;
+  }
+  .delete-btn:hover { color: var(--accent2); }
+  /* ─── AUTH SCREENS ─── */
+  .auth-overlay {
+    position: fixed; inset: 0; z-index: 999;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 1rem;
+    animation: fadeIn 0.4s ease;
+  }
+  .auth-overlay.hidden { display: none; }
+
+  .auth-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 2.5rem 2.5rem 2rem;
+    width: 100%;
+    max-width: 440px;
+    position: relative;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+  }
+
+  .auth-logo {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800;
+    font-size: 1.6rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 0.3rem;
+  }
+  .auth-logo-dot {
+    width: 10px; height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 12px var(--accent);
+    animation: pulse 2s infinite;
+  }
+  .auth-subtitle {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    padding-left: 20px;
+  }
+
+  .auth-tabs {
+    display: flex;
+    gap: 0;
+    background: var(--surface2);
+    border-radius: 8px;
+    padding: 3px;
+    margin-bottom: 1.75rem;
+  }
+  .auth-tab {
+    flex: 1; padding: 8px;
+    background: none; border: none;
+    color: var(--text-muted);
+    font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    cursor: pointer; border-radius: 6px;
+    transition: all 0.2s;
+  }
+  .auth-tab.active {
+    background: var(--surface);
+    color: var(--text);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  }
+
+  .auth-form { display: flex; flex-direction: column; gap: 1rem; }
+  .auth-form.hidden { display: none; }
+
+  .auth-input-wrap { position: relative; }
+  .auth-input-icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    font-size: 0.9rem; pointer-events: none;
+  }
+  .auth-input {
+    width: 100%; background: var(--bg);
+    border: 1px solid var(--border); border-radius: 8px;
+    padding: 11px 14px 11px 36px;
+    color: var(--text); font-family: 'DM Mono', monospace;
+    font-size: 0.85rem; outline: none;
+    transition: border-color 0.2s;
+  }
+  .auth-input:focus { border-color: var(--accent); }
+
+  .auth-btn {
+    width: 100%; background: var(--accent);
+    color: #0a0a0f; border: none; border-radius: 8px;
+    padding: 13px; font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800; font-size: 1rem;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+    margin-top: 0.25rem;
+  }
+  .auth-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(200,241,53,0.4); }
+  .auth-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .auth-msg {
+    font-size: 0.78rem; text-align: center; padding: 10px 14px;
+    border-radius: 8px; margin-top: 4px; display: none;
+    line-height: 1.5;
+  }
+  .auth-msg.error   { background: rgba(192,57,43,0.15); color: #e74c3c; border: 1px solid rgba(192,57,43,0.3); display: block; }
+  .auth-msg.success { background: rgba(46,204,113,0.12); color: #2ecc71; border: 1px solid rgba(46,204,113,0.3); display: block; }
+  .auth-msg.pending { background: rgba(116,185,255,0.12); color: #74b9ff; border: 1px solid rgba(116,185,255,0.3); display: block; }
+
+  /* ─── ADMIN PANEL ─── */
+  .admin-overlay {
+    position: fixed; inset: 0; z-index: 998;
+    background: rgba(0,0,0,0.75); backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+  }
+  .admin-overlay.hidden { display: none; }
+
+  .admin-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 2rem;
+    width: 100%; max-width: 600px;
+    max-height: 80vh; overflow-y: auto;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+  }
+  .admin-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800; font-size: 1.3rem;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .admin-close {
+    background: none; border: none; color: var(--text-muted);
+    cursor: pointer; font-size: 1.1rem; padding: 4px 8px;
+    border-radius: 4px; transition: color 0.15s;
+  }
+  .admin-close:hover { color: var(--accent2); }
+
+  .admin-section-title {
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: 0.68rem; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--text-muted);
+    margin-bottom: 0.75rem; margin-top: 1.25rem;
+  }
+  .admin-section-title:first-of-type { margin-top: 0; }
+
+  .user-row {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; margin-bottom: 8px;
+  }
+  .user-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--accent); color: #0a0a0f;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800; font-size: 1rem; flex-shrink: 0;
+  }
+  .user-info { flex: 1; min-width: 0; }
+  .user-name { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.85rem; }
+  .user-email { font-size: 0.7rem; color: var(--text-muted); margin-top: 1px; }
+  .user-meta { font-size: 0.65rem; color: var(--text-muted); margin-top: 2px; }
+
+  .user-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .btn-approve {
+    background: rgba(46,204,113,0.15); color: #2ecc71;
+    border: 1px solid rgba(46,204,113,0.3);
+    border-radius: 6px; padding: 5px 12px;
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: 0.72rem; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-approve:hover { background: rgba(46,204,113,0.28); }
+  .btn-reject {
+    background: rgba(192,57,43,0.12); color: #e74c3c;
+    border: 1px solid rgba(192,57,43,0.3);
+    border-radius: 6px; padding: 5px 12px;
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: 0.72rem; cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-reject:hover { background: rgba(192,57,43,0.25); }
+  .status-badge {
+    font-size: 0.65rem; padding: 3px 8px; border-radius: 4px;
+    font-family: 'DM Mono', monospace; font-weight: 500;
+  }
+  .badge-approved { background: rgba(46,204,113,0.15); color: #2ecc71; }
+  .badge-rejected { background: rgba(192,57,43,0.12); color: #e74c3c; }
+  .admin-empty { text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 1.5rem 0; }
+
+  /* User info chip in header */
+  .user-chip {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 6px 12px;
+    font-size: 0.78rem; color: var(--text-dim);
+    font-family: 'DM Mono', monospace;
+  }
+  .user-chip-dot { width: 7px; height: 7px; border-radius: 50%; background: #2ecc71; flex-shrink: 0; }
+  .btn-logout {
+    background: none; border: 1px solid var(--border);
+    border-radius: 8px; padding: 7px 13px;
+    color: var(--text-muted); cursor: pointer;
+    font-family: 'DM Mono', monospace; font-size: 0.75rem;
+    transition: all 0.2s;
+  }
+  .btn-logout:hover { border-color: var(--accent2); color: var(--accent2); }
+  /* ─── MOBILE BOTTOM NAV ─── */
+  .mob-nav {
+    display: none;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 200;
+    background: rgba(10,10,15,0.97);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    padding: 8px 0 env(safe-area-inset-bottom, 8px);
+    height: 60px;
+  }
+  .mob-nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    height: 100%;
+  }
+  .mob-nav-btn {
+    background: none; border: none;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 3px;
+    cursor: pointer; padding: 4px 12px;
+    border-radius: 8px; transition: all 0.15s;
+    color: var(--text-muted); flex: 1;
+  }
+  .mob-nav-btn.active { color: var(--accent); }
+  .mob-nav-btn .mnb-icon { font-size: 1.2rem; line-height: 1; }
+  .mob-nav-btn .mnb-label { font-size: 0.58rem; font-family: 'Syne', sans-serif; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+
+  /* ─── MOBILE DRAWER (sidebar as slide-up sheet) ─── */
+  .mob-drawer {
+    display: none;
+    position: fixed; inset: 0;
+    z-index: 300;
+  }
+  .mob-drawer.open { display: block; }
+  .mob-drawer-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+  }
+  .mob-drawer-sheet {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    border-top: 1px solid var(--border);
+    padding: 1rem 1.25rem 5rem;
+    max-height: 85vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .mob-drawer-handle {
+    width: 40px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 1rem;
+  }
+  .mob-drawer-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800; font-size: 1rem;
+    margin-bottom: 1rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  /* ─── MOBILE PANEL (day detail as slide-up) ─── */
+  .mob-panel {
+    display: none;
+    position: fixed; inset: 0;
+    z-index: 300;
+  }
+  .mob-panel.open { display: block; }
+  .mob-panel-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+  }
+  .mob-panel-sheet {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    border-top: 1px solid var(--border);
+    padding: 1rem 1.25rem 6rem;
+    max-height: 80vh;
+    overflow-y: auto;
+    animation: slideUp 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+
+  /* ─── RESPONSIVE BREAKPOINTS ─── */
+  @media (max-width: 900px) {
+    header { padding: 0 1rem; height: 56px; }
+    .logo { font-size: 1.15rem; }
+    .month-nav { display: none; }
+    .btn-add { display: none; }
+    .notif-btn-wrap { display: none; }
+    #notifBtn { display: none !important; }
+    .user-chip { display: none; }
+    .btn-logout { display: none; }
+
+    .app {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr;
+      height: calc(100vh - 56px - 60px);
+    }
+    .sidebar { display: none; }
+    .right-panel { display: none; }
+    .cal-main { padding: 0.75rem; }
+    .cal-day { min-height: 72px; padding: 5px; border-radius: 8px; }
+    .cal-day .task-chip { display: none; }
+    .cal-day .more-tasks { display: none; }
+    .day-num { font-size: 0.8rem; margin-bottom: 3px; }
+
+    /* dot indicators instead of chips on mobile */
+    .cal-day .mob-dot-row {
+      display: flex; gap: 2px; flex-wrap: wrap; margin-top: 2px;
+    }
+    .mob-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .mob-nav { display: flex; }
+    footer { display: none; }
+
+    .modal {
+      width: 100%;
+      max-width: 100%;
+      border-radius: 20px 20px 0 0;
+      padding: 1.5rem 1.25rem 5rem;
+      max-height: 92vh;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      margin: 0;
+      transform: translateY(100%);
+    }
+    .modal-overlay { align-items: flex-end; }
+    .modal-overlay.open .modal { transform: translateY(0); }
+
+    .admin-card {
+      width: 100%; max-width: 100%;
+      border-radius: 20px 20px 0 0;
+      position: fixed; bottom: 0; left: 0; right: 0;
+      margin: 0; max-height: 88vh;
+    }
+    .admin-overlay { align-items: flex-end; }
+    .auth-card { padding: 2rem 1.5rem; }
+    .platform-selector { grid-template-columns: repeat(5, 1fr); gap: 5px; }
+    .form-row { grid-template-columns: 1fr; gap: 0; }
+  }
+
+  @media (max-width: 480px) {
+    .logo { font-size: 1rem; }
+    .auth-card { padding: 1.75rem 1.25rem; }
+    .cal-grid-header div { font-size: 0.6rem; padding: 5px 0; }
+    .cal-day { min-height: 58px; }
+    .day-num { font-size: 0.75rem; width: 20px; height: 20px; }
+  }
+
+  /* ─── ANALYTICS MODAL ─── */
+  .analytics-overlay {
+    position: fixed; inset: 0; z-index: 700;
+    background: rgba(0,0,0,0.8); backdrop-filter: blur(10px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 1rem;
+    animation: fadeIn 0.25s ease;
+  }
+  .analytics-overlay.hidden { display: none; }
+  .analytics-modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    width: 720px; max-width: 96vw;
+    max-height: 88vh; overflow-y: auto;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+  }
+  .analytics-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    position: sticky; top: 0; background: var(--surface); z-index: 2;
+    border-radius: 18px 18px 0 0;
+  }
+  .analytics-title {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 800; font-size: 1.2rem;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .analytics-close {
+    background: none; border: none; color: var(--text-muted);
+    cursor: pointer; font-size: 1.1rem; padding: 4px 8px;
+    border-radius: 4px; transition: color 0.15s;
+  }
+  .analytics-close:hover { color: var(--accent2); }
+  .analytics-export-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 6px 14px;
+    color: var(--accent); font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: 0.75rem; cursor: pointer;
+    transition: all 0.15s; letter-spacing: 0.04em;
+  }
+  .analytics-export-btn:hover { background: rgba(200,241,53,0.1); border-color: var(--accent); }
+  .analytics-export-btn.pdf { color: #ff6b6b; }
+  .analytics-export-btn.pdf:hover { background: rgba(255,107,107,0.1); border-color: #ff6b6b; }
+  .analytics-tabs {
+    display: flex; gap: 0;
+    padding: 0.75rem 1.5rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .atab {
+    background: none; border: none; border-bottom: 2px solid transparent;
+    color: var(--text-muted); cursor: pointer;
+    font-family: 'Syne', sans-serif; font-weight: 700;
+    font-size: 0.82rem; padding: 8px 18px;
+    transition: all 0.15s; letter-spacing: 0.04em;
+    margin-bottom: -1px;
+  }
+  .atab:hover { color: var(--text); }
+  .atab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .analytics-panel { padding: 1.5rem; }
+  .analytics-panel.hidden { display: none; }
+  .analytics-chart-wrap {
+    position: relative; height: 300px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  .analytics-legend {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 8px;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 12px;
+  }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-label { font-size: 0.72rem; color: var(--text-dim); flex: 1; }
+  .legend-val { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.85rem; }
+  .analytics-summary {
+    display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1rem;
+  }
+  .asummary-card {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; text-align: center;
+  }
+  .asummary-val {
+    font-family: 'Syne', sans-serif; font-weight: 800;
+    font-size: 1.6rem; line-height: 1;
+  }
+  .asummary-label {
+    font-size: 0.62rem; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.08em; margin-top: 4px;
+  }
+  @media (max-width: 900px) {
+    .analytics-modal { border-radius: 20px 20px 0 0; position: fixed; bottom:0; left:0; right:0; max-height: 88vh; width: 100%; max-width: 100%; }
+    .analytics-overlay { align-items: flex-end; }
+    .analytics-chart-wrap { height: 220px; }
+  }
+</style>
+<body>
+
+<!-- ─── AUTH SCREEN ─── -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-card">
+    <div class="auth-logo"><div class="auth-logo-dot"></div>CMG Task Calendar</div>
+    <div class="auth-subtitle">Dubeon Corporation</div>
+
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Sign In</button>
+      <button class="auth-tab" id="tabRegister" onclick="switchTab('register')">Create Account</button>
+    </div>
+
+    <!-- LOGIN -->
+    <div class="auth-form" id="loginForm">
+      <div class="auth-input-wrap">
+        <span class="auth-input-icon">👤</span>
+        <input class="auth-input" id="loginUsername" type="text" placeholder="Username or Email" autocomplete="username" />
+      </div>
+      <div class="auth-input-wrap">
+        <span class="auth-input-icon">🔒</span>
+        <input class="auth-input" id="loginPassword" type="password" placeholder="Password" autocomplete="current-password" />
+      </div>
+      <div class="auth-msg" id="loginMsg"></div>
+      <button class="auth-btn" onclick="doLogin()">Sign In</button>
+    </div>
+
+    <!-- REGISTER -->
+    <div class="auth-form hidden" id="registerForm">
+      <div class="auth-input-wrap">
+        <span class="auth-input-icon">👤</span>
+        <input class="auth-input" id="regName" type="text" placeholder="Full Name" />
+      </div>
+      <div class="auth-input-wrap">
+        <span class="auth-input-icon">📧</span>
+        <input class="auth-input" id="regEmail" type="email" placeholder="Email Address" />
+      </div>
+      <div class="auth-input-wrap">
+        <span class="auth-input-icon">🆔</span>
+        <input class="auth-input" id="regUsername" type="text" placeholder="Username" autocomplete="username" />
+      </div>
+      <div class="auth-input-wrap">
+        <span class="auth-input-icon">🔒</span>
+        <input class="auth-input" id="regPassword" type="password" placeholder="Password" autocomplete="new-password" />
+      </div>
+      <div class="auth-input-wrap">
+        <span class="auth-input-icon">🔒</span>
+        <input class="auth-input" id="regPassword2" type="password" placeholder="Confirm Password" />
+      </div>
+      <div class="auth-msg" id="registerMsg"></div>
+      <button class="auth-btn" onclick="doRegister()">Request Access</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── ADMIN PANEL ─── -->
+<div class="admin-overlay hidden" id="adminOverlay">
+  <div class="admin-card">
+    <div class="admin-title">
+      <span>⚙️ Admin Panel</span>
+      <button class="admin-close" onclick="closeAdmin()">✕</button>
+    </div>
+    <div class="admin-section-title">Pending Approvals</div>
+    <div id="adminPending"></div>
+    <div class="admin-section-title">All Users</div>
+    <div id="adminUsers"></div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">
+    <div class="logo-dot"></div>
+    CMG Task Calendar  </div>
+  <div class="header-right">
+    <button onclick="openAnalytics()" style="
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex; align-items: center; gap: 6px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+    ">📊 <span>Analytics</span></button>
+    <button id="notifBtn" title="Enable Notifications" style="
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 7px 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.2s;
+      display: flex; align-items: center; gap: 6px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.75rem;
+    ">🔔 <span id="notifLabel">Enable Alerts</span></button>
+    <div class="month-nav">
+      <button id="prevMonth">‹</button>
+      <span class="month-label" id="monthLabel"></span>
+      <button id="nextMonth">›</button>
+    </div>
+    <button class="btn-add" id="openModal">+ Add Task</button>
+    <div class="user-chip" id="userChip"><div class="user-chip-dot"></div><span id="userChipName">—</span></div>
+    <button class="btn-logout" onclick="doLogout()">Sign Out</button>
+  </div>
+</header>
+
+<!-- APP -->
+<div class="app">
+
+  <!-- LEFT SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <h3>Quick Nav</h3>
+      <div class="mini-cal">
+        <div class="mini-cal-grid" id="miniCalHeader">
+          <div class="day-header">S</div><div class="day-header">M</div>
+          <div class="day-header">T</div><div class="day-header">W</div>
+          <div class="day-header">T</div><div class="day-header">F</div>
+          <div class="day-header">S</div>
+        </div>
+        <div class="mini-cal-grid" id="miniCalDays"></div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Stats</h3>
+      <div class="stat-grid">
+        <div class="stat-card" onclick="openStatModal('all')" title="View all tasks">
+          <div class="stat-val" id="statTotal">0</div>
+          <div class="stat-label">Total Tasks</div>
+        </div>
+        <div class="stat-card green" onclick="openStatModal('completed')" title="View completed tasks">
+          <div class="stat-val" id="statDone">0</div>
+          <div class="stat-label">Completed</div>
+        </div>
+        <div class="stat-card blue" onclick="openStatModal('month')" title="View this month's tasks">
+          <div class="stat-val" id="statMonth">0</div>
+          <div class="stat-label">This Month</div>
+        </div>
+        <div class="stat-card red" onclick="openStatModal('pending')" title="View pending tasks">
+          <div class="stat-val" id="statPending">0</div>
+          <div class="stat-label">Pending</div>
+        </div>
+      </div>
+      <div class="progress-wrap" style="margin-top:12px">
+        <div class="progress-bar" id="progressBar" style="width:0%"></div>
+      </div>
+      <div class="progress-label">
+        <span>Progress this month</span>
+        <span id="progressPct">0%</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Categories</h3>
+      <div id="catList"></div>
+    </div>
+
+    <div class="sidebar-section" id="adminBtnWrap" style="display:none">
+      <button onclick="openAdmin()" style="
+        width:100%; background: rgba(200,241,53,0.08);
+        border: 1px solid rgba(200,241,53,0.25);
+        border-radius: 8px; padding: 10px;
+        color: var(--accent); font-family: 'Syne', sans-serif;
+        font-weight: 700; font-size: 0.8rem;
+        letter-spacing: 0.05em; cursor: pointer;
+        transition: all 0.2s; display:flex; align-items:center; gap:8px; justify-content:center;
+      ">⚙️ Admin Panel <span id="pendingBadge" style="
+        background:var(--accent2); color:#fff; border-radius:50%;
+        width:18px;height:18px;display:none;align-items:center;justify-content:center;
+        font-size:0.65rem;
+      "></span></button>
+    </div>
+  </aside>
+
+  <!-- MAIN CALENDAR -->
+  <main class="cal-main">
+    <div class="cal-grid-header">
+      <div>Sun</div><div>Mon</div><div>Tue</div>
+      <div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+  </main>
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="panel-header">
+      <div class="panel-date" id="panelDate">—</div>
+      <div class="panel-date-sub" id="panelSub">Select a day</div>
+    </div>
+    <div class="panel-tasks" id="panelTasks">
+      <div class="empty-day">
+        <div class="empty-icon">📅</div>
+        <p>Click a day to view tasks</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MOBILE BOTTOM NAV ─── -->
+<nav class="mob-nav">
+  <div class="mob-nav-inner">
+    <button class="mob-nav-btn active" id="mnbCal" onclick="mobNav('cal')">
+      <span class="mnb-icon">📅</span>
+      <span class="mnb-label">Calendar</span>
+    </button>
+    <button class="mob-nav-btn" id="mnbAdd" onclick="mobNav('add')">
+      <span class="mnb-icon" style="background:var(--accent);border-radius:50%;width:38px;height:38px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;color:#0a0a0f;margin-bottom:2px">+</span>
+      <span class="mnb-label">Add</span>
+    </button>
+    <button class="mob-nav-btn" id="mnbStats" onclick="mobNav('stats')">
+      <span class="mnb-icon">📊</span>
+      <span class="mnb-label">Stats</span>
+    </button>
+    <button class="mob-nav-btn" id="mnbMenu" onclick="mobNav('menu')">
+      <span class="mnb-icon">☰</span>
+      <span class="mnb-label">Menu</span>
+    </button>
+  </div>
+</nav>
+
+<!-- ─── MOBILE STATS DRAWER ─── -->
+<div class="mob-drawer" id="mobStatsDrawer">
+  <div class="mob-drawer-backdrop" onclick="closeMobDrawer('mobStatsDrawer')"></div>
+  <div class="mob-drawer-sheet">
+    <div class="mob-drawer-handle"></div>
+    <div class="mob-drawer-title">📊 Stats &amp; Categories</div>
+    <div style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.6rem">Overview</div>
+    <div class="stat-grid" style="margin-bottom:10px">
+      <div class="stat-card" onclick="openStatModal('all')"><div class="stat-val" id="mStatTotal">0</div><div class="stat-label">Total Tasks</div></div>
+      <div class="stat-card green" onclick="openStatModal('completed')"><div class="stat-val" id="mStatDone">0</div><div class="stat-label">Completed</div></div>
+      <div class="stat-card blue" onclick="openStatModal('month')"><div class="stat-val" id="mStatMonth">0</div><div class="stat-label">This Month</div></div>
+      <div class="stat-card red" onclick="openStatModal('pending')"><div class="stat-val" id="mStatPending">0</div><div class="stat-label">Pending</div></div>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" id="mProgressBar" style="width:0%"></div></div>
+    <div class="progress-label"><span>Progress this month</span><span id="mProgressPct">0%</span></div>
+    <div style="font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted);margin-bottom:0.6rem;margin-top:1.2rem">Categories</div>
+    <div id="mCatList"></div>
+  </div>
+</div>
+
+<!-- ─── MOBILE MENU DRAWER ─── -->
+<div class="mob-drawer" id="mobMenuDrawer">
+  <div class="mob-drawer-backdrop" onclick="closeMobDrawer('mobMenuDrawer')"></div>
+  <div class="mob-drawer-sheet">
+    <div class="mob-drawer-handle"></div>
+    <div class="mob-drawer-title"><span>☰ Menu</span></div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between">
+        <button onclick="mobChangeMonth(-1)" style="background:none;border:none;color:var(--text-muted);font-size:1.2rem;cursor:pointer;padding:4px 12px">‹</button>
+        <span style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem" id="mobMonthLabel"></span>
+        <button onclick="mobChangeMonth(1)" style="background:none;border:none;color:var(--text-muted);font-size:1.2rem;cursor:pointer;padding:4px 12px">›</button>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px">
+        <div class="mini-cal-grid" style="margin-bottom:4px">
+          <div class="day-header">S</div><div class="day-header">M</div><div class="day-header">T</div>
+          <div class="day-header">W</div><div class="day-header">T</div><div class="day-header">F</div><div class="day-header">S</div>
+        </div>
+        <div class="mini-cal-grid" id="mobMiniCal"></div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:10px">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);color:#0a0a0f;display:flex;align-items:center;justify-content:center;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem" id="mobUserAvatar">—</div>
+        <div><div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem" id="mobUserName">—</div><div style="font-size:0.65rem;color:var(--text-muted)">Signed in</div></div>
+      </div>
+      <button onclick="openAnalytics();closeMobDrawer('mobMenuDrawer')" style="background:rgba(200,241,53,0.08);border:1px solid rgba(200,241,53,0.2);border-radius:10px;padding:12px 16px;color:var(--accent);font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;cursor:pointer;text-align:left;width:100%">
+        📊 Analytics & Reports
+      </button>
+      <button id="mobNotifBtn" onclick="mobToggleNotif()" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text-muted);font-family:'DM Mono',monospace;font-size:0.8rem;cursor:pointer;text-align:left;display:flex;align-items:center;gap:8px;width:100%">
+        🔔 <span id="mobNotifLabel">Enable Alerts</span>
+      </button>
+      <button id="mobAdminBtn" onclick="openAdmin();closeMobDrawer('mobMenuDrawer')" style="display:none;background:rgba(200,241,53,0.08);border:1px solid rgba(200,241,53,0.25);border-radius:10px;padding:12px 16px;color:var(--accent);font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;cursor:pointer;text-align:left;width:100%;align-items:center;gap:8px">
+        ⚙️ Admin Panel
+      </button>
+      <button onclick="doLogout();closeMobDrawer('mobMenuDrawer')" style="background:rgba(255,107,107,0.08);border:1px solid rgba(255,107,107,0.2);border-radius:10px;padding:12px 16px;color:var(--accent2);font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;cursor:pointer;text-align:left;width:100%">
+        🚪 Sign Out
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MOBILE DAY PANEL ─── -->
+<div class="mob-panel" id="mobDayPanel">
+  <div class="mob-panel-backdrop" onclick="closeMobPanel()"></div>
+  <div class="mob-panel-sheet">
+    <div class="mob-drawer-handle"></div>
+    <div class="mob-drawer-title">
+      <div>
+        <div style="font-family:'Fraunces',serif;font-size:1.3rem;font-weight:600;line-height:1.1" id="mobPanelDate">—</div>
+        <div style="font-size:0.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em" id="mobPanelSub"></div>
+      </div>
+      <button onclick="closeMobPanel()" style="background:none;border:none;color:var(--text-muted);font-size:1rem;cursor:pointer">✕</button>
+    </div>
+    <div id="mobPanelTasks"></div>
+  </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<!-- SheetJS for Excel export -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<!-- ANALYTICS MODAL -->
+<div class="analytics-overlay hidden" id="analyticsOverlay">
+  <div class="analytics-modal">
+    <div class="analytics-header">
+      <div class="analytics-title">📊 Analytics & Reports</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="analytics-export-btn" onclick="exportToExcel()">⬇ Excel</button>
+        <button class="analytics-export-btn pdf" onclick="exportToPDF()">⬇ PDF</button>
+        <button class="analytics-close" onclick="closeAnalytics()">✕</button>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="analytics-tabs">
+      <button class="atab active" id="atab-category" onclick="switchATab('category')">By Category</button>
+      <button class="atab" id="atab-weekly" onclick="switchATab('weekly')">Weekly</button>
+      <button class="atab" id="atab-monthly" onclick="switchATab('monthly')">Monthly</button>
+    </div>
+
+    <!-- Category Chart -->
+    <div class="analytics-panel" id="apanel-category">
+      <div class="analytics-chart-wrap">
+        <canvas id="chartCategory"></canvas>
+      </div>
+      <div id="categoryLegend" class="analytics-legend"></div>
+    </div>
+
+    <!-- Weekly Chart -->
+    <div class="analytics-panel hidden" id="apanel-weekly">
+      <div class="analytics-summary" id="weeklySummary"></div>
+      <div class="analytics-chart-wrap">
+        <canvas id="chartWeekly"></canvas>
+      </div>
+    </div>
+
+    <!-- Monthly Chart -->
+    <div class="analytics-panel hidden" id="apanel-monthly">
+      <div class="analytics-summary" id="monthlySummary"></div>
+      <div class="analytics-chart-wrap">
+        <canvas id="chartMonthly"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- STAT TASK LIST MODAL -->
+<div class="stat-modal-overlay" id="statModalOverlay">
+  <div class="stat-modal">
+    <div class="stat-modal-header">
+      <div class="stat-modal-title">
+        <span id="statModalIcon">📋</span>
+        <span id="statModalTitle">Tasks</span>
+        <span class="stat-modal-badge" id="statModalBadge" style="background:rgba(200,241,53,0.12);color:var(--accent)">0</span>
+      </div>
+      <button class="stat-modal-close" onclick="closeStatModal()">✕</button>
+    </div>
+    <div class="stat-modal-body" id="statModalBody"></div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-title">
+      <span id="modalTitleText">New Task</span>
+      <button class="modal-close" id="closeModal">✕</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Task Title</label>
+      <input class="form-input" id="taskTitle" placeholder="e.g. Publish Instagram carousel..." />
+    </div>
+    <div class="form-group">
+      <label class="form-label">Category</label>
+      <div class="cat-selector" id="catSelector"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-input" type="date" id="taskDate" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Time (optional)</label>
+        <input class="form-input" type="time" id="taskTime" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">🔔 Remind Me Before</label>
+      <select class="form-select" id="taskRemind">
+        <option value="0">At task time</option>
+        <option value="5">5 minutes before</option>
+        <option value="10" selected>10 minutes before</option>
+        <option value="15">15 minutes before</option>
+        <option value="30">30 minutes before</option>
+        <option value="60">1 hour before</option>
+        <option value="1440">1 day before</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <textarea class="form-textarea" id="taskNotes" rows="3" placeholder="Describe the task, links, or details..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Priority</label>
+      <select class="form-select" id="taskPriority">
+        <option value="normal">Normal</option>
+        <option value="high">High Priority</option>
+        <option value="low">Low Priority</option>
+      </select>
+    </div>
+    <button class="btn-submit" id="saveTask">Add to Calendar</button>
+  </div>
+</div>
+
+<!-- Firebase SDKs -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+// ── FIREBASE CONFIG ──
+const firebaseConfig = {
+  apiKey: "AIzaSyDLfOMBzDl-v5TDm_dIkkMM7VuhxqTzLHs",
+  authDomain: "cmg-task-calendar.firebaseapp.com",
+  projectId: "cmg-task-calendar",
+  storageBucket: "cmg-task-calendar.firebasestorage.app",
+  messagingSenderId: "95515134140",
+  appId: "1:95515134140:web:db61f3e94c6a888694a8b9",
+  measurementId: "G-E9KZ2LP6Q5"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+const auth = getAuth(app);
+
+// ── CONSTANTS ──
+const ADMIN_EMAIL = "cmgadmin@dubeon.com"; // internal admin marker
+const ADMIN_USERNAME = "CMGadmin";
+const ADMIN_PASSWORD = "Dubeon.2002ADMIN";
+
+const SOCIAL_PLATFORMS = [
+  { id: 'facebook',  label: 'Facebook',  color: '#1877f2', icon: '📘' },
+  { id: 'linkedin',  label: 'LinkedIn',  color: '#0a66c2', icon: '💼' },
+  { id: 'youtube',   label: 'YouTube',   color: '#ff0000', icon: '▶️' },
+  { id: 'instagram', label: 'Instagram', color: '#e1306c', icon: '📸' },
+  { id: 'tiktok',    label: 'TikTok',    color: '#69c9d0', icon: '🎵' },
+];
+
+const CATEGORIES = [
+  { id: 'social',    label: 'Social Media', color: '#ff9f43', isSocialParent: true },
+  ...SOCIAL_PLATFORMS.map(p => ({ ...p, parentId: 'social' })),
+  { id: 'email',     label: 'Email',        color: '#48dbfb' },
+  { id: 'blog',      label: 'Blog/Content', color: '#ff6b6b' },
+  { id: 'ad',        label: 'Paid Ads',     color: '#c8f135' },
+  { id: 'event',     label: 'Event',        color: '#a29bfe' },
+  { id: 'other',     label: 'Other',        color: '#fd79a8' },
+];
+
+// Top-level categories only (for sidebar grouping)
+const TOP_CATS = CATEGORIES.filter(c => !c.parentId);
+
+let tasks = [];
+let currentDate = new Date();
+let selectedDate = null;
+let selectedCat = 'social';
+let currentUser = null; // Firebase auth user
+let currentUserProfile = null; // Firestore user doc
+
+function dateKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function today() { return dateKey(new Date()); }
+
+// ── FIRESTORE TASK OPS ──
+async function saveTask(taskData) {
+  const ref = await addDoc(collection(db, 'tasks'), taskData);
+  return ref.id;
+}
+async function updateTaskInDB(taskId, data) {
+  await updateDoc(doc(db, 'tasks', taskId), data);
+}
+async function duplicateTask(idx) {
+  const t = tasks[idx];
+  if (!t) return;
+  const { _id, ...taskData } = t; // remove Firestore ID
+  const duplicate = {
+    ...taskData,
+    title: t.title + ' (Copy)',
+    done: false,
+    createdAt: new Date().toISOString(),
+    createdBy: currentUser ? currentUser.uid : 'unknown',
+  };
+  await saveTask(duplicate);
+  // Flash confirmation
+  const btn = document.querySelector(`.dup-btn[data-dup="${idx}"]`);
+  if (btn) {
+    const orig = btn.textContent;
+    btn.textContent = '✓';
+    btn.style.color = '#2ecc71';
+    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1000);
+  }
+}
+
+async function deleteTaskFromDB(taskId) {
+  await deleteDoc(doc(db, 'tasks', taskId));
+}
+
+function subscribeToTasks() {
+  const q = query(collection(db, 'tasks'), orderBy('date'));
+  onSnapshot(q, snap => {
+    tasks = snap.docs.map(d => ({ ...d.data(), _id: d.id }));
+    renderCalendar();
+    if (selectedDate) {
+      if (isMobile()) renderMobDayPanel(selectedDate);
+      else renderPanel();
+    }
+    renderStats();
+    renderCategories();
+  });
+}
+
+// ── FIRESTORE USER OPS ──
+async function createUserProfile(uid, data) {
+  await setDoc(doc(db, 'users', uid), data);
+}
+async function getUserProfile(uid) {
+  const snap = await getDoc(doc(db, 'users', uid));
+  return snap.exists() ? { uid, ...snap.data() } : null;
+}
+async function updateUserProfile(uid, data) {
+  await updateDoc(doc(db, 'users', uid), data);
+}
+function subscribeToUsers(callback) {
+  onSnapshot(collection(db, 'users'), snap => {
+    const users = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
+    callback(users);
+  });
+}
+
+// ─── RENDER CALENDAR ───
+function renderCalendar() {
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+
+  document.getElementById('monthLabel').textContent =
+    new Date(year, month).toLocaleString('default', {month:'long', year:'numeric'});
+
+  const first = new Date(year, month, 1);
+  const last = new Date(year, month+1, 0);
+  const startDay = first.getDay();
+  const todayKey = today();
+
+  for (let i = 0; i < startDay; i++) {
+    const d = new Date(year, month, -startDay+1+i);
+    grid.appendChild(makeDayCell(d, true));
+  }
+  for (let d = 1; d <= last.getDate(); d++) {
+    grid.appendChild(makeDayCell(new Date(year, month, d), false));
+  }
+  const remaining = 42 - (startDay + last.getDate());
+  for (let i = 1; i <= remaining; i++) {
+    grid.appendChild(makeDayCell(new Date(year, month+1, i), true));
+  }
+
+  renderMiniCal();
+  renderStats();
+  renderCategories();
+}
+
+function isMobile() { return window.innerWidth <= 900; }
+
+function makeDayCell(d, otherMonth) {
+  const key = dateKey(d);
+  const dayTasks = tasks.filter(t => t.date === key);
+  const isToday = key === today();
+  const isSelected = selectedDate && key === selectedDate;
+
+  const cell = document.createElement('div');
+  cell.className = 'cal-day' +
+    (otherMonth ? ' other-month' : '') +
+    (isToday ? ' today' : '') +
+    (isSelected ? ' selected' : '');
+
+  const num = document.createElement('div');
+  num.className = 'day-num';
+  num.textContent = d.getDate();
+  cell.appendChild(num);
+
+  if (isMobile()) {
+    if (dayTasks.length > 0) {
+      const dotRow = document.createElement('div');
+      dotRow.className = 'mob-dot-row';
+      dayTasks.slice(0, 5).forEach(t => {
+        const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
+        const dot = document.createElement('div');
+        dot.className = 'mob-dot';
+        dot.style.background = cat.color;
+        dotRow.appendChild(dot);
+      });
+      cell.appendChild(dotRow);
+    }
+  } else {
+    const shown = dayTasks.slice(0, 3);
+    shown.forEach(t => {
+      const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
+      const chip = document.createElement('div');
+      chip.className = 'task-chip' + (t.done ? ' done' : '');
+      chip.style.background = cat.color;
+      const iconHtml = cat.icon ? `<span style="font-size:0.7rem;line-height:1">${cat.icon}</span>` : `<span class="chip-dot"></span>`;
+      const doneTag = t.done ? `<span class="done-tag">DONE</span>` : '';
+      chip.innerHTML = `${iconHtml}${t.title}${doneTag}`;
+      chip.onclick = (e) => { e.stopPropagation(); selectDay(key); };
+      cell.appendChild(chip);
+    });
+    if (dayTasks.length > 3) {
+      const more = document.createElement('div');
+      more.className = 'more-tasks';
+      more.textContent = `+${dayTasks.length - 3} more`;
+      cell.appendChild(more);
+    }
+  }
+
+  cell.onclick = () => selectDay(key);
+  return cell;
+}
+
+function selectDay(key) {
+  selectedDate = key;
+  renderCalendar();
+  if (isMobile()) {
+    renderMobDayPanel(key);
+  } else {
+    renderPanel();
+  }
+}
+
+// ─── RIGHT PANEL ───
+function renderPanel() {
+  if (!selectedDate) return;
+  const d = new Date(selectedDate + 'T12:00:00');
+  document.getElementById('panelDate').textContent =
+    d.toLocaleString('default', {month:'long', day:'numeric'});
+  document.getElementById('panelSub').textContent =
+    d.toLocaleString('default', {weekday:'long', year:'numeric'});
+
+  const dayTasks = tasks.filter(t => t.date === selectedDate);
+  const container = document.getElementById('panelTasks');
+
+  if (!dayTasks.length) {
+    container.innerHTML = `<div class="empty-day"><div class="empty-icon">✨</div><p>No tasks yet.<br>Click + Add Task to get started.</p></div>`;
+    return;
+  }
+
+  container.innerHTML = '';
+  dayTasks.forEach((t, idx) => {
+    const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
+    const item = document.createElement('div');
+    item.className = 'task-item' + (t.done ? ' done' : '');
+    item.style.setProperty('--cat-color', cat.color);
+    item.querySelector = null;
+    item.innerHTML = `
+      <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${cat.color};border-radius:3px 0 0 3px"></div>
+      <div class="task-item-top">
+        <div class="task-title">${t.title}</div>
+        <div style="display:flex;align-items:center;gap:4px">
+          <div class="task-check ${t.done ? 'checked' : ''}" data-idx="${tasks.indexOf(t)}">${t.done ? '✓' : ''}</div>
+          <button class="edit-btn" data-edit="${tasks.indexOf(t)}" title="Edit">✎</button>
+          <button class="dup-btn" data-dup="${tasks.indexOf(t)}" title="Duplicate">⧉</button>
+          <button class="delete-btn" data-del="${tasks.indexOf(t)}" title="Delete">✕</button>
+        </div>
+      </div>
+      <div class="task-meta">
+        <span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon ? cat.icon + ' ' : ''}${cat.label}</span>
+        ${t.time ? `<span class="task-time">⏰ ${t.time}</span>` : ''}
+        ${t.priority === 'high' ? `<span class="task-tag" style="background:#ff6b6b20;color:#ff6b6b">HIGH</span>` : ''}
+        ${t.done ? `<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71;font-weight:700">✓ DONE</span>` : `<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
+      </div>
+      ${t.notes ? `<div class="task-notes">${t.notes}</div>` : ''}
+    `;
+    container.appendChild(item);
+  });
+
+  container.querySelectorAll('.task-check').forEach(el => {
+    el.onclick = async () => {
+      const i = parseInt(el.dataset.idx);
+      const t = tasks[i];
+      await updateTaskInDB(t._id, { done: !t.done });
+    };
+  });
+  container.querySelectorAll('.edit-btn').forEach(el => {
+    el.onclick = () => { openEditModal(parseInt(el.dataset.edit)); };
+  });
+  container.querySelectorAll('.dup-btn').forEach(el => {
+    el.onclick = async () => {
+      const i = parseInt(el.dataset.dup);
+      await duplicateTask(i);
+    };
+  });
+  container.querySelectorAll('.delete-btn').forEach(el => {
+    el.onclick = async () => {
+      const i = parseInt(el.dataset.del);
+      await deleteTaskFromDB(tasks[i]._id);
+    };
+  });
+}
+
+// ─── MINI CAL ───
+function renderMiniCal() {
+  const container = document.getElementById('miniCalDays');
+  container.innerHTML = '';
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const first = new Date(year, month, 1).getDay();
+  const last = new Date(year, month+1, 0).getDate();
+  const todayKey = today();
+
+  for (let i = 0; i < first; i++) {
+    const el = document.createElement('div');
+    el.className = 'mini-day other-month';
+    container.appendChild(el);
+  }
+  for (let d = 1; d <= last; d++) {
+    const key = dateKey(new Date(year, month, d));
+    const el = document.createElement('div');
+    el.className = 'mini-day' +
+      (key === todayKey ? ' today' : '') +
+      (key === selectedDate ? ' selected' : '') +
+      (tasks.some(t => t.date === key) ? ' has-tasks' : '');
+    el.textContent = d;
+    el.onclick = () => selectDay(key);
+    container.appendChild(el);
+  }
+}
+
+// ─── STATS ───
+function renderStats() {
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const monthTasks = tasks.filter(t => {
+    const d = new Date(t.date);
+    return d.getFullYear() === year && d.getMonth() === month;
+  });
+  const done = tasks.filter(t => t.done).length;
+  const monthDone = monthTasks.filter(t => t.done).length;
+  const pct = monthTasks.length ? Math.round(monthDone/monthTasks.length*100) : 0;
+
+  document.getElementById('statTotal').textContent = tasks.length;
+  document.getElementById('statDone').textContent = done;
+  document.getElementById('statMonth').textContent = monthTasks.length;
+  document.getElementById('statPending').textContent = tasks.filter(t => !t.done).length;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = pct + '%';
+}
+
+// ─── CATEGORIES ───
+function renderCategories() {
+  const container = document.getElementById('catList');
+  container.innerHTML = '';
+
+  TOP_CATS.forEach(cat => {
+    const count = cat.isSocialParent
+      ? tasks.filter(t => SOCIAL_PLATFORMS.some(p => p.id === t.category)).length
+      : tasks.filter(t => t.category === cat.id).length;
+
+    const item = document.createElement('div');
+    item.className = 'cat-item';
+    item.style.cursor = 'pointer';
+    item.title = `View ${cat.label} tasks`;
+    item.innerHTML = `
+      <div class="cat-dot" style="background:${cat.color};box-shadow:0 0 6px ${cat.color}60"></div>
+      <span class="cat-name">${cat.icon ? cat.icon + ' ' : ''}${cat.label}</span>
+      <span class="cat-count">${count}</span>
+    `;
+    item.onclick = () => openCatModal(cat.id);
+    container.appendChild(item);
+
+    if (cat.isSocialParent) {
+      SOCIAL_PLATFORMS.forEach(p => {
+        const pCount = tasks.filter(t => t.category === p.id).length;
+        const sub = document.createElement('div');
+        sub.className = 'cat-sub-item';
+        sub.style.cursor = 'pointer';
+        sub.title = `View ${p.label} tasks`;
+        sub.innerHTML = `
+          <span style="font-size:0.9rem">${p.icon}</span>
+          <span style="color:${p.color};flex:1">${p.label}</span>
+          <span class="cat-count">${pCount}</span>
+        `;
+        sub.onclick = () => openCatModal(p.id);
+        container.appendChild(sub);
+      });
+    }
+  });
+}
+
+// ─── MODAL ───
+function buildCatSelector() {
+  const container = document.getElementById('catSelector');
+  container.innerHTML = '';
+
+  // Top-level buttons (non-social-platform)
+  TOP_CATS.forEach(cat => {
+    const btn = document.createElement('button');
+    const isActive = cat.isSocialParent
+      ? SOCIAL_PLATFORMS.some(p => p.id === selectedCat)
+      : selectedCat === cat.id;
+    btn.className = 'cat-btn' + (isActive ? ' active' : '');
+    if (isActive) {
+      const activeCat = cat.isSocialParent ? (SOCIAL_PLATFORMS.find(p=>p.id===selectedCat)||cat) : cat;
+      btn.style.borderColor = activeCat.color;
+      btn.style.background = activeCat.color;
+    }
+    btn.innerHTML = (cat.icon ? `<span>${cat.icon}</span>` : '') + cat.label;
+    btn.onclick = () => {
+      selectedCat = cat.isSocialParent ? 'facebook' : cat.id;
+      buildCatSelector();
+    };
+    container.appendChild(btn);
+  });
+
+  // If social selected, show platform sub-picker
+  if (SOCIAL_PLATFORMS.some(p => p.id === selectedCat)) {
+    const subLabel = document.createElement('div');
+    subLabel.className = 'social-sub-label';
+    subLabel.textContent = 'Choose Platform';
+    container.appendChild(subLabel);
+
+    const platformGrid = document.createElement('div');
+    platformGrid.className = 'platform-selector';
+    SOCIAL_PLATFORMS.forEach(p => {
+      const btn = document.createElement('button');
+      btn.className = 'platform-btn' + (selectedCat === p.id ? ' active' : '');
+      btn.style.color = p.color;
+      if (selectedCat === p.id) btn.style.borderColor = p.color;
+      btn.innerHTML = `<span class="platform-icon">${p.icon}</span><span class="platform-name">${p.label}</span>`;
+      btn.onclick = () => { selectedCat = p.id; buildCatSelector(); };
+      platformGrid.appendChild(btn);
+    });
+    container.appendChild(platformGrid);
+  }
+}
+
+let editingTaskId = null;
+
+function openEditModal(idx) {
+  const t = tasks[idx];
+  if (!t) return;
+  editingTaskId = t._id;
+  document.getElementById('modalTitleText').textContent = 'Edit Task';
+  document.getElementById('saveTask').textContent = 'Save Changes';
+  document.getElementById('taskTitle').value = t.title;
+  document.getElementById('taskDate').value = t.date;
+  document.getElementById('taskTime').value = t.time || '';
+  document.getElementById('taskRemind').value = t.remind || '10';
+  document.getElementById('taskNotes').value = t.notes || '';
+  document.getElementById('taskPriority').value = t.priority || 'normal';
+  selectedCat = t.category;
+  buildCatSelector();
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+document.getElementById('openModal').onclick = () => {
+  editingTaskId = null;
+  document.getElementById('modalTitleText').textContent = 'New Task';
+  document.getElementById('saveTask').textContent = 'Add to Calendar';
+  document.getElementById('taskTitle').value = '';
+  document.getElementById('taskTime').value = '';
+  document.getElementById('taskRemind').value = '10';
+  document.getElementById('taskNotes').value = '';
+  document.getElementById('taskPriority').value = 'normal';
+  document.getElementById('modalOverlay').classList.add('open');
+  document.getElementById('taskDate').value = selectedDate || today();
+  buildCatSelector();
+};
+
+document.getElementById('closeModal').onclick = () => {
+  document.getElementById('modalOverlay').classList.remove('open');
+};
+
+document.getElementById('modalOverlay').onclick = (e) => {
+  if (e.target === document.getElementById('modalOverlay')) {
+    document.getElementById('modalOverlay').classList.remove('open');
+  }
+};
+
+document.getElementById('saveTask').onclick = async () => {
+  const title = document.getElementById('taskTitle').value.trim();
+  const date  = document.getElementById('taskDate').value;
+  if (!title || !date) { alert('Please fill in title and date.'); return; }
+
+  const taskData = {
+    title, date,
+    category: selectedCat,
+    time:     document.getElementById('taskTime').value,
+    remind:   document.getElementById('taskRemind').value,
+    notes:    document.getElementById('taskNotes').value.trim(),
+    priority: document.getElementById('taskPriority').value,
+  };
+
+  if (editingTaskId) {
+    await updateTaskInDB(editingTaskId, taskData);
+    editingTaskId = null;
+  } else {
+    taskData.done = false;
+    taskData.createdAt = new Date().toISOString();
+    taskData.createdBy = currentUser ? currentUser.uid : 'unknown';
+    await saveTask(taskData);
+  }
+
+  document.getElementById('modalTitleText').textContent = 'New Task';
+  document.getElementById('saveTask').textContent = 'Add to Calendar';
+  document.getElementById('modalOverlay').classList.remove('open');
+  selectedDate = date;
+};
+
+// ─── NOTIFICATIONS ───
+let notifTimers = {};
+
+function requestNotifPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+}
+
+function sendNotification(task) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const cat = CATEGORIES.find(c => c.id === task.category) || CATEGORIES[CATEGORIES.length - 1];
+  const n = new Notification(`⏰ CMG Task Calendar`, {
+    body: `${cat.icon || '📌'} ${task.title}${task.notes ? '\n' + task.notes : ''}`,
+    icon: 'https://cdn-icons-png.flaticon.com/512/1827/1827392.png',
+    tag: String(task.id),
+    requireInteraction: true,
+  });
+  n.onclick = () => { window.focus(); n.close(); };
+}
+
+function scheduleNotification(task) {
+  if (!task.time || !task.date) return;
+  const remind = parseInt(task.remind || '0');
+  const taskDateTime = new Date(`${task.date}T${task.time}`);
+  const fireAt = new Date(taskDateTime.getTime() - remind * 60000);
+  const delay = fireAt.getTime() - Date.now();
+  if (delay <= 0) return;
+  if (notifTimers[task._id]) clearTimeout(notifTimers[task._id]);
+  notifTimers[task._id] = setTimeout(() => {
+    sendNotification(task);
+    delete notifTimers[task._id];
+  }, delay);
+}
+
+function rescheduleAll() {
+  Object.values(notifTimers).forEach(t => clearTimeout(t));
+  notifTimers = {};
+  if (Notification.permission !== 'granted') return;
+  tasks.forEach(t => { if (!t.done) scheduleNotification(t); });
+}
+
+// ── EXPOSE GLOBALS for HTML onclick attributes ──
+// ─── STAT MODAL ───
+const STAT_CONFIG = {
+  all:       { icon: '📋', label: 'All Tasks',        color: '#c8f135', bg: 'rgba(200,241,53,0.12)',   filter: () => [...tasks] },
+  completed: { icon: '✅', label: 'Completed Tasks',  color: '#2ecc71', bg: 'rgba(46,204,113,0.12)',   filter: () => tasks.filter(t => t.done) },
+  month:     { icon: '📅', label: 'This Month\'s Tasks', color: '#74b9ff', bg: 'rgba(116,185,255,0.12)', filter: () => {
+    const y = currentDate.getFullYear(), m = currentDate.getMonth();
+    return tasks.filter(t => { const d = new Date(t.date); return d.getFullYear()===y && d.getMonth()===m; });
+  }},
+  pending:   { icon: '⏳', label: 'Pending Tasks',    color: '#c0392b', bg: 'rgba(192,57,43,0.12)',    filter: () => tasks.filter(t => !t.done) },
+};
+
+function openStatModal(type) {
+  const cfg = STAT_CONFIG[type];
+  if (!cfg) return;
+  const filtered = cfg.filter().sort((a,b) => a.date.localeCompare(b.date));
+
+  document.getElementById('statModalIcon').textContent = cfg.icon;
+  document.getElementById('statModalTitle').textContent = cfg.label;
+  document.getElementById('statModalBadge').textContent = filtered.length;
+  document.getElementById('statModalBadge').style.background = cfg.bg;
+  document.getElementById('statModalBadge').style.color = cfg.color;
+
+  const body = document.getElementById('statModalBody');
+
+  if (!filtered.length) {
+    body.innerHTML = `<div class="stat-empty"><div class="e-icon">${cfg.icon}</div><p>No tasks found in this category.</p></div>`;
+  } else {
+    body.innerHTML = '';
+    filtered.forEach(t => {
+      const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
+      const d = new Date(t.date + 'T12:00:00');
+      const dateStr = d.toLocaleString('default', { month: 'short', day: 'numeric', year: 'numeric' });
+      const item = document.createElement('div');
+      item.className = 'stat-task-item' + (t.done ? ' done' : '');
+      item.innerHTML = `
+        <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${cat.color};border-radius:3px 0 0 3px"></div>
+        <div class="stat-task-row">
+          <div class="stat-task-title">${t.title}</div>
+          <div class="stat-task-date">📅 ${dateStr}</div>
+        </div>
+        <div class="stat-task-meta">
+          <span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon||''}${cat.label}</span>
+          ${t.time ? `<span class="task-time">⏰ ${t.time}</span>` : ''}
+          ${t.priority === 'high' ? `<span class="task-tag" style="background:#ff6b6b20;color:#ff6b6b">HIGH</span>` : ''}
+          ${t.done ? `<span class="task-tag" style="background:rgba(46,204,113,0.12);color:#2ecc71">✓ Done</span>` : ''}
+        </div>
+        ${t.notes ? `<div class="task-notes" style="margin-top:6px">${t.notes}</div>` : ''}
+      `;
+      // Click task to jump to its date on calendar
+      item.onclick = () => {
+        closeStatModal();
+        selectDay(t.date);
+      };
+      body.appendChild(item);
+    });
+  }
+
+  document.getElementById('statModalOverlay').classList.add('open');
+}
+
+function closeStatModal() {
+  document.getElementById('statModalOverlay').classList.remove('open');
+}
+
+document.getElementById('statModalOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('statModalOverlay')) closeStatModal();
+});
+
+// ═══════════════════════════════════════════
+// ANALYTICS
+// ═══════════════════════════════════════════
+let chartCategory = null, chartWeekly = null, chartMonthly = null;
+
+const CHART_DEFAULTS = {
+  responsive: true, maintainAspectRatio: false,
+  plugins: { legend: { display: false }, tooltip: { callbacks: {} } },
+  scales: {}
+};
+
+function openAnalytics() {
+  document.getElementById('analyticsOverlay').classList.remove('hidden');
+  switchATab('category');
+}
+function closeAnalytics() {
+  document.getElementById('analyticsOverlay').classList.add('hidden');
+}
+function switchATab(tab) {
+  ['category','weekly','monthly'].forEach(t => {
+    document.getElementById(`atab-${t}`).classList.toggle('active', t === tab);
+    document.getElementById(`apanel-${t}`).classList.toggle('hidden', t !== tab);
+  });
+  if (tab === 'category') renderCategoryChart();
+  if (tab === 'weekly')   renderWeeklyChart();
+  if (tab === 'monthly')  renderMonthlyChart();
+}
+
+// ── CATEGORY CHART (Doughnut) ──
+function renderCategoryChart() {
+  const counts = {};
+  const colors = {};
+  tasks.forEach(t => {
+    const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
+    if (cat.isSocialParent) return;
+    counts[cat.id] = (counts[cat.id] || 0) + 1;
+    colors[cat.id] = cat.color;
+  });
+
+  const labels = Object.keys(counts).map(id => {
+    const cat = CATEGORIES.find(c => c.id === id);
+    return (cat?.icon || '') + ' ' + (cat?.label || id);
+  });
+  const data   = Object.values(counts);
+  const bgColors = Object.keys(counts).map(id => colors[id]);
+
+  if (chartCategory) chartCategory.destroy();
+  const ctx = document.getElementById('chartCategory').getContext('2d');
+  chartCategory = new Chart(ctx, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data, backgroundColor: bgColors, borderColor: '#111118', borderWidth: 3, hoverOffset: 8 }] },
+    options: {
+      ...CHART_DEFAULTS,
+      cutout: '65%',
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} tasks` } }
+      }
+    }
+  });
+
+  // Legend
+  const legend = document.getElementById('categoryLegend');
+  legend.innerHTML = Object.keys(counts).map(id => {
+    const cat = CATEGORIES.find(c => c.id === id);
+    const pct = tasks.length ? Math.round(counts[id]/tasks.length*100) : 0;
+    return `<div class="legend-item">
+      <div class="legend-dot" style="background:${colors[id]}"></div>
+      <span class="legend-label">${cat?.icon||''}${cat?.label||id}</span>
+      <span class="legend-val" style="color:${colors[id]}">${counts[id]}</span>
+      <span style="font-size:0.65rem;color:var(--text-muted);margin-left:2px">${pct}%</span>
+    </div>`;
+  }).join('');
+}
+
+// ── WEEKLY CHART (last 8 weeks) ──
+function renderWeeklyChart() {
+  const weeks = [];
+  const now = new Date();
+  for (let i = 7; i >= 0; i--) {
+    const start = new Date(now);
+    start.setDate(now.getDate() - (i * 7) - now.getDay());
+    start.setHours(0,0,0,0);
+    const end = new Date(start); end.setDate(start.getDate() + 6); end.setHours(23,59,59,999);
+    const weekTasks = tasks.filter(t => { const d = new Date(t.date); return d >= start && d <= end; });
+    weeks.push({
+      label: `${start.toLocaleString('default',{month:'short',day:'numeric'})}`,
+      total: weekTasks.length,
+      done:  weekTasks.filter(t => t.done).length,
+      pending: weekTasks.filter(t => !t.done).length,
+    });
+  }
+
+  const totalAll = weeks.reduce((s,w) => s+w.total, 0);
+  const doneAll  = weeks.reduce((s,w) => s+w.done, 0);
+  const rate     = totalAll ? Math.round(doneAll/totalAll*100) : 0;
+
+  document.getElementById('weeklySummary').innerHTML = `
+    <div class="asummary-card"><div class="asummary-val" style="color:var(--accent)">${totalAll}</div><div class="asummary-label">Total (8 weeks)</div></div>
+    <div class="asummary-card"><div class="asummary-val" style="color:#2ecc71">${doneAll}</div><div class="asummary-label">Completed</div></div>
+    <div class="asummary-card"><div class="asummary-val" style="color:#74b9ff">${rate}%</div><div class="asummary-label">Completion Rate</div></div>
+  `;
+
+  if (chartWeekly) chartWeekly.destroy();
+  const ctx = document.getElementById('chartWeekly').getContext('2d');
+  chartWeekly = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: weeks.map(w => w.label),
+      datasets: [
+        { label: 'Completed', data: weeks.map(w => w.done),    backgroundColor: '#2ecc71', borderRadius: 4 },
+        { label: 'Pending',   data: weeks.map(w => w.pending), backgroundColor: '#c0392b', borderRadius: 4 },
+      ]
+    },
+    options: {
+      ...CHART_DEFAULTS,
+      plugins: { legend: { display: true, labels: { color: '#9090aa', font: { size: 11 } } } },
+      scales: {
+        x: { stacked: true, ticks: { color: '#6b6b80', font: { size: 10 } }, grid: { color: '#2a2a3a' } },
+        y: { stacked: true, ticks: { color: '#6b6b80', font: { size: 10 } }, grid: { color: '#2a2a3a' }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+// ── MONTHLY CHART (last 6 months) ──
+function renderMonthlyChart() {
+  const months = [];
+  const now = new Date();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const y = d.getFullYear(), m = d.getMonth();
+    const mTasks = tasks.filter(t => { const td = new Date(t.date); return td.getFullYear()===y && td.getMonth()===m; });
+    months.push({
+      label: d.toLocaleString('default', { month: 'short', year: '2-digit' }),
+      total: mTasks.length,
+      done:  mTasks.filter(t => t.done).length,
+      rate:  mTasks.length ? Math.round(mTasks.filter(t=>t.done).length/mTasks.length*100) : 0,
+    });
+  }
+
+  const totalAll = months.reduce((s,m) => s+m.total, 0);
+  const doneAll  = months.reduce((s,m) => s+m.done, 0);
+  const avgRate  = months.length ? Math.round(months.reduce((s,m)=>s+m.rate,0)/months.length) : 0;
+
+  document.getElementById('monthlySummary').innerHTML = `
+    <div class="asummary-card"><div class="asummary-val" style="color:var(--accent)">${totalAll}</div><div class="asummary-label">Total (6 months)</div></div>
+    <div class="asummary-card"><div class="asummary-val" style="color:#2ecc71">${doneAll}</div><div class="asummary-label">Completed</div></div>
+    <div class="asummary-card"><div class="asummary-val" style="color:#74b9ff">${avgRate}%</div><div class="asummary-label">Avg Completion</div></div>
+  `;
+
+  if (chartMonthly) chartMonthly.destroy();
+  const ctx = document.getElementById('chartMonthly').getContext('2d');
+  chartMonthly = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: months.map(m => m.label),
+      datasets: [
+        {
+          label: 'Total Tasks', data: months.map(m => m.total),
+          borderColor: '#c8f135', backgroundColor: 'rgba(200,241,53,0.08)',
+          tension: 0.4, fill: true, pointBackgroundColor: '#c8f135', pointRadius: 5
+        },
+        {
+          label: 'Completed', data: months.map(m => m.done),
+          borderColor: '#2ecc71', backgroundColor: 'rgba(46,204,113,0.08)',
+          tension: 0.4, fill: true, pointBackgroundColor: '#2ecc71', pointRadius: 5
+        },
+        {
+          label: 'Rate %', data: months.map(m => m.rate),
+          borderColor: '#74b9ff', backgroundColor: 'transparent',
+          tension: 0.4, borderDash: [4,4], pointBackgroundColor: '#74b9ff', pointRadius: 4,
+          yAxisID: 'yRate'
+        }
+      ]
+    },
+    options: {
+      ...CHART_DEFAULTS,
+      plugins: { legend: { display: true, labels: { color: '#9090aa', font: { size: 11 } } } },
+      scales: {
+        x: { ticks: { color: '#6b6b80', font:{size:10} }, grid: { color: '#2a2a3a' } },
+        y: { ticks: { color: '#6b6b80', font:{size:10} }, grid: { color: '#2a2a3a' }, beginAtZero: true },
+        yRate: { position: 'right', min: 0, max: 100, ticks: { color: '#74b9ff', font:{size:10}, callback: v => v+'%' }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+// ── EXPORT TO EXCEL ──
+function exportToExcel() {
+  if (!window.XLSX) { alert('Excel library not loaded yet. Please try again.'); return; }
+  const rows = tasks.map(t => {
+    const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
+    return {
+      'Title':    t.title,
+      'Category': cat.label,
+      'Date':     t.date,
+      'Time':     t.time || '',
+      'Priority': t.priority || 'normal',
+      'Status':   t.done ? 'Completed' : 'Pending',
+      'Notes':    t.notes || '',
+    };
+  });
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:35},{wch:16},{wch:12},{wch:8},{wch:10},{wch:12},{wch:40}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'CMG Tasks');
+  XLSX.writeFile(wb, `CMG-Tasks-${today()}.xlsx`);
+}
+
+// ── EXPORT TO PDF ──
+function exportToPDF() {
+  const rows = tasks.map(t => {
+    const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
+    return `
+      <tr style="border-bottom:1px solid #eee">
+        <td style="padding:8px 10px">${t.title}</td>
+        <td style="padding:8px 10px">${cat.label}</td>
+        <td style="padding:8px 10px">${t.date}</td>
+        <td style="padding:8px 10px">${t.time || '—'}</td>
+        <td style="padding:8px 10px">${t.priority || 'normal'}</td>
+        <td style="padding:8px 10px;color:${t.done?'#2ecc71':'#c0392b'}">${t.done?'✓ Done':'⏳ Pending'}</td>
+        <td style="padding:8px 10px;font-size:11px;color:#666">${t.notes||''}</td>
+      </tr>`;
+  }).join('');
+
+  const done = tasks.filter(t=>t.done).length;
+  const rate = tasks.length ? Math.round(done/tasks.length*100) : 0;
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>CMG Task Calendar Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 30px; color: #222; }
+    h1 { color: #0a0a0f; margin-bottom: 4px; }
+    .meta { color: #666; font-size: 13px; margin-bottom: 20px; }
+    .stats { display:flex; gap:20px; margin-bottom:24px; }
+    .stat { background:#f5f5f5; border-radius:8px; padding:12px 20px; text-align:center; }
+    .stat-val { font-size:24px; font-weight:800; }
+    .stat-label { font-size:11px; color:#888; text-transform:uppercase; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    thead { background:#0a0a0f; color:white; }
+    thead th { padding:10px; text-align:left; }
+    tbody tr:nth-child(even) { background:#f9f9f9; }
+    @media print { body { padding: 0; } }
+  </style></head><body>
+  <h1>📋 CMG Task Calendar</h1>
+  <div class="meta">Dubeon Corporation · Exported on ${new Date().toLocaleString()}</div>
+  <div class="stats">
+    <div class="stat"><div class="stat-val">${tasks.length}</div><div class="stat-label">Total Tasks</div></div>
+    <div class="stat"><div class="stat-val" style="color:#2ecc71">${done}</div><div class="stat-label">Completed</div></div>
+    <div class="stat"><div class="stat-val" style="color:#c0392b">${tasks.length-done}</div><div class="stat-label">Pending</div></div>
+    <div class="stat"><div class="stat-val" style="color:#0984e3">${rate}%</div><div class="stat-label">Completion Rate</div></div>
+  </div>
+  <table>
+    <thead><tr><th>Title</th><th>Category</th><th>Date</th><th>Time</th><th>Priority</th><th>Status</th><th>Notes</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  </body></html>`;
+
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+  setTimeout(() => win.print(), 500);
+}
+
+// ─── CATEGORY TASK MODAL ───
+function openCatModal(catId) {
+  const isSocialParent = catId === 'social';
+  let filtered, label, icon, color;
+
+  if (isSocialParent) {
+    filtered = tasks.filter(t => SOCIAL_PLATFORMS.some(p => p.id === t.category));
+    label = 'Social Media'; icon = '📱'; color = '#ff9f43';
+  } else {
+    const cat = CATEGORIES.find(c => c.id === catId);
+    filtered = tasks.filter(t => t.category === catId);
+    label = cat?.label || catId;
+    icon  = cat?.icon  || '📋';
+    color = cat?.color || '#c8f135';
+  }
+
+  filtered = filtered.slice().sort((a,b) => a.date.localeCompare(b.date));
+
+  document.getElementById('statModalIcon').textContent = icon;
+  document.getElementById('statModalTitle').textContent = label;
+  document.getElementById('statModalBadge').textContent = filtered.length;
+  document.getElementById('statModalBadge').style.background = color + '20';
+  document.getElementById('statModalBadge').style.color = color;
+
+  const body = document.getElementById('statModalBody');
+
+  if (!filtered.length) {
+    body.innerHTML = `<div class="stat-empty"><div class="e-icon">${icon}</div><p>No tasks in <strong>${label}</strong> yet.</p></div>`;
+  } else {
+    body.innerHTML = '';
+    filtered.forEach(t => {
+      const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
+      const d = new Date(t.date + 'T12:00:00');
+      const dateStr = d.toLocaleString('default', { month: 'short', day: 'numeric', year: 'numeric' });
+      const item = document.createElement('div');
+      item.className = 'stat-task-item' + (t.done ? ' done' : '');
+      item.innerHTML = `
+        <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${cat.color};border-radius:3px 0 0 3px"></div>
+        <div class="stat-task-row">
+          <div class="stat-task-title">${t.title}</div>
+          <div class="stat-task-date">📅 ${dateStr}</div>
+        </div>
+        <div class="stat-task-meta">
+          <span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon||''}${cat.label}</span>
+          ${t.time ? `<span class="task-time">⏰ ${t.time}</span>` : ''}
+          ${t.priority === 'high' ? `<span class="task-tag" style="background:#ff6b6b20;color:#ff6b6b">HIGH</span>` : ''}
+          ${t.done ? `<span class="task-tag" style="background:rgba(46,204,113,0.12);color:#2ecc71">✓ Done</span>` : `<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ Pending</span>`}
+        </div>
+        ${t.notes ? `<div class="task-notes" style="margin-top:6px">${t.notes}</div>` : ''}
+      `;
+      item.onclick = () => { closeStatModal(); selectDay(t.date); };
+      body.appendChild(item);
+    });
+  }
+
+  document.getElementById('statModalOverlay').classList.add('open');
+}
+
+window.openAnalytics  = openAnalytics;
+window.closeAnalytics = closeAnalytics;
+window.switchATab     = switchATab;
+window.exportToExcel  = exportToExcel;
+window.exportToPDF    = exportToPDF;
+window.doRegister    = doRegister;
+window.doLogout      = doLogout;
+window.switchTab     = switchTab;
+window.openAdmin     = openAdmin;
+window.closeAdmin    = closeAdmin;
+window.approveUser   = approveUser;
+window.rejectUser    = rejectUser;
+window.mobNav        = mobNav;
+window.closeMobDrawer= closeMobDrawer;
+window.closeMobPanel = closeMobPanel;
+window.mobChangeMonth= mobChangeMonth;
+window.mobToggleNotif= mobToggleNotif;
+window.selectDay     = selectDay;
+window.openStatModal  = openStatModal;
+window.closeStatModal = closeStatModal;
+window.openCatModal   = openCatModal;
+
+document.getElementById('prevMonth').onclick = () => {
+  currentDate.setMonth(currentDate.getMonth() - 1);
+  renderCalendar();
+  renderPanel();
+};
+document.getElementById('nextMonth').onclick = () => {
+  currentDate.setMonth(currentDate.getMonth() + 1);
+  renderCalendar();
+  renderPanel();
+};
+
+// ═══════════════════════════════════════════
+// AUTH SYSTEM (Firebase)
+// ═══════════════════════════════════════════
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.className = 'auth-msg ' + type;
+  el.textContent = text;
+}
+
+function switchTab(tab) {
+  document.getElementById('loginForm').classList.toggle('hidden', tab !== 'login');
+  document.getElementById('registerForm').classList.toggle('hidden', tab !== 'register');
+  document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+  document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+  document.getElementById('loginMsg').className = 'auth-msg';
+  document.getElementById('registerMsg').className = 'auth-msg';
+}
+
+async function doLogin() {
+  const usernameOrEmail = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  if (!usernameOrEmail || !password) { showMsg('loginMsg', 'Please enter username/email and password.', 'error'); return; }
+
+  showMsg('loginMsg', 'Signing in...', 'pending');
+
+  try {
+    // Admin shortcut login
+    if (usernameOrEmail === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+      try {
+        const cred = await signInWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD);
+        let profile = await getUserProfile(cred.user.uid);
+        if (!profile) {
+          profile = { uid: cred.user.uid, username: ADMIN_USERNAME, name: 'Administrator', email: ADMIN_EMAIL, role: 'admin', status: 'approved', createdAt: new Date().toISOString() };
+          await setDoc(doc(db, 'users', cred.user.uid), profile);
+        }
+        currentUser = cred.user;
+        enterApp(profile);
+      } catch(e) {
+        const cred = await createUserWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD);
+        const profile = { uid: cred.user.uid, username: ADMIN_USERNAME, name: 'Administrator', email: ADMIN_EMAIL, role: 'admin', status: 'approved', createdAt: new Date().toISOString() };
+        await setDoc(doc(db, 'users', cred.user.uid), profile);
+        currentUser = cred.user;
+        enterApp(profile);
+      }
+      return;
+    }
+
+    // Look up by username OR email
+    let profile = null;
+    const isEmail = usernameOrEmail.includes('@') && usernameOrEmail.includes('.');
+
+    if (isEmail) {
+      // Search by email
+      const snap = await getDocs(query(collection(db, 'users'), where('email', '==', usernameOrEmail)));
+      if (!snap.empty) profile = { uid: snap.docs[0].id, ...snap.docs[0].data() };
+    }
+
+    // Always also try by username (with and without @ prefix)
+    if (!profile) {
+      const cleanUsername = usernameOrEmail.replace(/^@/, ''); // remove @ if present
+      const snap = await getDocs(query(collection(db, 'users'), where('username', '==', cleanUsername)));
+      if (!snap.empty) profile = { uid: snap.docs[0].id, ...snap.docs[0].data() };
+    }
+
+    // Try with @ prefix too just in case
+    if (!profile) {
+      const snap = await getDocs(query(collection(db, 'users'), where('username', '==', usernameOrEmail)));
+      if (!snap.empty) profile = { uid: snap.docs[0].id, ...snap.docs[0].data() };
+    }
+
+    if (!profile) { showMsg('loginMsg', 'Account not found. Please check your username or email.', 'error'); return; }
+    if (profile.status === 'pending') { showMsg('loginMsg', '⏳ Your account is pending admin approval.', 'pending'); return; }
+    if (profile.status === 'rejected') { showMsg('loginMsg', '❌ Your account was rejected. Contact admin.', 'error'); return; }
+
+    // Sign in with Firebase Auth using the email on file
+    const cred = await signInWithEmailAndPassword(auth, profile.email, password);
+    currentUser = cred.user;
+    try {
+      enterApp(profile);
+    } catch(appErr) {
+      showMsg('loginMsg', 'Login OK but app error: ' + appErr.message, 'error');
+      console.error('enterApp error:', appErr);
+    }
+
+  } catch(e) {
+    if (e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
+      showMsg('loginMsg', 'Incorrect password. Please try again.', 'error');
+    } else if (e.code === 'auth/too-many-requests') {
+      showMsg('loginMsg', 'Too many attempts. Please try again later.', 'error');
+    } else {
+      showMsg('loginMsg', 'Error: ' + e.message, 'error');
+    }
+  }
+}
+
+async function doRegister() {
+  const name     = document.getElementById('regName').value.trim();
+  const email    = document.getElementById('regEmail').value.trim();
+  const username = document.getElementById('regUsername').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const password2= document.getElementById('regPassword2').value;
+
+  if (!name || !email || !username || !password) { showMsg('registerMsg', 'Please fill in all fields.', 'error'); return; }
+  if (password !== password2) { showMsg('registerMsg', 'Passwords do not match.', 'error'); return; }
+  if (password.length < 6) { showMsg('registerMsg', 'Password must be at least 6 characters.', 'error'); return; }
+  if (username === ADMIN_USERNAME) { showMsg('registerMsg', 'Username already taken.', 'error'); return; }
+
+  showMsg('registerMsg', 'Creating account...', 'pending');
+  isRegistering = true;
+
+  try {
+    // Check username uniqueness first
+    const uSnap = await getDocs(query(collection(db, 'users'), where('username', '==', username)));
+    if (!uSnap.empty) { showMsg('registerMsg', 'Username already taken.', 'error'); return; }
+
+    // Step 1: Create Firebase Auth account
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    const uid = cred.user.uid;
+
+    // Step 2: Write Firestore profile using the admin-style direct write
+    const profileRef = doc(db, 'users', uid);
+    const profileData = {
+      username, name, email,
+      role: 'user',
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    };
+
+    // Write with retries
+    let written = false;
+    for (let i = 0; i < 5; i++) {
+      try {
+        await setDoc(profileRef, profileData);
+        written = true;
+        break;
+      } catch(err) {
+        console.warn(`Write attempt ${i+1} failed:`, err.message);
+        await new Promise(r => setTimeout(r, 800));
+      }
+    }
+
+    // Step 3: Sign out regardless
+    await signOut(auth);
+    isRegistering = false;
+
+    if (written) {
+      showMsg('registerMsg', '✅ Account request submitted! Wait for admin approval before signing in.', 'success');
+      ['regName','regEmail','regUsername','regPassword','regPassword2'].forEach(id => document.getElementById(id).value = '');
+    } else {
+      showMsg('registerMsg', '⚠️ Account created but profile save failed. Please contact admin.', 'error');
+    }
+
+  } catch(e) {
+    isRegistering = false;
+    console.error('Registration error:', e);
+    if (e.code === 'auth/email-already-in-use') {
+      showMsg('registerMsg', 'Email already registered. Try signing in instead.', 'error');
+    } else if (e.code === 'auth/invalid-email') {
+      showMsg('registerMsg', 'Invalid email address.', 'error');
+    } else {
+      showMsg('registerMsg', 'Error: ' + e.message, 'error');
+    }
+  }
+}
+
+async function doLogout() {
+  await signOut(auth);
+  currentUser = null;
+  currentUserProfile = null;
+  document.getElementById('authOverlay').classList.remove('hidden');
+  document.getElementById('loginUsername').value = '';
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('loginMsg').className = 'auth-msg';
+  switchTab('login');
+}
+
+let pendingProfile = null;
+let isRegistering = false;
+let appStarted = false;
+
+function enterApp(profile) {
+  appStarted = true;
+  currentUserProfile = profile;
+  document.getElementById('authOverlay').classList.add('hidden');
+  document.getElementById('userChipName').textContent = profile.name;
+
+  if (profile.role === 'admin') {
+    document.getElementById('adminBtnWrap').style.display = 'block';
+    const mobAdminBtn = document.getElementById('mobAdminBtn');
+    if (mobAdminBtn) mobAdminBtn.style.display = 'flex';
+  }
+
+  subscribeToTasks();
+
+  const todayKey = today();
+  selectedDate = todayKey;
+  renderCalendar();
+  renderPanel();
+  updateNotifBtn();
+  rescheduleAll();
+}
+
+// ── FIREBASE AUTH STATE LISTENER ──
+onAuthStateChanged(auth, async (user) => {
+  if (isRegistering) return;
+  if (appStarted) return;
+  if (user) {
+    currentUser = user;
+    let profile = null;
+    for (let i = 0; i < 5; i++) {
+      try {
+        profile = await getUserProfile(user.uid);
+        if (profile) break;
+      } catch(e) {
+        await new Promise(r => setTimeout(r, 800));
+      }
+    }
+    if (!profile) { await signOut(auth); return; }
+    if (profile.status === 'pending' || profile.status === 'rejected') {
+      await signOut(auth);
+      document.getElementById('authOverlay').classList.remove('hidden');
+      return;
+    }
+    enterApp(profile);
+  } else {
+    document.getElementById('authOverlay').classList.remove('hidden');
+  }
+});
+
+// ── ADMIN PANEL ──
+function openAdmin() {
+  document.getElementById('adminOverlay').classList.remove('hidden');
+  renderAdminPanel();
+}
+function closeAdmin() {
+  document.getElementById('adminOverlay').classList.add('hidden');
+}
+
+let allUsersCache = [];
+
+function renderAdminPanel() {
+  subscribeToUsers(users => {
+    allUsersCache = users.filter(u => u.role !== 'admin');
+    const pending = allUsersCache.filter(u => u.status === 'pending');
+    const others  = allUsersCache.filter(u => u.status !== 'pending');
+
+    document.getElementById('adminPending').innerHTML = pending.length
+      ? pending.map(u => userRowHTML(u, true)).join('')
+      : '<div class="admin-empty">No pending requests 🎉</div>';
+
+    document.getElementById('adminUsers').innerHTML = others.length
+      ? others.map(u => userRowHTML(u, false)).join('')
+      : '<div class="admin-empty">No other users yet.</div>';
+
+    // Badge
+    const badge = document.getElementById('pendingBadge');
+    if (pending.length > 0) { badge.style.display = 'flex'; badge.textContent = pending.length; }
+    else { badge.style.display = 'none'; }
+  });
+}
+
+function userRowHTML(u, showActions) {
+  const initials = u.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  const date = u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—';
+  const badge = u.status === 'approved'
+    ? `<span class="status-badge badge-approved">Approved</span>`
+    : u.status === 'rejected'
+    ? `<span class="status-badge badge-rejected">Rejected</span>`
+    : '';
+  const actions = showActions ? `
+    <div class="user-actions">
+      <button class="btn-approve" onclick="approveUser('${u.uid}')">Approve</button>
+      <button class="btn-reject"  onclick="rejectUser('${u.uid}')">Reject</button>
+    </div>` : badge;
+  return `
+    <div class="user-row">
+      <div class="user-avatar">${initials}</div>
+      <div class="user-info">
+        <div class="user-name">${u.name}</div>
+        <div class="user-email">${u.email}</div>
+        <div class="user-meta">@${u.username} · Requested ${date}</div>
+      </div>
+      ${actions}
+    </div>`;
+}
+
+async function approveUser(uid) {
+  await updateUserProfile(uid, { status: 'approved' });
+}
+async function rejectUser(uid) {
+  await updateUserProfile(uid, { status: 'rejected' });
+}
+
+function refreshPendingBadge() {} // handled by subscribeToUsers now
+
+// ── BOOT ──
+// onAuthStateChanged handles initial load — show auth overlay until Firebase responds
+document.getElementById('authOverlay').classList.remove('hidden');;
+
+// Notification bell button
+function updateNotifBtn() {
+  const btn = document.getElementById('notifBtn');
+  const label = document.getElementById('notifLabel');
+  if (!('Notification' in window)) {
+    btn.style.display = 'none'; return;
+  }
+  if (Notification.permission === 'granted') {
+    label.textContent = 'Alerts ON';
+    btn.style.borderColor = '#2ecc71';
+    btn.style.color = '#2ecc71';
+  } else if (Notification.permission === 'denied') {
+    label.textContent = 'Alerts Blocked';
+    btn.style.borderColor = '#c0392b';
+    btn.style.color = '#c0392b';
+  } else {
+    label.textContent = 'Enable Alerts';
+    btn.style.borderColor = '';
+    btn.style.color = '';
+  }
+}
+
+document.getElementById('notifBtn').onclick = () => {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'granted') {
+    rescheduleAll();
+    return;
+  }
+  Notification.requestPermission().then(() => {
+    updateNotifBtn();
+    rescheduleAll();
+  });
+};
+
+// Allow Enter key on login
+document.getElementById('loginPassword').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.getElementById('loginUsername').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+// ═══════════════════════════════════════════
+// MOBILE JS
+// ═══════════════════════════════════════════
+function mobNav(tab) {
+  ['mnbCal','mnbAdd','mnbStats','mnbMenu'].forEach(id => {
+    document.getElementById(id).classList.remove('active');
+  });
+  if (tab === 'cal') {
+    document.getElementById('mnbCal').classList.add('active');
+  } else if (tab === 'add') {
+    document.getElementById('mnbAdd').classList.add('active');
+    document.getElementById('modalOverlay').classList.add('open');
+    if (selectedDate) document.getElementById('taskDate').value = selectedDate;
+    else document.getElementById('taskDate').value = today();
+    buildCatSelector();
+  } else if (tab === 'stats') {
+    document.getElementById('mnbStats').classList.add('active');
+    renderMobStats();
+    document.getElementById('mobStatsDrawer').classList.add('open');
+  } else if (tab === 'menu') {
+    document.getElementById('mnbMenu').classList.add('active');
+    renderMobMenu();
+    document.getElementById('mobMenuDrawer').classList.add('open');
+  }
+}
+
+function closeMobDrawer(id) {
+  document.getElementById(id).classList.remove('open');
+  ['mnbCal','mnbAdd','mnbStats','mnbMenu'].forEach(i => document.getElementById(i).classList.remove('active'));
+  document.getElementById('mnbCal').classList.add('active');
+}
+
+function closeMobPanel() {
+  document.getElementById('mobDayPanel').classList.remove('open');
+}
+
+function renderMobStats() {
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const monthTasks = tasks.filter(t => {
+    const d = new Date(t.date);
+    return d.getFullYear() === year && d.getMonth() === month;
+  });
+  const done = tasks.filter(t => t.done).length;
+  const monthDone = monthTasks.filter(t => t.done).length;
+  const pct = monthTasks.length ? Math.round(monthDone/monthTasks.length*100) : 0;
+
+  document.getElementById('mStatTotal').textContent = tasks.length;
+  document.getElementById('mStatDone').textContent = done;
+  document.getElementById('mStatMonth').textContent = monthTasks.length;
+  document.getElementById('mStatPending').textContent = tasks.filter(t => !t.done).length;
+  document.getElementById('mProgressBar').style.width = pct + '%';
+  document.getElementById('mProgressPct').textContent = pct + '%';
+
+  // Categories
+  const container = document.getElementById('mCatList');
+  container.innerHTML = '';
+  TOP_CATS.forEach(cat => {
+    const count = cat.isSocialParent
+      ? tasks.filter(t => SOCIAL_PLATFORMS.some(p => p.id === t.category)).length
+      : tasks.filter(t => t.category === cat.id).length;
+    const item = document.createElement('div');
+    item.className = 'cat-item';
+    item.style.cursor = 'pointer';
+    item.innerHTML = `<div class="cat-dot" style="background:${cat.color};box-shadow:0 0 6px ${cat.color}60"></div><span class="cat-name">${cat.label}</span><span class="cat-count">${count}</span>`;
+    item.onclick = () => { closeMobDrawer('mobStatsDrawer'); openCatModal(cat.id); };
+    container.appendChild(item);
+    if (cat.isSocialParent) {
+      SOCIAL_PLATFORMS.forEach(p => {
+        const pCount = tasks.filter(t => t.category === p.id).length;
+        const sub = document.createElement('div');
+        sub.className = 'cat-sub-item';
+        sub.style.cursor = 'pointer';
+        sub.innerHTML = `<span style="font-size:0.9rem">${p.icon}</span><span style="color:${p.color};flex:1">${p.label}</span><span class="cat-count">${pCount}</span>`;
+        sub.onclick = () => { closeMobDrawer('mobStatsDrawer'); openCatModal(p.id); };
+        container.appendChild(sub);
+      });
+    }
+  });
+}
+
+function renderMobMenu() {
+  const session = getSession();
+  if (!session) return;
+  document.getElementById('mobMonthLabel').textContent =
+    new Date(currentDate.getFullYear(), currentDate.getMonth()).toLocaleString('default', {month:'long', year:'numeric'});
+  const initials = session.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  document.getElementById('mobUserAvatar').textContent = initials;
+  document.getElementById('mobUserName').textContent = session.name;
+  if (session.role === 'admin') {
+    const ab = document.getElementById('mobAdminBtn');
+    ab.style.display = 'flex';
+  }
+  updateMobNotifBtn();
+  renderMobMiniCal();
+}
+
+function renderMobMiniCal() {
+  const container = document.getElementById('mobMiniCal');
+  container.innerHTML = '';
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const first = new Date(year, month, 1).getDay();
+  const last = new Date(year, month+1, 0).getDate();
+  const todayKey = today();
+  for (let i = 0; i < first; i++) {
+    const el = document.createElement('div'); el.className = 'mini-day other-month'; container.appendChild(el);
+  }
+  for (let d = 1; d <= last; d++) {
+    const key = dateKey(new Date(year, month, d));
+    const el = document.createElement('div');
+    el.className = 'mini-day' + (key===todayKey?' today':'') + (key===selectedDate?' selected':'') + (tasks.some(t=>t.date===key)?' has-tasks':'');
+    el.textContent = d;
+    el.onclick = () => { selectDay(key); closeMobDrawer('mobMenuDrawer'); };
+    container.appendChild(el);
+  }
+}
+
+function mobChangeMonth(dir) {
+  currentDate.setMonth(currentDate.getMonth() + dir);
+  renderCalendar();
+  renderPanel();
+  renderMobMenu();
+}
+
+function updateMobNotifBtn() {
+  const label = document.getElementById('mobNotifLabel');
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'granted') { label.textContent = 'Alerts ON ✓'; }
+  else if (Notification.permission === 'denied') { label.textContent = 'Alerts Blocked'; }
+  else { label.textContent = 'Enable Alerts'; }
+}
+
+function mobToggleNotif() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission === 'granted') { rescheduleAll(); return; }
+  Notification.requestPermission().then(() => { updateNotifBtn(); updateMobNotifBtn(); rescheduleAll(); });
+}
+
+function renderMobDayPanel(key) {
+  const d = new Date(key + 'T12:00:00');
+  document.getElementById('mobPanelDate').textContent =
+    d.toLocaleString('default', {month:'long', day:'numeric'});
+  document.getElementById('mobPanelSub').textContent =
+    d.toLocaleString('default', {weekday:'long', year:'numeric'});
+
+  const dayTasks = tasks.filter(t => t.date === key);
+  const container = document.getElementById('mobPanelTasks');
+
+  if (!dayTasks.length) {
+    container.innerHTML = `<div class="empty-day"><div class="empty-icon">✨</div><p>No tasks yet. Tap + Add to get started.</p></div>`;
+  } else {
+    container.innerHTML = '';
+    dayTasks.forEach(t => {
+      const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
+      const item = document.createElement('div');
+      item.className = 'task-item' + (t.done ? ' done' : '');
+      item.innerHTML = `
+        <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${cat.color};border-radius:3px 0 0 3px"></div>
+        <div class="task-item-top">
+          <div class="task-title">${t.title}</div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <div class="task-check ${t.done?'checked':''}" data-idx="${tasks.indexOf(t)}">${t.done?'✓':''}</div>
+            <button class="edit-btn" data-edit="${tasks.indexOf(t)}" title="Edit">✎</button>
+            <button class="dup-btn" data-dup="${tasks.indexOf(t)}" title="Duplicate">⧉</button>
+            <button class="delete-btn" data-del="${tasks.indexOf(t)}">✕</button>
+          </div>
+        </div>
+        <div class="task-meta">
+          <span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon||''}${cat.label}</span>
+          ${t.time?`<span class="task-time">⏰ ${t.time}</span>`:''}
+          ${t.priority==='high'?`<span class="task-tag" style="background:#ff6b6b20;color:#ff6b6b">HIGH</span>`:''}
+          ${t.done?`<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71;font-weight:700">✓ DONE</span>`:`<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
+        </div>
+        ${t.notes?`<div class="task-notes">${t.notes}</div>`:''}
+      `;
+      container.appendChild(item);
+    });
+    container.querySelectorAll('.task-check').forEach(el => {
+      el.onclick = async () => {
+        const i = parseInt(el.dataset.idx);
+        const t = tasks[i];
+        await updateTaskInDB(t._id, { done: !t.done });
+      };
+    });
+    container.querySelectorAll('.edit-btn').forEach(el => {
+      el.onclick = () => {
+        const i = parseInt(el.dataset.edit);
+        document.getElementById('mobDayPanel').classList.remove('open');
+        openEditModal(i);
+      };
+    });
+    container.querySelectorAll('.dup-btn').forEach(el => {
+      el.onclick = async () => {
+        const i = parseInt(el.dataset.dup);
+        await duplicateTask(i);
+      };
+    });
+    container.querySelectorAll('.delete-btn').forEach(el => {
+      el.onclick = async () => {
+        const i = parseInt(el.dataset.del);
+        await deleteTaskFromDB(tasks[i]._id);
+      };
+    });
+  }
+  document.getElementById('mobDayPanel').classList.add('open');
+}
+
+
+
+</script>
+<footer style="
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(10,10,15,0.95);
+  backdrop-filter: blur(20px);
+  border-top: 1px solid #2a2a3a;
+  padding: 10px 2rem;
+  text-align: center;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  color: #6b6b80;
+">
+  Copyright &copy; 2026 &nbsp;&mdash;&nbsp; Dubeon Corporation &nbsp;&mdash;&nbsp; CMG. All Rights Reserved.
+</footer>
+</body>
+</html>
