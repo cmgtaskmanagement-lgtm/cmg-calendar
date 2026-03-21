@@ -1392,6 +1392,7 @@
     .notif-dropdown { width:280px; right:-50px; }
   }
 </style>
+</head>
 <body>
 
 <!-- ─── AUTH SCREEN ─── -->
@@ -1924,11 +1925,11 @@
 </div>
 
 <!-- Firebase SDKs -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
+<!-- Firebase compat scripts (work as regular scripts, no module scope issues) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
 // ── FIREBASE CONFIG ──
 const firebaseConfig = {
   apiKey: "AIzaSyDLfOMBzDl-v5TDm_dIkkMM7VuhxqTzLHs",
@@ -1936,13 +1937,12 @@ const firebaseConfig = {
   projectId: "cmg-task-calendar",
   storageBucket: "cmg-task-calendar.firebasestorage.app",
   messagingSenderId: "95515134140",
-  appId: "1:95515134140:web:db61f3e94c6a888694a8b9",
-  measurementId: "G-E9KZ2LP6Q5"
+  appId: "1:95515134140:web:db61f3e94c6a888694a8b9"
 };
 
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
-const auth = getAuth(app);
+firebase.initializeApp(firebaseConfig);
+const db   = firebase.firestore();
+const auth = firebase.auth();
 
 // ── CONSTANTS ──
 const ADMIN_EMAIL = "cmgadmin@dubeon.com"; // internal admin marker
@@ -1984,41 +1984,18 @@ function today() { return dateKey(new Date()); }
 
 // ── FIRESTORE TASK OPS ──
 async function saveTask(taskData) {
-  const ref = await addDoc(collection(db, 'tasks'), taskData);
+  const ref = await db.collection('tasks').add(taskData);
   return ref.id;
 }
 async function updateTaskInDB(taskId, data) {
-  await updateDoc(doc(db, 'tasks', taskId), data);
+  await db.collection('tasks').doc(taskId).update(data);
 }
-async function duplicateTask(idx) {
-  const t = tasks[idx];
-  if (!t) return;
-  const { _id, ...taskData } = t; // remove Firestore ID
-  const duplicate = {
-    ...taskData,
-    title: t.title + ' (Copy)',
-    done: false,
-    createdAt: new Date().toISOString(),
-    createdBy: currentUser ? currentUser.uid : 'unknown',
-  };
-  await saveTask(duplicate);
-  // Flash confirmation
-  const btn = document.querySelector(`.dup-btn[data-dup="${idx}"]`);
-  if (btn) {
-    const orig = btn.textContent;
-    btn.textContent = '✓';
-    btn.style.color = '#2ecc71';
-    setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 1000);
-  }
-}
-
 async function deleteTaskFromDB(taskId) {
-  await deleteDoc(doc(db, 'tasks', taskId));
+  await db.collection('tasks').doc(taskId).delete();
 }
 
 function subscribeToTasks() {
-  const q = query(collection(db, 'tasks'), orderBy('date'));
-  onSnapshot(q, snap => {
+  db.collection('tasks').orderBy('date').onSnapshot(snap => {
     tasks = snap.docs.map(d => ({ ...d.data(), _id: d.id }));
     renderCalendar();
     if (selectedDate) {
@@ -2032,17 +2009,17 @@ function subscribeToTasks() {
 
 // ── FIRESTORE USER OPS ──
 async function createUserProfile(uid, data) {
-  await setDoc(doc(db, 'users', uid), data);
+  await db.collection('users').doc(uid).set(data);
 }
 async function getUserProfile(uid) {
-  const snap = await getDoc(doc(db, 'users', uid));
-  return snap.exists() ? { uid, ...snap.data() } : null;
+  const snap = await db.collection('users').doc(uid).get();
+  return snap.exists ? { uid, ...snap.data() } : null;
 }
 async function updateUserProfile(uid, data) {
-  await updateDoc(doc(db, 'users', uid), data);
+  await db.collection('users').doc(uid).update(data);
 }
 function subscribeToUsers(callback) {
-  onSnapshot(collection(db, 'users'), snap => {
+  db.collection('users').onSnapshot(snap => {
     const users = snap.docs.map(d => ({ uid: d.id, ...d.data() }));
     callback(users);
   });
@@ -3012,18 +2989,18 @@ async function doLogin() {
     // Admin shortcut login
     if (usernameOrEmail === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
       try {
-        const cred = await signInWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD);
+        const cred = await auth.signInWithEmailAndPassword( ADMIN_EMAIL, ADMIN_PASSWORD);
         let profile = await getUserProfile(cred.user.uid);
         if (!profile) {
           profile = { uid: cred.user.uid, username: ADMIN_USERNAME, name: 'Administrator', email: ADMIN_EMAIL, role: 'admin', status: 'approved', createdAt: new Date().toISOString() };
-          await setDoc(doc(db, 'users', cred.user.uid), profile);
+          await db.collection('users').doc(cred.user.uid).set(profile);
         }
         currentUser = cred.user;
         enterApp(profile);
       } catch(e) {
-        const cred = await createUserWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD);
+        const cred = await auth.createUserWithEmailAndPassword( ADMIN_EMAIL, ADMIN_PASSWORD);
         const profile = { uid: cred.user.uid, username: ADMIN_USERNAME, name: 'Administrator', email: ADMIN_EMAIL, role: 'admin', status: 'approved', createdAt: new Date().toISOString() };
-        await setDoc(doc(db, 'users', cred.user.uid), profile);
+        await db.collection('users').doc(cred.user.uid).set(profile);
         currentUser = cred.user;
         enterApp(profile);
       }
@@ -3036,20 +3013,20 @@ async function doLogin() {
 
     if (isEmail) {
       // Search by email
-      const snap = await getDocs(query(collection(db, 'users'), where('email', '==', usernameOrEmail)));
+      const snap = await db.collection('users').where('email', '==', usernameOrEmail).get();
       if (!snap.empty) profile = { uid: snap.docs[0].id, ...snap.docs[0].data() };
     }
 
     // Always also try by username (with and without @ prefix)
     if (!profile) {
       const cleanUsername = usernameOrEmail.replace(/^@/, ''); // remove @ if present
-      const snap = await getDocs(query(collection(db, 'users'), where('username', '==', cleanUsername)));
+      const snap = await db.collection('users').where('username', '==', cleanUsername).get();
       if (!snap.empty) profile = { uid: snap.docs[0].id, ...snap.docs[0].data() };
     }
 
     // Try with @ prefix too just in case
     if (!profile) {
-      const snap = await getDocs(query(collection(db, 'users'), where('username', '==', usernameOrEmail)));
+      const snap = await db.collection('users').where('username', '==', usernameOrEmail).get();
       if (!snap.empty) profile = { uid: snap.docs[0].id, ...snap.docs[0].data() };
     }
 
@@ -3058,7 +3035,7 @@ async function doLogin() {
     if (profile.status === 'rejected') { showMsg('loginMsg', '❌ Your account was rejected. Contact admin.', 'error'); return; }
 
     // Sign in with Firebase Auth using the email on file
-    const cred = await signInWithEmailAndPassword(auth, profile.email, password);
+    const cred = await auth.signInWithEmailAndPassword( profile.email, password);
     currentUser = cred.user;
     try {
       enterApp(profile);
@@ -3095,15 +3072,15 @@ async function doRegister() {
 
   try {
     // Check username uniqueness first
-    const uSnap = await getDocs(query(collection(db, 'users'), where('username', '==', username)));
+    const uSnap = await db.collection('users').where('username', '==', username).get();
     if (!uSnap.empty) { showMsg('registerMsg', 'Username already taken.', 'error'); return; }
 
     // Step 1: Create Firebase Auth account
-    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    const cred = await auth.createUserWithEmailAndPassword( email, password);
     const uid = cred.user.uid;
 
     // Step 2: Write Firestore profile using the admin-style direct write
-    const profileRef = doc(db, 'users', uid);
+    // Write to Firestore with retries
     const profileData = {
       username, name, email,
       role: 'user',
@@ -3115,7 +3092,7 @@ async function doRegister() {
     let written = false;
     for (let i = 0; i < 5; i++) {
       try {
-        await setDoc(profileRef, profileData);
+        await db.collection('users').doc(uid).set(profileData);
         written = true;
         break;
       } catch(err) {
@@ -3125,7 +3102,7 @@ async function doRegister() {
     }
 
     // Step 3: Sign out regardless
-    await signOut(auth);
+    await auth.signOut();
     isRegistering = false;
 
     if (written) {
@@ -3149,7 +3126,7 @@ async function doRegister() {
 }
 
 async function doLogout() {
-  await signOut(auth);
+  await auth.signOut();
   currentUser = null;
   currentUserProfile = null;
   document.getElementById('authOverlay').classList.remove('hidden');
@@ -3187,7 +3164,7 @@ function enterApp(profile) {
 }
 
 // ── FIREBASE AUTH STATE LISTENER ──
-onAuthStateChanged(auth, async (user) => {
+auth.onAuthStateChanged( async (user) => {
   if (isRegistering) return;
   if (appStarted) return;
   if (user) {
@@ -3201,9 +3178,9 @@ onAuthStateChanged(auth, async (user) => {
         await new Promise(r => setTimeout(r, 800));
       }
     }
-    if (!profile) { await signOut(auth); return; }
+    if (!profile) { await auth.signOut(); return; }
     if (profile.status === 'pending' || profile.status === 'rejected') {
-      await signOut(auth);
+      await auth.signOut();
       document.getElementById('authOverlay').classList.remove('hidden');
       return;
     }
@@ -3984,7 +3961,7 @@ function populateAssigneeDropdown() {
   const select = document.getElementById('taskAssignee');
   if (!select) return;
   // Get all users from Firestore cache
-  getDocs(collection(db, 'users')).then(snap => {
+  db.collection('users').get().then(snap => {
     select.innerHTML = '<option value="">— Unassigned —</option>';
     snap.docs.forEach(d => {
       const u = d.data();
@@ -4079,6 +4056,8 @@ window.toggleNotifDropdown = toggleNotifDropdown;
 window.clearAllNotifs = clearAllNotifs;
 window.switchView     = switchView;
 window.weekNav        = weekNav;
+</script>
+
 <footer style="
   position: fixed;
   bottom: 0;
