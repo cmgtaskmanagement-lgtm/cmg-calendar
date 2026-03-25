@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CMG Task Calendar</title>
+<title>CMG SocMed Activities & Events Calendar</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Fraunces:ital,wght@0,300;0,600;1,300&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -1418,7 +1418,7 @@
 <!-- ─── AUTH SCREEN ─── -->
 <div class="auth-overlay" id="authOverlay">
   <div class="auth-card">
-    <div class="auth-logo"><div class="auth-logo-dot"></div>CMG Task Calendar</div>
+    <div class="auth-logo"><div class="auth-logo-dot"></div>CMG Task Management</div>
     <div class="auth-subtitle">Dubeon Corporation</div>
 
     <div class="auth-tabs">
@@ -1486,7 +1486,7 @@
 <header>
   <div class="logo">
     <div class="logo-dot"></div>
-    CMG Task Calendar  </div>
+    CMG SocMed Activities & Events Calendar  </div>
   <div class="header-right">
     <button onclick="openAnalytics()" style="
       background: var(--surface);
@@ -2513,7 +2513,7 @@ function requestNotifPermission() {
 function sendNotification(task) {
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
   const cat = CATEGORIES.find(c => c.id === task.category) || CATEGORIES[CATEGORIES.length - 1];
-  const n = new Notification(`⏰ CMG Task Calendar`, {
+  const n = new Notification(`⏰ CMG SocMed Activities & Events Calendar`, {
     body: `${cat.icon || '📌'} ${task.title}${task.notes ? '\n' + task.notes : ''}`,
     icon: 'https://cdn-icons-png.flaticon.com/512/1827/1827392.png',
     tag: String(task.id),
@@ -2848,7 +2848,7 @@ function exportToPDF() {
   const rate = tasks.length ? Math.round(done/tasks.length*100) : 0;
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>CMG Task Calendar Report</title>
+  <title>CMG SocMed Activities & Events Calendar Report</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 30px; color: #222; }
     h1 { color: #0a0a0f; margin-bottom: 4px; }
@@ -2863,7 +2863,7 @@ function exportToPDF() {
     tbody tr:nth-child(even) { background:#f9f9f9; }
     @media print { body { padding: 0; } }
   </style></head><body>
-  <h1>📋 CMG Task Calendar</h1>
+  <h1>📋 CMG SocMed Activities & Events Calendar</h1>
   <div class="meta">Dubeon Corporation · Exported on ${new Date().toLocaleString()}</div>
   <div class="stats">
     <div class="stat"><div class="stat-val">${tasks.length}</div><div class="stat-label">Total Tasks</div></div>
