@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CMG SocMed Activities & Events</title>
+<title>CMG SocMed Activities &amp; Events Calendar</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Fraunces:ital,wght@0,300;0,600;1,300&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -1436,7 +1436,7 @@
 <!-- ─── AUTH SCREEN ─── -->
 <div class="auth-overlay" id="authOverlay">
   <div class="auth-card">
-    <div class="auth-logo"><div class="auth-logo-dot"></div>CMG Task Calendar</div>
+    <div class="auth-logo"><div class="auth-logo-dot"></div>CMG Task Management</div>
     <div class="auth-subtitle">Dubeon Corporation</div>
 
     <div class="auth-tabs">
@@ -1504,7 +1504,7 @@
 <header>
   <div class="logo">
     <div class="logo-dot"></div>
-    CMG Task Calendar  </div>
+    CMG SocMed Activities &amp; Events Calendar  </div>
   <div class="header-right">
     <button onclick="openAnalytics()" style="
       background: var(--surface);
@@ -2661,7 +2661,7 @@ function requestNotifPermission() {
 function sendNotification(task) {
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
   const cat = CATEGORIES.find(c => c.id === task.category) || CATEGORIES[CATEGORIES.length - 1];
-  const n = new Notification(`⏰ CMG Task Calendar`, {
+  const n = new Notification(`⏰ CMG SocMed Activities &amp; Events Calendar`, {
     body: `${cat.icon || '📌'} ${task.title}${task.notes ? '\n' + task.notes : ''}`,
     icon: 'https://cdn-icons-png.flaticon.com/512/1827/1827392.png',
     tag: String(task.id),
