@@ -1598,9 +1598,13 @@
           <div class="stat-val" id="statMonth">0</div>
           <div class="stat-label">This Month</div>
         </div>
-        <div class="stat-card red" onclick="openStatModal('pending')" title="View pending tasks this month">
+        <div class="stat-card red" onclick="openStatModal('pending')" title="View overdue/pending tasks">
           <div class="stat-val" id="statPending">0</div>
           <div class="stat-label">Pending</div>
+        </div>
+        <div class="stat-card" onclick="openStatModal('upcoming')" title="View upcoming tasks this month" style="border-color:rgba(162,155,254,0.3)">
+          <div class="stat-val" id="statUpcoming" style="color:#a29bfe">0</div>
+          <div class="stat-label">Upcoming</div>
         </div>
       </div>
       <div class="progress-wrap" style="margin-top:12px">
@@ -1763,6 +1767,7 @@
       <div class="stat-card green" onclick="openStatModal('completed')"><div class="stat-val" id="mStatDone">0</div><div class="stat-label">Completed</div></div>
       <div class="stat-card blue" onclick="openStatModal('month')"><div class="stat-val" id="mStatMonth">0</div><div class="stat-label">This Month</div></div>
       <div class="stat-card red" onclick="openStatModal('pending')"><div class="stat-val" id="mStatPending">0</div><div class="stat-label">Pending</div></div>
+      <div class="stat-card" onclick="openStatModal('upcoming')" style="border-color:rgba(162,155,254,0.3)"><div class="stat-val" id="mStatUpcoming" style="color:#a29bfe">0</div><div class="stat-label">Upcoming</div></div>
     </div>
     <div class="progress-wrap"><div class="progress-bar" id="mProgressBar" style="width:0%"></div></div>
     <div class="progress-label"><span>Progress this month</span><span id="mProgressPct">0%</span></div>
@@ -2405,7 +2410,7 @@ function renderPanel() {
         <span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon ? cat.icon + ' ' : ''}${cat.label}</span>
         ${t.time ? `<span class="task-time">⏰ ${t.time}</span>` : ''}
         ${t.priority === 'high' ? `<span class="task-tag" style="background:#ff6b6b20;color:#ff6b6b">HIGH</span>` : ''}
-        ${t.done ? `<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71;font-weight:700">✓ DONE</span>` : `<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
+        ${t.done ? `<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71;font-weight:700">✓ DONE</span>` : t.date > today() ? `<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe">🗓️ UPCOMING</span>` : `<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
         ${t.approval ? `<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe;font-weight:600">🏷️ ${t.approval}</span>` : ''}
       </div>
       ${t.notes ? `<div class="task-notes">${t.notes}</div>` : ''}
@@ -2467,22 +2472,26 @@ function renderMiniCal() {
 
 // ─── STATS ───
 function renderStats() {
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-  const monthTasks = tasks.filter(t => {
+  const year     = currentDate.getFullYear();
+  const month    = currentDate.getMonth();
+  const todayKey = today();
+
+  const monthTasks   = tasks.filter(t => {
     const d = new Date(t.date);
     return d.getFullYear() === year && d.getMonth() === month;
   });
   const monthDone    = monthTasks.filter(t => t.done).length;
-  const monthPending = monthTasks.filter(t => !t.done).length;
-  const pct = monthTasks.length ? Math.round(monthDone/monthTasks.length*100) : 0;
+  const monthPending = monthTasks.filter(t => !t.done && t.date <= todayKey).length;
+  const monthUpcoming= monthTasks.filter(t => !t.done && t.date > todayKey).length;
+  const pct = monthTasks.length ? Math.round(monthDone / monthTasks.length * 100) : 0;
 
-  document.getElementById('statTotal').textContent = tasks.length;
-  document.getElementById('statDone').textContent = monthDone;
-  document.getElementById('statMonth').textContent = monthTasks.length;
-  document.getElementById('statPending').textContent = monthPending;
-  document.getElementById('progressBar').style.width = pct + '%';
-  document.getElementById('progressPct').textContent = pct + '%';
+  document.getElementById('statTotal').textContent    = tasks.length;
+  document.getElementById('statDone').textContent     = monthDone;
+  document.getElementById('statMonth').textContent    = monthTasks.length;
+  document.getElementById('statPending').textContent  = monthPending;
+  document.getElementById('statUpcoming').textContent = monthUpcoming;
+  document.getElementById('progressBar').style.width  = pct + '%';
+  document.getElementById('progressPct').textContent  = pct + '%';
 }
 
 // ─── CATEGORIES ───
@@ -2706,18 +2715,24 @@ function rescheduleAll() {
 // ── EXPOSE GLOBALS for HTML onclick attributes ──
 // ─── STAT MODAL ───
 const STAT_CONFIG = {
-  all:       { icon: '📋', label: 'All Tasks',               color: '#c8f135', bg: 'rgba(200,241,53,0.12)',   filter: () => [...tasks] },
-  completed: { icon: '✅', label: 'Completed This Month',    color: '#2ecc71', bg: 'rgba(46,204,113,0.12)',   filter: () => {
+  all:       { icon: '📋', label: 'All Tasks',            color: '#c8f135', bg: 'rgba(200,241,53,0.12)',   filter: () => [...tasks] },
+  completed: { icon: '✅', label: 'Completed This Month', color: '#2ecc71', bg: 'rgba(46,204,113,0.12)',   filter: () => {
     const y = currentDate.getFullYear(), m = currentDate.getMonth();
     return tasks.filter(t => { const d = new Date(t.date); return t.done && d.getFullYear()===y && d.getMonth()===m; });
   }},
-  month:     { icon: '📅', label: 'This Month\'s Tasks',    color: '#74b9ff', bg: 'rgba(116,185,255,0.12)', filter: () => {
+  month:     { icon: '📅', label: 'This Month\'s Tasks',  color: '#74b9ff', bg: 'rgba(116,185,255,0.12)', filter: () => {
     const y = currentDate.getFullYear(), m = currentDate.getMonth();
     return tasks.filter(t => { const d = new Date(t.date); return d.getFullYear()===y && d.getMonth()===m; });
   }},
-  pending:   { icon: '⏳', label: 'Pending This Month',      color: '#c0392b', bg: 'rgba(192,57,43,0.12)',    filter: () => {
+  pending:   { icon: '⏳', label: 'Pending Tasks',        color: '#c0392b', bg: 'rgba(192,57,43,0.12)',   filter: () => {
     const y = currentDate.getFullYear(), m = currentDate.getMonth();
-    return tasks.filter(t => { const d = new Date(t.date); return !t.done && d.getFullYear()===y && d.getMonth()===m; });
+    const todayKey = today();
+    return tasks.filter(t => { const d = new Date(t.date); return !t.done && t.date <= todayKey && d.getFullYear()===y && d.getMonth()===m; });
+  }},
+  upcoming:  { icon: '🗓️', label: 'Upcoming Tasks',      color: '#a29bfe', bg: 'rgba(162,155,254,0.12)', filter: () => {
+    const y = currentDate.getFullYear(), m = currentDate.getMonth();
+    const todayKey = today();
+    return tasks.filter(t => { const d = new Date(t.date); return !t.done && t.date > todayKey && d.getFullYear()===y && d.getMonth()===m; });
   }},
 };
 
@@ -3666,7 +3681,7 @@ function openCatModal(catId) {
           <span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon||''}${cat.label}</span>
           ${t.time ? `<span class="task-time">⏰ ${t.time}</span>` : ''}
           ${t.priority === 'high' ? `<span class="task-tag" style="background:#ff6b6b20;color:#ff6b6b">HIGH</span>` : ''}
-          ${t.done ? `<span class="task-tag" style="background:rgba(46,204,113,0.12);color:#2ecc71">✓ Done</span>` : `<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ Pending</span>`}
+          ${t.done ? `<span class="task-tag" style="background:rgba(46,204,113,0.12);color:#2ecc71">✓ Done</span>` : t.date > today() ? `<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe">🗓️ Upcoming</span>` : `<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ Pending</span>`}
         </div>
         ${t.notes ? `<div class="task-notes" style="margin-top:6px">${t.notes}</div>` : ''}
       `;
@@ -4174,22 +4189,26 @@ function closeMobPanel() {
 }
 
 function renderMobStats() {
-  const year = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-  const monthTasks = tasks.filter(t => {
+  const year     = currentDate.getFullYear();
+  const month    = currentDate.getMonth();
+  const todayKey = today();
+
+  const monthTasks   = tasks.filter(t => {
     const d = new Date(t.date);
     return d.getFullYear() === year && d.getMonth() === month;
   });
-  const monthDone    = monthTasks.filter(t => t.done).length;
-  const monthPending = monthTasks.filter(t => !t.done).length;
-  const pct = monthTasks.length ? Math.round(monthDone/monthTasks.length*100) : 0;
+  const monthDone     = monthTasks.filter(t => t.done).length;
+  const monthPending  = monthTasks.filter(t => !t.done && t.date <= todayKey).length;
+  const monthUpcoming = monthTasks.filter(t => !t.done && t.date > todayKey).length;
+  const pct = monthTasks.length ? Math.round(monthDone / monthTasks.length * 100) : 0;
 
-  document.getElementById('mStatTotal').textContent = tasks.length;
-  document.getElementById('mStatDone').textContent = monthDone;
-  document.getElementById('mStatMonth').textContent = monthTasks.length;
-  document.getElementById('mStatPending').textContent = monthPending;
-  document.getElementById('mProgressBar').style.width = pct + '%';
-  document.getElementById('mProgressPct').textContent = pct + '%';
+  document.getElementById('mStatTotal').textContent    = tasks.length;
+  document.getElementById('mStatDone').textContent     = monthDone;
+  document.getElementById('mStatMonth').textContent    = monthTasks.length;
+  document.getElementById('mStatPending').textContent  = monthPending;
+  document.getElementById('mStatUpcoming').textContent = monthUpcoming;
+  document.getElementById('mProgressBar').style.width  = pct + '%';
+  document.getElementById('mProgressPct').textContent  = pct + '%';
 
   // Categories
   const container = document.getElementById('mCatList');
@@ -4309,7 +4328,7 @@ function renderMobDayPanel(key) {
           <span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon||''}${cat.label}</span>
           ${t.time?`<span class="task-time">⏰ ${t.time}</span>`:''}
           ${t.priority==='high'?`<span class="task-tag" style="background:#ff6b6b20;color:#ff6b6b">HIGH</span>`:''}
-          ${t.done?`<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71;font-weight:700">✓ DONE</span>`:`<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
+          ${t.done?`<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71;font-weight:700">✓ DONE</span>`:t.date>today()?`<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe">🗓️ UPCOMING</span>`:`<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
           ${t.approval?`<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe;font-weight:600">🏷️ ${t.approval}</span>`:''}
         </div>
         ${t.notes?`<div class="task-notes">${t.notes}</div>`:''}
@@ -4526,7 +4545,7 @@ function renderAgendaView() {
             <span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon||''}${cat.label}</span>
             ${t.time?`<span class="task-time">⏰ ${t.time}</span>`:''}
             ${t.assignedTo?`<span class="task-time">👤 ${t.assignedTo}</span>`:''}
-            ${t.done?`<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71">✓ DONE</span>`:`<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
+            ${t.done?`<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71">✓ DONE</span>`:t.date>today()?`<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe">🗓️ UPCOMING</span>`:`<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
             ${t.approval?`<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe;font-weight:600">🏷️ ${t.approval}</span>`:''}
             ${isPast && !t.done?`<span class="task-tag" style="background:rgba(255,107,107,0.2);color:#ff6b6b">⚠️ OVERDUE</span>`:''}
           </div>
@@ -4556,7 +4575,7 @@ function openTaskDetail(idx) {
     <span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon||''}${cat.label}</span>
     ${t.time?`<span class="task-time">⏰ ${t.time}</span>`:''}
     ${t.priority==='high'?`<span class="task-tag" style="background:#ff6b6b20;color:#ff6b6b">HIGH</span>`:''}
-    ${t.done?`<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71">✓ DONE</span>`:`<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
+    ${t.done?`<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71">✓ DONE</span>`:t.date>today()?`<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe">🗓️ UPCOMING</span>`:`<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
     ${t.approval?`<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe;font-weight:600">🏷️ ${t.approval}</span>`:''}
     <span class="task-time">📅 ${t.date}</span>
   `;
