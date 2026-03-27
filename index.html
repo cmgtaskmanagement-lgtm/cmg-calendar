@@ -3520,10 +3520,12 @@ function generatePDFReport() {
   const rangeLabel   = `${from} to ${to}`;
   const todayKey     = today();
 
-  const filtered  = tasks.filter(t => t.date >= from && t.date <= to);
-  const done      = filtered.filter(t => t.done).length;
-  const overdue   = filtered.filter(t => !t.done && t.date < todayKey).length;
-  const rate      = filtered.length ? Math.round(done / filtered.length * 100) : 0;
+  const filtered   = tasks.filter(t => t.date >= from && t.date <= to);
+  const done       = filtered.filter(t => t.done).length;
+  const pending    = filtered.filter(t => !t.done && t.date <= todayKey).length;
+  const upcoming   = filtered.filter(t => !t.done && t.date > todayKey).length;
+  const overdue    = filtered.filter(t => !t.done && t.date < todayKey).length;
+  const rate       = filtered.length ? Math.round(done / filtered.length * 100) : 0;
 
   // ── Task rows ──
   const taskRows = filtered
@@ -3627,8 +3629,9 @@ function generatePDFReport() {
   <div class="stats">
     <div class="stat"><div class="stat-val">${filtered.length}</div><div class="stat-label">Total Tasks</div></div>
     <div class="stat"><div class="stat-val" style="color:#2ecc71">${done}</div><div class="stat-label">Completed</div></div>
-    <div class="stat"><div class="stat-val" style="color:#c0392b">${filtered.length-done}</div><div class="stat-label">Pending</div></div>
-    <div class="stat"><div class="stat-val" style="color:#e74c3c">${overdue}</div><div class="stat-label">Overdue</div></div>
+    <div class="stat"><div class="stat-val" style="color:#e74c3c">${pending}</div><div class="stat-label">⏳ Pending</div></div>
+    <div class="stat"><div class="stat-val" style="color:#a29bfe">${upcoming}</div><div class="stat-label">🗓️ Upcoming</div></div>
+    <div class="stat"><div class="stat-val" style="color:#ff6b6b">${overdue}</div><div class="stat-label">Overdue</div></div>
     <div class="stat"><div class="stat-val" style="color:#0984e3">${rate}%</div><div class="stat-label">Completion Rate</div></div>
   </div>
 
@@ -3678,13 +3681,22 @@ function openCatModal(catId) {
   const isSocialParent = catId === 'social';
   let filtered, label, icon, color;
 
+  // Filter to current month — matching the sidebar category counts
+  const year  = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const monthTasks = tasks.filter(t => {
+    const d = new Date(t.date);
+    return d.getFullYear() === year && d.getMonth() === month;
+  });
+  const monthName = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+
   if (isSocialParent) {
-    filtered = tasks.filter(t => SOCIAL_PLATFORMS.some(p => p.id === t.category));
-    label = 'Social Media'; icon = '📱'; color = '#ff9f43';
+    filtered = monthTasks.filter(t => SOCIAL_PLATFORMS.some(p => p.id === t.category));
+    label = `Social Media — ${monthName}`; icon = '📱'; color = '#ff9f43';
   } else {
     const cat = CATEGORIES.find(c => c.id === catId);
-    filtered = tasks.filter(t => t.category === catId);
-    label = cat?.label || catId;
+    filtered = monthTasks.filter(t => t.category === catId);
+    label = `${cat?.label || catId} — ${monthName}`;
     icon  = cat?.icon  || '📋';
     color = cat?.color || '#c8f135';
   }
