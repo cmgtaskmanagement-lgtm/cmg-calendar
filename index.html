@@ -1598,13 +1598,9 @@
           <div class="stat-val" id="statMonth">0</div>
           <div class="stat-label">This Month</div>
         </div>
-        <div class="stat-card red" onclick="openStatModal('pending')" title="View overdue/pending tasks">
+        <div class="stat-card red" onclick="openStatModal('pending')" title="View pending tasks this month">
           <div class="stat-val" id="statPending">0</div>
           <div class="stat-label">Pending</div>
-        </div>
-        <div class="stat-card" onclick="openStatModal('upcoming')" title="View upcoming tasks this month" style="border-color:rgba(162,155,254,0.3)">
-          <div class="stat-val" id="statUpcoming" style="color:#a29bfe">0</div>
-          <div class="stat-label">Upcoming</div>
         </div>
       </div>
       <div class="progress-wrap" style="margin-top:12px">
@@ -1767,7 +1763,6 @@
       <div class="stat-card green" onclick="openStatModal('completed')"><div class="stat-val" id="mStatDone">0</div><div class="stat-label">Completed</div></div>
       <div class="stat-card blue" onclick="openStatModal('month')"><div class="stat-val" id="mStatMonth">0</div><div class="stat-label">This Month</div></div>
       <div class="stat-card red" onclick="openStatModal('pending')"><div class="stat-val" id="mStatPending">0</div><div class="stat-label">Pending</div></div>
-      <div class="stat-card" onclick="openStatModal('upcoming')" style="border-color:rgba(162,155,254,0.3)"><div class="stat-val" id="mStatUpcoming" style="color:#a29bfe">0</div><div class="stat-label">Upcoming</div></div>
     </div>
     <div class="progress-wrap"><div class="progress-bar" id="mProgressBar" style="width:0%"></div></div>
     <div class="progress-label"><span>Progress this month</span><span id="mProgressPct">0%</span></div>
@@ -2410,7 +2405,7 @@ function renderPanel() {
         <span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon ? cat.icon + ' ' : ''}${cat.label}</span>
         ${t.time ? `<span class="task-time">⏰ ${t.time}</span>` : ''}
         ${t.priority === 'high' ? `<span class="task-tag" style="background:#ff6b6b20;color:#ff6b6b">HIGH</span>` : ''}
-        ${t.done ? `<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71;font-weight:700">✓ DONE</span>` : t.date > today() ? `<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe">🗓️ UPCOMING</span>` : `<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
+        ${t.done ? `<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71;font-weight:700">✓ DONE</span>` : `<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
         ${t.approval ? `<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe;font-weight:600">🏷️ ${t.approval}</span>` : ''}
       </div>
       ${t.notes ? `<div class="task-notes">${t.notes}</div>` : ''}
@@ -2472,26 +2467,22 @@ function renderMiniCal() {
 
 // ─── STATS ───
 function renderStats() {
-  const year     = currentDate.getFullYear();
-  const month    = currentDate.getMonth();
-  const todayKey = today();
-
-  const monthTasks   = tasks.filter(t => {
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const monthTasks = tasks.filter(t => {
     const d = new Date(t.date);
     return d.getFullYear() === year && d.getMonth() === month;
   });
   const monthDone    = monthTasks.filter(t => t.done).length;
-  const monthPending = monthTasks.filter(t => !t.done && t.date <= todayKey).length;
-  const monthUpcoming= monthTasks.filter(t => !t.done && t.date > todayKey).length;
-  const pct = monthTasks.length ? Math.round(monthDone / monthTasks.length * 100) : 0;
+  const monthPending = monthTasks.filter(t => !t.done).length;
+  const pct = monthTasks.length ? Math.round(monthDone/monthTasks.length*100) : 0;
 
-  document.getElementById('statTotal').textContent    = tasks.length;
-  document.getElementById('statDone').textContent     = monthDone;
-  document.getElementById('statMonth').textContent    = monthTasks.length;
-  document.getElementById('statPending').textContent  = monthPending;
-  document.getElementById('statUpcoming').textContent = monthUpcoming;
-  document.getElementById('progressBar').style.width  = pct + '%';
-  document.getElementById('progressPct').textContent  = pct + '%';
+  document.getElementById('statTotal').textContent = tasks.length;
+  document.getElementById('statDone').textContent = monthDone;
+  document.getElementById('statMonth').textContent = monthTasks.length;
+  document.getElementById('statPending').textContent = monthPending;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressPct').textContent = pct + '%';
 }
 
 // ─── CATEGORIES ───
@@ -2715,24 +2706,18 @@ function rescheduleAll() {
 // ── EXPOSE GLOBALS for HTML onclick attributes ──
 // ─── STAT MODAL ───
 const STAT_CONFIG = {
-  all:       { icon: '📋', label: 'All Tasks',            color: '#c8f135', bg: 'rgba(200,241,53,0.12)',   filter: () => [...tasks] },
-  completed: { icon: '✅', label: 'Completed This Month', color: '#2ecc71', bg: 'rgba(46,204,113,0.12)',   filter: () => {
+  all:       { icon: '📋', label: 'All Tasks',               color: '#c8f135', bg: 'rgba(200,241,53,0.12)',   filter: () => [...tasks] },
+  completed: { icon: '✅', label: 'Completed This Month',    color: '#2ecc71', bg: 'rgba(46,204,113,0.12)',   filter: () => {
     const y = currentDate.getFullYear(), m = currentDate.getMonth();
     return tasks.filter(t => { const d = new Date(t.date); return t.done && d.getFullYear()===y && d.getMonth()===m; });
   }},
-  month:     { icon: '📅', label: 'This Month\'s Tasks',  color: '#74b9ff', bg: 'rgba(116,185,255,0.12)', filter: () => {
+  month:     { icon: '📅', label: 'This Month\'s Tasks',    color: '#74b9ff', bg: 'rgba(116,185,255,0.12)', filter: () => {
     const y = currentDate.getFullYear(), m = currentDate.getMonth();
     return tasks.filter(t => { const d = new Date(t.date); return d.getFullYear()===y && d.getMonth()===m; });
   }},
-  pending:   { icon: '⏳', label: 'Pending Tasks',        color: '#c0392b', bg: 'rgba(192,57,43,0.12)',   filter: () => {
+  pending:   { icon: '⏳', label: 'Pending This Month',      color: '#c0392b', bg: 'rgba(192,57,43,0.12)',    filter: () => {
     const y = currentDate.getFullYear(), m = currentDate.getMonth();
-    const todayKey = today();
-    return tasks.filter(t => { const d = new Date(t.date); return !t.done && t.date <= todayKey && d.getFullYear()===y && d.getMonth()===m; });
-  }},
-  upcoming:  { icon: '🗓️', label: 'Upcoming Tasks',      color: '#a29bfe', bg: 'rgba(162,155,254,0.12)', filter: () => {
-    const y = currentDate.getFullYear(), m = currentDate.getMonth();
-    const todayKey = today();
-    return tasks.filter(t => { const d = new Date(t.date); return !t.done && t.date > todayKey && d.getFullYear()===y && d.getMonth()===m; });
+    return tasks.filter(t => { const d = new Date(t.date); return !t.done && d.getFullYear()===y && d.getMonth()===m; });
   }},
 };
 
@@ -2876,7 +2861,6 @@ function renderCategoryChart() {
 function renderWeeklyChart() {
   const weeks = [];
   const now = new Date();
-  const todayKey = today();
   for (let i = 7; i >= 0; i--) {
     const start = new Date(now);
     start.setDate(now.getDate() - (i * 7) - now.getDay());
@@ -2884,11 +2868,10 @@ function renderWeeklyChart() {
     const end = new Date(start); end.setDate(start.getDate() + 6); end.setHours(23,59,59,999);
     const weekTasks = tasks.filter(t => { const d = new Date(t.date); return d >= start && d <= end; });
     weeks.push({
-      label:    `${start.toLocaleString('default',{month:'short',day:'numeric'})}`,
-      total:    weekTasks.length,
-      done:     weekTasks.filter(t => t.done).length,
-      pending:  weekTasks.filter(t => !t.done && t.date <= todayKey).length,
-      upcoming: weekTasks.filter(t => !t.done && t.date > todayKey).length,
+      label: `${start.toLocaleString('default',{month:'short',day:'numeric'})}`,
+      total: weekTasks.length,
+      done:  weekTasks.filter(t => t.done).length,
+      pending: weekTasks.filter(t => !t.done).length,
     });
   }
 
@@ -2909,9 +2892,8 @@ function renderWeeklyChart() {
     data: {
       labels: weeks.map(w => w.label),
       datasets: [
-        { label: 'Completed', data: weeks.map(w => w.done),     backgroundColor: '#2ecc71', borderRadius: 4 },
-        { label: 'Pending',   data: weeks.map(w => w.pending),  backgroundColor: '#c0392b', borderRadius: 4 },
-        { label: 'Upcoming',  data: weeks.map(w => w.upcoming), backgroundColor: '#a29bfe', borderRadius: 4 },
+        { label: 'Completed', data: weeks.map(w => w.done),    backgroundColor: '#2ecc71', borderRadius: 4 },
+        { label: 'Pending',   data: weeks.map(w => w.pending), backgroundColor: '#c0392b', borderRadius: 4 },
       ]
     },
     options: {
@@ -2929,18 +2911,15 @@ function renderWeeklyChart() {
 function renderMonthlyChart() {
   const months = [];
   const now = new Date();
-  const todayKey = today();
   for (let i = 5; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     const y = d.getFullYear(), m = d.getMonth();
     const mTasks = tasks.filter(t => { const td = new Date(t.date); return td.getFullYear()===y && td.getMonth()===m; });
     months.push({
-      label:    d.toLocaleString('default', { month: 'short', year: '2-digit' }),
-      total:    mTasks.length,
-      done:     mTasks.filter(t => t.done).length,
-      pending:  mTasks.filter(t => !t.done && t.date <= todayKey).length,
-      upcoming: mTasks.filter(t => !t.done && t.date > todayKey).length,
-      rate:     mTasks.length ? Math.round(mTasks.filter(t=>t.done).length/mTasks.length*100) : 0,
+      label: d.toLocaleString('default', { month: 'short', year: '2-digit' }),
+      total: mTasks.length,
+      done:  mTasks.filter(t => t.done).length,
+      rate:  mTasks.length ? Math.round(mTasks.filter(t=>t.done).length/mTasks.length*100) : 0,
     });
   }
 
@@ -2972,16 +2951,6 @@ function renderMonthlyChart() {
           tension: 0.4, fill: true, pointBackgroundColor: '#2ecc71', pointRadius: 5
         },
         {
-          label: 'Pending', data: months.map(m => m.pending),
-          borderColor: '#ff6b6b', backgroundColor: 'transparent',
-          tension: 0.4, borderDash: [3,3], pointBackgroundColor: '#ff6b6b', pointRadius: 4
-        },
-        {
-          label: 'Upcoming', data: months.map(m => m.upcoming),
-          borderColor: '#a29bfe', backgroundColor: 'transparent',
-          tension: 0.4, borderDash: [3,3], pointBackgroundColor: '#a29bfe', pointRadius: 4
-        },
-        {
           label: 'Rate %', data: months.map(m => m.rate),
           borderColor: '#74b9ff', backgroundColor: 'transparent',
           tension: 0.4, borderDash: [4,4], pointBackgroundColor: '#74b9ff', pointRadius: 4,
@@ -3004,22 +2973,19 @@ function renderMonthlyChart() {
 // ── 👤 BY ASSIGNEE CHART ──
 let chartAssignee = null;
 function renderAssigneeChart() {
-  const todayKey = today();
   const assigneeMap = {};
   tasks.forEach(t => {
     const name = t.assignedTo || 'Unassigned';
-    if (!assigneeMap[name]) assigneeMap[name] = { total: 0, done: 0, pending: 0, upcoming: 0 };
+    if (!assigneeMap[name]) assigneeMap[name] = { total: 0, done: 0 };
     assigneeMap[name].total++;
     if (t.done) assigneeMap[name].done++;
-    else if (t.date <= todayKey) assigneeMap[name].pending++;
-    else assigneeMap[name].upcoming++;
   });
 
-  const names    = Object.keys(assigneeMap);
-  const dones    = names.map(n => assigneeMap[n].done);
-  const pendings = names.map(n => assigneeMap[n].pending);
-  const upcomings= names.map(n => assigneeMap[n].upcoming);
-  const palette  = ['#c8f135','#6b9fff','#ff9f43','#a29bfe','#48dbfb','#fd79a8','#2ecc71','#ff6b6b'];
+  const names  = Object.keys(assigneeMap);
+  const totals = names.map(n => assigneeMap[n].total);
+  const dones  = names.map(n => assigneeMap[n].done);
+  const pendings = names.map(n => assigneeMap[n].total - assigneeMap[n].done);
+  const palette = ['#c8f135','#6b9fff','#ff9f43','#a29bfe','#48dbfb','#fd79a8','#2ecc71','#ff6b6b'];
 
   const topAssignee = names.reduce((a, b) => assigneeMap[a].done >= assigneeMap[b].done ? a : b, names[0] || '—');
 
@@ -3036,9 +3002,8 @@ function renderAssigneeChart() {
     data: {
       labels: names,
       datasets: [
-        { label: 'Completed', data: dones,     backgroundColor: '#2ecc71', borderRadius: 4 },
-        { label: 'Pending',   data: pendings,  backgroundColor: '#c0392b', borderRadius: 4 },
-        { label: 'Upcoming',  data: upcomings, backgroundColor: '#a29bfe', borderRadius: 4 },
+        { label: 'Completed', data: dones,    backgroundColor: '#2ecc71', borderRadius: 4 },
+        { label: 'Pending',   data: pendings, backgroundColor: '#c0392b', borderRadius: 4 },
       ]
     },
     options: {
@@ -3052,14 +3017,11 @@ function renderAssigneeChart() {
   });
 
   document.getElementById('assigneeLegend').innerHTML = names.map((n, i) => {
-    const r = assigneeMap[n];
-    const rate = r.total ? Math.round(r.done / r.total * 100) : 0;
+    const rate = assigneeMap[n].total ? Math.round(assigneeMap[n].done / assigneeMap[n].total * 100) : 0;
     return `<div class="legend-item">
       <div class="legend-dot" style="background:${palette[i % palette.length]}"></div>
       <span class="legend-label">${n}</span>
-      <span class="legend-val" style="color:${palette[i % palette.length]}">${r.done}/${r.total}</span>
-      <span style="font-size:0.62rem;color:#ff6b6b;margin-left:4px">⏳${r.pending}</span>
-      <span style="font-size:0.62rem;color:#a29bfe;margin-left:4px">🗓️${r.upcoming}</span>
+      <span class="legend-val" style="color:${palette[i % palette.length]}">${assigneeMap[n].done}/${assigneeMap[n].total}</span>
       <span style="font-size:0.65rem;color:var(--text-muted);margin-left:2px">${rate}%</span>
     </div>`;
   }).join('');
@@ -3068,16 +3030,13 @@ function renderAssigneeChart() {
 // ── 📱 PLATFORM BREAKDOWN CHART ──
 let chartPlatform = null;
 function renderPlatformChart() {
-  const todayKey = today();
   const platMap = {};
-  SOCIAL_PLATFORMS.forEach(p => { platMap[p.id] = { label: p.label, icon: p.icon, color: p.color, total: 0, done: 0, pending: 0, upcoming: 0 }; });
+  SOCIAL_PLATFORMS.forEach(p => { platMap[p.id] = { label: p.label, icon: p.icon, color: p.color, total: 0, done: 0 }; });
 
   tasks.forEach(t => {
     if (platMap[t.category]) {
       platMap[t.category].total++;
       if (t.done) platMap[t.category].done++;
-      else if (t.date <= todayKey) platMap[t.category].pending++;
-      else platMap[t.category].upcoming++;
     }
   });
 
@@ -3102,8 +3061,7 @@ function renderPlatformChart() {
       labels: allPlats.map(p => `${p.icon} ${p.label}`),
       datasets: [
         { label: 'Completed', data: allPlats.map(p => p.done),            backgroundColor: allPlats.map(p => p.color + 'cc'), borderRadius: 4 },
-        { label: 'Pending',   data: allPlats.map(p => p.pending),         backgroundColor: '#c0392b44', borderRadius: 4 },
-        { label: 'Upcoming',  data: allPlats.map(p => p.upcoming),        backgroundColor: '#a29bfe44', borderRadius: 4 },
+        { label: 'Pending',   data: allPlats.map(p => p.total - p.done),  backgroundColor: allPlats.map(p => p.color + '44'), borderRadius: 4 },
       ]
     },
     options: {
@@ -3122,8 +3080,6 @@ function renderPlatformChart() {
       <div class="legend-dot" style="background:${p.color}"></div>
       <span class="legend-label">${p.icon} ${p.label}</span>
       <span class="legend-val" style="color:${p.color}">${p.done}/${p.total}</span>
-      <span style="font-size:0.62rem;color:#ff6b6b;margin-left:4px">⏳${p.pending}</span>
-      <span style="font-size:0.62rem;color:#a29bfe;margin-left:4px">🗓️${p.upcoming}</span>
       <span style="font-size:0.65rem;color:var(--text-muted);margin-left:2px">${rate}%</span>
     </div>`;
   }).join('');
@@ -3283,7 +3239,7 @@ function exportToExcel() {
   const taskRows = tasks.map(t => {
     const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
     const todayKey = today();
-    const status = t.done ? 'Completed' : t.date < todayKey ? 'Overdue' : t.date === todayKey ? 'Pending' : 'Upcoming';
+    const isOverdue = !t.done && t.date < todayKey;
     return {
       'Title':       t.title,
       'Category':    cat.label,
@@ -3292,7 +3248,7 @@ function exportToExcel() {
       'Date':        t.date,
       'Time':        t.time || '',
       'Priority':    t.priority || 'normal',
-      'Status':      status,
+      'Status':      t.done ? 'Completed' : isOverdue ? 'OVERDUE' : 'Pending',
       'Notes':       t.notes || '',
     };
   });
@@ -3302,45 +3258,39 @@ function exportToExcel() {
 
   // ── Sheet 2: By Assignee ──
   const assigneeMap = {};
-  const todayKeyX = today();
   tasks.forEach(t => {
     const name = t.assignedTo || 'Unassigned';
-    if (!assigneeMap[name]) assigneeMap[name] = { total: 0, done: 0, pending: 0, upcoming: 0 };
+    if (!assigneeMap[name]) assigneeMap[name] = { total: 0, done: 0, overdue: 0 };
     assigneeMap[name].total++;
     if (t.done) assigneeMap[name].done++;
-    else if (t.date <= todayKeyX) assigneeMap[name].pending++;
-    else assigneeMap[name].upcoming++;
+    if (!t.done && t.date < today()) assigneeMap[name].overdue++;
   });
   const assigneeRows = Object.keys(assigneeMap).map(name => ({
     'Assignee':        name,
     'Total Tasks':     assigneeMap[name].total,
     'Completed':       assigneeMap[name].done,
-    'Pending':         assigneeMap[name].pending,
-    'Upcoming':        assigneeMap[name].upcoming,
+    'Pending':         assigneeMap[name].total - assigneeMap[name].done,
+    'Overdue':         assigneeMap[name].overdue,
     'Completion Rate': assigneeMap[name].total ? Math.round(assigneeMap[name].done / assigneeMap[name].total * 100) + '%' : '0%',
   }));
   const ws2 = XLSX.utils.json_to_sheet(assigneeRows);
-  ws2['!cols'] = [{wch:22},{wch:14},{wch:12},{wch:12},{wch:12},{wch:18}];
+  ws2['!cols'] = [{wch:22},{wch:14},{wch:12},{wch:12},{wch:10},{wch:18}];
   XLSX.utils.book_append_sheet(wb, ws2, 'By Assignee');
 
   // ── Sheet 3: Platform Breakdown ──
-  const todayKeyP = today();
   const platRows = SOCIAL_PLATFORMS.map(p => {
     const platTasks = tasks.filter(t => t.category === p.id);
-    const done     = platTasks.filter(t => t.done).length;
-    const pending  = platTasks.filter(t => !t.done && t.date <= todayKeyP).length;
-    const upcoming = platTasks.filter(t => !t.done && t.date > todayKeyP).length;
+    const done = platTasks.filter(t => t.done).length;
     return {
       'Platform':        p.label,
       'Total Tasks':     platTasks.length,
       'Completed':       done,
-      'Pending':         pending,
-      'Upcoming':        upcoming,
+      'Pending':         platTasks.length - done,
       'Completion Rate': platTasks.length ? Math.round(done / platTasks.length * 100) + '%' : '0%',
     };
   });
   const ws3 = XLSX.utils.json_to_sheet(platRows);
-  ws3['!cols'] = [{wch:14},{wch:14},{wch:12},{wch:12},{wch:12},{wch:18}];
+  ws3['!cols'] = [{wch:14},{wch:14},{wch:12},{wch:12},{wch:18}];
   XLSX.utils.book_append_sheet(wb, ws3, 'Platform Breakdown');
 
   // ── Sheet 4: Overdue Tasks ──
@@ -3511,7 +3461,7 @@ function updateReportPreview() {
   `;
 }
 
-async function generatePDFReport() {
+function generatePDFReport() {
   const { from, to } = getReportRange();
   if (!from || !to) { alert('Please select a period first.'); return; }
 
@@ -3520,217 +3470,149 @@ async function generatePDFReport() {
   const rangeLabel   = `${from} to ${to}`;
   const todayKey     = today();
 
-  const filtered   = tasks.filter(t => t.date >= from && t.date <= to);
-  const done       = filtered.filter(t => t.done).length;
-  const pending    = filtered.filter(t => !t.done && t.date <= todayKey).length;
-  const upcoming   = filtered.filter(t => !t.done && t.date > todayKey).length;
-  const overdue    = filtered.filter(t => !t.done && t.date < todayKey).length;
-  const rate       = filtered.length ? Math.round(done / filtered.length * 100) : 0;
+  const filtered  = tasks.filter(t => t.date >= from && t.date <= to);
+  const done      = filtered.filter(t => t.done).length;
+  const overdue   = filtered.filter(t => !t.done && t.date < todayKey).length;
+  const rate      = filtered.length ? Math.round(done / filtered.length * 100) : 0;
 
-  // ── Helper: render Chart.js to base64 image ──
-  function renderChartToImage(type, data, options = {}) {
-    return new Promise(resolve => {
-      const canvas = document.createElement('canvas');
-      canvas.width = 900; canvas.height = 380;
-      const ctx = canvas.getContext('2d');
-      const chart = new Chart(ctx, {
-        type, data,
-        options: { responsive: false, animation: false, ...options }
-      });
-      setTimeout(() => { resolve(canvas.toDataURL('image/png')); chart.destroy(); }, 400);
-    });
-  }
+  // ── Task rows ──
+  const taskRows = filtered
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .map(t => {
+      const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
+      const isOverdue = !t.done && t.date < todayKey;
+      return `<tr style="border-bottom:1px solid #eee">
+        <td style="padding:7px 8px">${t.title}</td>
+        <td style="padding:7px 8px">${cat.label}</td>
+        <td style="padding:7px 8px">${t.assignedTo || '—'}</td>
+        <td style="padding:7px 8px">${t.date}</td>
+        <td style="padding:7px 8px">${t.priority || 'normal'}</td>
+        <td style="padding:7px 8px;color:${t.done?'#2ecc71':isOverdue?'#e74c3c':'#c0392b'};font-weight:600">
+          ${t.done ? '✓ Done' : isOverdue ? '⚠️ Overdue' : '⏳ Pending'}
+        </td>
+      </tr>`;
+    }).join('');
 
-  const barScales = {
-    x: { stacked: true, ticks: { color: '#555' }, grid: { color: '#eee' } },
-    y: { stacked: true, ticks: { color: '#555' }, grid: { color: '#eee' }, beginAtZero: true }
-  };
-
-  // ── Chart 1: Status Overview (Doughnut) ──
-  const statusChartImg = await renderChartToImage('doughnut',
-    { labels: ['Completed', 'Pending', 'Upcoming'],
-      datasets: [{ data: [done, pending, upcoming],
-        backgroundColor: ['#2ecc71', '#e74c3c', '#a29bfe'],
-        borderColor: '#fff', borderWidth: 3, hoverOffset: 8 }] },
-    { cutout: '60%', plugins: { legend: { display: true, labels: { color: '#333', font: { size: 13 } } } } }
-  );
-
-  // ── Chart 2: By Assignee (Stacked Bar) ──
+  // ── Assignee rows ──
   const assigneeMap = {};
   filtered.forEach(t => {
     const name = t.assignedTo || 'Unassigned';
-    if (!assigneeMap[name]) assigneeMap[name] = { done: 0, pending: 0, upcoming: 0 };
+    if (!assigneeMap[name]) assigneeMap[name] = { total:0, done:0, overdue:0 };
+    assigneeMap[name].total++;
     if (t.done) assigneeMap[name].done++;
-    else if (t.date <= todayKey) assigneeMap[name].pending++;
-    else assigneeMap[name].upcoming++;
+    if (!t.done && t.date < todayKey) assigneeMap[name].overdue++;
   });
-  const assigneeNames = Object.keys(assigneeMap);
-  const assigneeChartImg = await renderChartToImage('bar',
-    { labels: assigneeNames,
-      datasets: [
-        { label: 'Completed', data: assigneeNames.map(n => assigneeMap[n].done),     backgroundColor: '#2ecc71', borderRadius: 4 },
-        { label: 'Pending',   data: assigneeNames.map(n => assigneeMap[n].pending),  backgroundColor: '#e74c3c', borderRadius: 4 },
-        { label: 'Upcoming',  data: assigneeNames.map(n => assigneeMap[n].upcoming), backgroundColor: '#a29bfe', borderRadius: 4 },
-      ] },
-    { plugins: { legend: { display: true, labels: { color: '#333', font: { size: 12 } } } }, scales: barScales }
-  );
-
-  // ── Chart 3: Platform Breakdown (Bar) ──
-  const platData = SOCIAL_PLATFORMS.map(p => {
-    const pt = filtered.filter(t => t.category === p.id);
-    return { label: p.label, color: p.color,
-      done:     pt.filter(t => t.done).length,
-      pending:  pt.filter(t => !t.done && t.date <= todayKey).length,
-      upcoming: pt.filter(t => !t.done && t.date > todayKey).length };
-  });
-  const platformChartImg = await renderChartToImage('bar',
-    { labels: platData.map(p => p.label),
-      datasets: [
-        { label: 'Completed', data: platData.map(p => p.done),     backgroundColor: platData.map(p => p.color + 'cc'), borderRadius: 4 },
-        { label: 'Pending',   data: platData.map(p => p.pending),  backgroundColor: '#e74c3c88', borderRadius: 4 },
-        { label: 'Upcoming',  data: platData.map(p => p.upcoming), backgroundColor: '#a29bfe88', borderRadius: 4 },
-      ] },
-    { plugins: { legend: { display: true, labels: { color: '#333', font: { size: 12 } } } }, scales: barScales }
-  );
-
-  // ── Chart 4: Completion Trend (Line) ──
-  const dayCur = new Date(from + 'T00:00:00');
-  const dayEnd = new Date(to + 'T23:59:59');
-  const dayArr = [];
-  while (dayCur <= dayEnd) {
-    const key = dateKey(dayCur);
-    const dt = filtered.filter(t => t.date === key);
-    dayArr.push({ label: key, total: dt.length, done: dt.filter(t => t.done).length });
-    dayCur.setDate(dayCur.getDate() + 1);
-  }
-  let tLabels, tTotal, tDone;
-  if (dayArr.length > 30) {
-    const buckets = [];
-    for (let i = 0; i < dayArr.length; i += 7) {
-      const chunk = dayArr.slice(i, i + 7);
-      buckets.push({ label: chunk[0].label, total: chunk.reduce((s,d)=>s+d.total,0), done: chunk.reduce((s,d)=>s+d.done,0) });
-    }
-    tLabels = buckets.map(b => b.label); tTotal = buckets.map(b => b.total); tDone = buckets.map(b => b.done);
-  } else {
-    tLabels = dayArr.map(d => d.label); tTotal = dayArr.map(d => d.total); tDone = dayArr.map(d => d.done);
-  }
-  const trendChartImg = await renderChartToImage('line',
-    { labels: tLabels,
-      datasets: [
-        { label: 'Total Tasks', data: tTotal, borderColor: '#c8a800', backgroundColor: 'rgba(200,168,0,0.08)', tension: 0.4, fill: true, pointRadius: 3, pointBackgroundColor: '#c8a800' },
-        { label: 'Completed',   data: tDone,  borderColor: '#2ecc71', backgroundColor: 'rgba(46,204,113,0.08)', tension: 0.4, fill: true, pointRadius: 3, pointBackgroundColor: '#2ecc71' },
-      ] },
-    { plugins: { legend: { display: true, labels: { color: '#333', font: { size: 12 } } } },
-      scales: {
-        x: { ticks: { color: '#555', font: { size: 9 }, maxRotation: 45 }, grid: { color: '#eee' } },
-        y: { ticks: { color: '#555' }, grid: { color: '#eee' }, beginAtZero: true }
-      } }
-  );
-
-  // ── Table rows ──
-  const taskRows = filtered.sort((a,b) => a.date.localeCompare(b.date)).map(t => {
-    const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
-    const status = t.done ? '✓ Done' : t.date < todayKey ? '⚠️ Overdue' : t.date === todayKey ? '⏳ Pending' : '🗓️ Upcoming';
-    const statusColor = t.done ? '#2ecc71' : t.date <= todayKey ? '#e74c3c' : '#a29bfe';
-    return `<tr style="border-bottom:1px solid #eee">
-      <td style="padding:7px 8px">${t.title}</td><td style="padding:7px 8px">${cat.label}</td>
-      <td style="padding:7px 8px">${t.assignedTo || '—'}</td><td style="padding:7px 8px">${t.date}</td>
-      <td style="padding:7px 8px">${t.priority || 'normal'}</td>
-      <td style="padding:7px 8px;color:${statusColor};font-weight:600">${status}</td></tr>`;
-  }).join('');
-
-  const assigneeRows = assigneeNames.map(name => {
+  const assigneeRows = Object.keys(assigneeMap).map(name => {
     const r = assigneeMap[name];
-    const total = r.done + r.pending + r.upcoming;
-    const rA = total ? Math.round(r.done/total*100) : 0;
+    const rA = r.total ? Math.round(r.done/r.total*100) : 0;
     return `<tr style="border-bottom:1px solid #eee">
       <td style="padding:7px 8px;font-weight:600">${name}</td>
-      <td style="padding:7px 8px;text-align:center">${total}</td>
+      <td style="padding:7px 8px;text-align:center">${r.total}</td>
       <td style="padding:7px 8px;text-align:center;color:#2ecc71;font-weight:600">${r.done}</td>
-      <td style="padding:7px 8px;text-align:center;color:#e74c3c;font-weight:600">${r.pending}</td>
-      <td style="padding:7px 8px;text-align:center;color:#a29bfe;font-weight:600">${r.upcoming}</td>
-      <td style="padding:7px 8px;text-align:center;color:#0984e3;font-weight:700">${rA}%</td></tr>`;
+      <td style="padding:7px 8px;text-align:center;color:#c0392b">${r.total-r.done}</td>
+      <td style="padding:7px 8px;text-align:center;color:#e74c3c;font-weight:600">${r.overdue}</td>
+      <td style="padding:7px 8px;text-align:center;color:#0984e3;font-weight:700">${rA}%</td>
+    </tr>`;
   }).join('');
 
+  // ── Platform rows ──
   const platRows = SOCIAL_PLATFORMS.map(p => {
     const pt = filtered.filter(t => t.category === p.id);
     const pd = pt.filter(t => t.done).length;
-    const pp = pt.filter(t => !t.done && t.date <= todayKey).length;
-    const pu = pt.filter(t => !t.done && t.date > todayKey).length;
     const pr = pt.length ? Math.round(pd/pt.length*100) : 0;
     return `<tr style="border-bottom:1px solid #eee">
       <td style="padding:7px 8px;font-weight:600">${p.icon} ${p.label}</td>
       <td style="padding:7px 8px;text-align:center">${pt.length}</td>
       <td style="padding:7px 8px;text-align:center;color:#2ecc71;font-weight:600">${pd}</td>
-      <td style="padding:7px 8px;text-align:center;color:#e74c3c;font-weight:600">${pp}</td>
-      <td style="padding:7px 8px;text-align:center;color:#a29bfe;font-weight:600">${pu}</td>
-      <td style="padding:7px 8px;text-align:center;color:#0984e3;font-weight:700">${pr}%</td></tr>`;
+      <td style="padding:7px 8px;text-align:center;color:#c0392b">${pt.length-pd}</td>
+      <td style="padding:7px 8px;text-align:center;color:#0984e3;font-weight:700">${pr}%</td>
+    </tr>`;
   }).join('');
 
-  const overdueRows = filtered.filter(t => !t.done && t.date < todayKey).sort((a,b)=>a.date.localeCompare(b.date)).map(t => {
-    const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
-    const d2 = Math.floor((new Date(todayKey)-new Date(t.date))/86400000);
-    return `<tr style="border-bottom:1px solid #eee">
-      <td style="padding:7px 8px">${t.title}</td><td style="padding:7px 8px">${t.assignedTo||'—'}</td>
-      <td style="padding:7px 8px">${cat.label}</td><td style="padding:7px 8px">${t.date}</td>
-      <td style="padding:7px 8px;color:#e74c3c;font-weight:700">${d2} day${d2!==1?'s':''}</td></tr>`;
-  }).join('');
+  // ── Overdue rows ──
+  const overdueRows = filtered
+    .filter(t => !t.done && t.date < todayKey)
+    .sort((a,b) => a.date.localeCompare(b.date))
+    .map(t => {
+      const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
+      const days = Math.floor((new Date(todayKey) - new Date(t.date)) / 86400000);
+      return `<tr style="border-bottom:1px solid #eee">
+        <td style="padding:7px 8px">${t.title}</td>
+        <td style="padding:7px 8px">${t.assignedTo || '—'}</td>
+        <td style="padding:7px 8px">${cat.label}</td>
+        <td style="padding:7px 8px">${t.date}</td>
+        <td style="padding:7px 8px;color:#e74c3c;font-weight:700">${days} day${days!==1?'s':''}</td>
+      </tr>`;
+    }).join('');
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>CMG ${periodLabel} Report — ${rangeLabel}</title>
   <style>
-    body{font-family:Arial,sans-serif;padding:30px;color:#222;font-size:13px}
-    h1{color:#0a0a0f;margin-bottom:2px;font-size:20px}
-    .badge{display:inline-block;background:#0a0a0f;color:#c8f135;border-radius:4px;padding:2px 10px;font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin-left:8px;vertical-align:middle}
-    .meta{color:#666;font-size:12px;margin:6px 0 20px}
-    .stats{display:flex;gap:12px;margin-bottom:24px;flex-wrap:wrap}
-    .stat{background:#f5f5f5;border-radius:8px;padding:10px 16px;text-align:center;min-width:80px}
-    .stat-val{font-size:22px;font-weight:800}.stat-label{font-size:10px;color:#888;text-transform:uppercase}
-    h2{color:#0a0a0f;font-size:14px;margin:28px 0 6px;border-bottom:2px solid #0a0a0f;padding-bottom:5px}
-    table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px}
-    thead{background:#0a0a0f;color:white} thead th{padding:8px;text-align:left}
-    tbody tr:nth-child(even){background:#f9f9f9}
-    .chart-wrap{margin:8px 0 20px;background:#fafafa;border:1px solid #eee;border-radius:8px;padding:10px;text-align:center;page-break-inside:avoid}
-    .chart-wrap img{width:100%;max-width:860px;height:auto}
-    .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:8px}
-    .no-data{text-align:center;padding:14px;color:#999;background:#f9f9f9;border-radius:6px}
-    .no-overdue{text-align:center;padding:14px;color:#2ecc71;font-weight:600;background:#f0fff4;border-radius:6px}
-    @media print{body{padding:10px}.chart-wrap{page-break-inside:avoid}}
+    body { font-family: Arial, sans-serif; padding: 30px; color: #222; font-size: 13px; }
+    h1 { color: #0a0a0f; margin-bottom: 2px; font-size: 20px; }
+    .badge { display:inline-block; background:#0a0a0f; color:#c8f135; border-radius:4px; padding:2px 10px; font-size:11px; font-weight:800; letter-spacing:0.1em; text-transform:uppercase; margin-left:8px; vertical-align:middle; }
+    .meta { color: #666; font-size: 12px; margin: 6px 0 20px; }
+    .stats { display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap; }
+    .stat { background:#f5f5f5; border-radius:8px; padding:10px 16px; text-align:center; min-width:80px; }
+    .stat-val { font-size:22px; font-weight:800; }
+    .stat-label { font-size:10px; color:#888; text-transform:uppercase; }
+    h2 { color:#0a0a0f; font-size:14px; margin:26px 0 8px; border-bottom:2px solid #0a0a0f; padding-bottom:5px; }
+    table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:6px; }
+    thead { background:#0a0a0f; color:white; }
+    thead th { padding:8px; text-align:left; }
+    tbody tr:nth-child(even) { background:#f9f9f9; }
+    .no-data { text-align:center; padding:14px; color:#999; background:#f9f9f9; border-radius:6px; }
+    .no-overdue { text-align:center; padding:14px; color:#2ecc71; font-weight:600; background:#f0fff4; border-radius:6px; }
+    @media print { body { padding:10px; } }
   </style></head><body>
+
   <h1>📋 CMG SocMed Activities & Events Calendar <span class="badge">${periodLabel} Report</span></h1>
-  <div class="meta">Dubeon Corporation &nbsp;·&nbsp; Period: <strong>${from}</strong> to <strong>${to}</strong> &nbsp;·&nbsp; Generated on ${new Date().toLocaleString()}</div>
+  <div class="meta">
+    Dubeon Corporation &nbsp;·&nbsp; Period: <strong>${from}</strong> to <strong>${to}</strong> &nbsp;·&nbsp; Generated on ${new Date().toLocaleString()}
+  </div>
+
   <div class="stats">
     <div class="stat"><div class="stat-val">${filtered.length}</div><div class="stat-label">Total Tasks</div></div>
     <div class="stat"><div class="stat-val" style="color:#2ecc71">${done}</div><div class="stat-label">Completed</div></div>
-    <div class="stat"><div class="stat-val" style="color:#e74c3c">${pending}</div><div class="stat-label">⏳ Pending</div></div>
-    <div class="stat"><div class="stat-val" style="color:#a29bfe">${upcoming}</div><div class="stat-label">🗓️ Upcoming</div></div>
-    <div class="stat"><div class="stat-val" style="color:#ff6b6b">${overdue}</div><div class="stat-label">Overdue</div></div>
+    <div class="stat"><div class="stat-val" style="color:#c0392b">${filtered.length-done}</div><div class="stat-label">Pending</div></div>
+    <div class="stat"><div class="stat-val" style="color:#e74c3c">${overdue}</div><div class="stat-label">Overdue</div></div>
     <div class="stat"><div class="stat-val" style="color:#0984e3">${rate}%</div><div class="stat-label">Completion Rate</div></div>
   </div>
-  <div class="charts-row">
-    <div><h2 style="margin-top:0">📊 Status Overview</h2><div class="chart-wrap"><img src="${statusChartImg}" /></div></div>
-    <div><h2 style="margin-top:0">📈 Completion Trend</h2><div class="chart-wrap"><img src="${trendChartImg}" /></div></div>
-  </div>
+
   <h2>👤 By Assignee</h2>
-  <div class="chart-wrap"><img src="${assigneeChartImg}" /></div>
-  ${assigneeRows ? `<table><thead><tr><th>Assignee</th><th>Total</th><th>Completed</th><th>⏳ Pending</th><th>🗓️ Upcoming</th><th>Rate</th></tr></thead><tbody>${assigneeRows}</tbody></table>` : '<div class="no-data">No assignee data.</div>'}
+  ${assigneeRows ? `<table>
+    <thead><tr><th>Assignee</th><th>Total</th><th>Completed</th><th>Pending</th><th>Overdue</th><th>Rate</th></tr></thead>
+    <tbody>${assigneeRows}</tbody>
+  </table>` : '<div class="no-data">No assignee data for this period.</div>'}
+
   <h2>📱 Platform Breakdown</h2>
-  <div class="chart-wrap"><img src="${platformChartImg}" /></div>
-  <table><thead><tr><th>Platform</th><th>Total</th><th>Completed</th><th>⏳ Pending</th><th>🗓️ Upcoming</th><th>Rate</th></tr></thead><tbody>${platRows}</tbody></table>
+  <table>
+    <thead><tr><th>Platform</th><th>Total</th><th>Completed</th><th>Pending</th><th>Rate</th></tr></thead>
+    <tbody>${platRows}</tbody>
+  </table>
+
   <h2>⚠️ Overdue Tasks</h2>
-  ${overdueRows ? `<table><thead><tr><th>Title</th><th>Assigned To</th><th>Category</th><th>Due Date</th><th>Days Overdue</th></tr></thead><tbody>${overdueRows}</tbody></table>` : '<div class="no-overdue">🎉 No overdue tasks in this period!</div>'}
+  ${overdueRows ? `<table>
+    <thead><tr><th>Title</th><th>Assigned To</th><th>Category</th><th>Due Date</th><th>Days Overdue</th></tr></thead>
+    <tbody>${overdueRows}</tbody>
+  </table>` : '<div class="no-overdue">🎉 No overdue tasks in this period!</div>'}
+
   <h2>📋 All Tasks in Period</h2>
-  ${taskRows ? `<table><thead><tr><th>Title</th><th>Category</th><th>Assigned To</th><th>Date</th><th>Priority</th><th>Status</th></tr></thead><tbody>${taskRows}</tbody></table>` : '<div class="no-data">No tasks found.</div>'}
+  ${taskRows ? `<table>
+    <thead><tr><th>Title</th><th>Category</th><th>Assigned To</th><th>Date</th><th>Priority</th><th>Status</th></tr></thead>
+    <tbody>${taskRows}</tbody>
+  </table>` : '<div class="no-data">No tasks found for this period.</div>'}
+
   </body></html>`;
 
   const win = window.open('', '_blank');
   win.document.write(html);
   win.document.close();
-  setTimeout(() => win.print(), 800);
+  setTimeout(() => win.print(), 500);
   closeReportModal();
 }
 
-window.openReportModalwindow.openReportModal    = openReportModal;
+window.openReportModal    = openReportModal;
 window.closeReportModal   = closeReportModal;
 window.selectReportPeriod = selectReportPeriod;
 window.updateReportPreview = updateReportPreview;
@@ -3743,22 +3625,13 @@ function openCatModal(catId) {
   const isSocialParent = catId === 'social';
   let filtered, label, icon, color;
 
-  // Filter to current month — matching the sidebar category counts
-  const year  = currentDate.getFullYear();
-  const month = currentDate.getMonth();
-  const monthTasks = tasks.filter(t => {
-    const d = new Date(t.date);
-    return d.getFullYear() === year && d.getMonth() === month;
-  });
-  const monthName = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
-
   if (isSocialParent) {
-    filtered = monthTasks.filter(t => SOCIAL_PLATFORMS.some(p => p.id === t.category));
-    label = `Social Media — ${monthName}`; icon = '📱'; color = '#ff9f43';
+    filtered = tasks.filter(t => SOCIAL_PLATFORMS.some(p => p.id === t.category));
+    label = 'Social Media'; icon = '📱'; color = '#ff9f43';
   } else {
     const cat = CATEGORIES.find(c => c.id === catId);
-    filtered = monthTasks.filter(t => t.category === catId);
-    label = `${cat?.label || catId} — ${monthName}`;
+    filtered = tasks.filter(t => t.category === catId);
+    label = cat?.label || catId;
     icon  = cat?.icon  || '📋';
     color = cat?.color || '#c8f135';
   }
@@ -3793,7 +3666,7 @@ function openCatModal(catId) {
           <span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon||''}${cat.label}</span>
           ${t.time ? `<span class="task-time">⏰ ${t.time}</span>` : ''}
           ${t.priority === 'high' ? `<span class="task-tag" style="background:#ff6b6b20;color:#ff6b6b">HIGH</span>` : ''}
-          ${t.done ? `<span class="task-tag" style="background:rgba(46,204,113,0.12);color:#2ecc71">✓ Done</span>` : t.date > today() ? `<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe">🗓️ Upcoming</span>` : `<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ Pending</span>`}
+          ${t.done ? `<span class="task-tag" style="background:rgba(46,204,113,0.12);color:#2ecc71">✓ Done</span>` : `<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ Pending</span>`}
         </div>
         ${t.notes ? `<div class="task-notes" style="margin-top:6px">${t.notes}</div>` : ''}
       `;
@@ -3957,31 +3830,19 @@ async function doLogin() {
           profile = { uid: cred.user.uid, username: ADMIN_USERNAME, name: 'Administrator', email: ADMIN_EMAIL, role: 'admin', status: 'approved', createdAt: new Date().toISOString() };
           await db.collection('users').doc(cred.user.uid).set(profile);
         }
-        // Ensure admin fields are always correct
-        if (profile.role !== 'admin') {
-          await db.collection('users').doc(cred.user.uid).update({ role: 'admin', status: 'approved' });
-          profile.role = 'admin'; profile.status = 'approved';
-        }
         currentUser = cred.user;
-        appStarted = true;
+        appStarted = true; // prevent onAuthStateChanged from firing again
         enterApp(profile);
       } catch(e) {
-        if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential') {
-          // First time — create the admin account
-          try {
-            const cred = await auth.createUserWithEmailAndPassword(ADMIN_EMAIL, ADMIN_PASSWORD);
-            const profile = { uid: cred.user.uid, username: ADMIN_USERNAME, name: 'Administrator', email: ADMIN_EMAIL, role: 'admin', status: 'approved', createdAt: new Date().toISOString() };
-            await db.collection('users').doc(cred.user.uid).set(profile);
-            currentUser = cred.user;
-            appStarted = true;
-            enterApp(profile);
-          } catch(e2) {
-            appStarted = false;
-            showMsg('loginMsg', '❌ Admin setup error: ' + e2.message, 'error');
-          }
-        } else {
-          appStarted = false;
-          showMsg('loginMsg', '❌ Admin login error: ' + e.message, 'error');
+        try {
+          const cred = await auth.createUserWithEmailAndPassword(ADMIN_EMAIL, ADMIN_PASSWORD);
+          const profile = { uid: cred.user.uid, username: ADMIN_USERNAME, name: 'Administrator', email: ADMIN_EMAIL, role: 'admin', status: 'approved', createdAt: new Date().toISOString() };
+          await db.collection('users').doc(cred.user.uid).set(profile);
+          currentUser = cred.user;
+          appStarted = true;
+          enterApp(profile);
+        } catch(e2) {
+          showMsg('loginMsg', 'Admin error: ' + e2.message, 'error');
         }
       }
       return;
@@ -4313,26 +4174,22 @@ function closeMobPanel() {
 }
 
 function renderMobStats() {
-  const year     = currentDate.getFullYear();
-  const month    = currentDate.getMonth();
-  const todayKey = today();
-
-  const monthTasks   = tasks.filter(t => {
+  const year = currentDate.getFullYear();
+  const month = currentDate.getMonth();
+  const monthTasks = tasks.filter(t => {
     const d = new Date(t.date);
     return d.getFullYear() === year && d.getMonth() === month;
   });
-  const monthDone     = monthTasks.filter(t => t.done).length;
-  const monthPending  = monthTasks.filter(t => !t.done && t.date <= todayKey).length;
-  const monthUpcoming = monthTasks.filter(t => !t.done && t.date > todayKey).length;
-  const pct = monthTasks.length ? Math.round(monthDone / monthTasks.length * 100) : 0;
+  const monthDone    = monthTasks.filter(t => t.done).length;
+  const monthPending = monthTasks.filter(t => !t.done).length;
+  const pct = monthTasks.length ? Math.round(monthDone/monthTasks.length*100) : 0;
 
-  document.getElementById('mStatTotal').textContent    = tasks.length;
-  document.getElementById('mStatDone').textContent     = monthDone;
-  document.getElementById('mStatMonth').textContent    = monthTasks.length;
-  document.getElementById('mStatPending').textContent  = monthPending;
-  document.getElementById('mStatUpcoming').textContent = monthUpcoming;
-  document.getElementById('mProgressBar').style.width  = pct + '%';
-  document.getElementById('mProgressPct').textContent  = pct + '%';
+  document.getElementById('mStatTotal').textContent = tasks.length;
+  document.getElementById('mStatDone').textContent = monthDone;
+  document.getElementById('mStatMonth').textContent = monthTasks.length;
+  document.getElementById('mStatPending').textContent = monthPending;
+  document.getElementById('mProgressBar').style.width = pct + '%';
+  document.getElementById('mProgressPct').textContent = pct + '%';
 
   // Categories
   const container = document.getElementById('mCatList');
@@ -4362,7 +4219,7 @@ function renderMobStats() {
 }
 
 function renderMobMenu() {
-  const session = currentUserProfile;
+  const session = getSession();
   if (!session) return;
   document.getElementById('mobMonthLabel').textContent =
     new Date(currentDate.getFullYear(), currentDate.getMonth()).toLocaleString('default', {month:'long', year:'numeric'});
@@ -4371,7 +4228,7 @@ function renderMobMenu() {
   document.getElementById('mobUserName').textContent = session.name;
   if (session.role === 'admin') {
     const ab = document.getElementById('mobAdminBtn');
-    if (ab) ab.style.display = 'flex';
+    ab.style.display = 'flex';
   }
   updateMobNotifBtn();
   renderMobMiniCal();
@@ -4452,7 +4309,7 @@ function renderMobDayPanel(key) {
           <span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon||''}${cat.label}</span>
           ${t.time?`<span class="task-time">⏰ ${t.time}</span>`:''}
           ${t.priority==='high'?`<span class="task-tag" style="background:#ff6b6b20;color:#ff6b6b">HIGH</span>`:''}
-          ${t.done?`<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71;font-weight:700">✓ DONE</span>`:t.date>today()?`<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe">🗓️ UPCOMING</span>`:`<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
+          ${t.done?`<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71;font-weight:700">✓ DONE</span>`:`<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
           ${t.approval?`<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe;font-weight:600">🏷️ ${t.approval}</span>`:''}
         </div>
         ${t.notes?`<div class="task-notes">${t.notes}</div>`:''}
@@ -4669,7 +4526,7 @@ function renderAgendaView() {
             <span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon||''}${cat.label}</span>
             ${t.time?`<span class="task-time">⏰ ${t.time}</span>`:''}
             ${t.assignedTo?`<span class="task-time">👤 ${t.assignedTo}</span>`:''}
-            ${t.done?`<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71">✓ DONE</span>`:t.date>today()?`<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe">🗓️ UPCOMING</span>`:`<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
+            ${t.done?`<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71">✓ DONE</span>`:`<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
             ${t.approval?`<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe;font-weight:600">🏷️ ${t.approval}</span>`:''}
             ${isPast && !t.done?`<span class="task-tag" style="background:rgba(255,107,107,0.2);color:#ff6b6b">⚠️ OVERDUE</span>`:''}
           </div>
@@ -4699,7 +4556,7 @@ function openTaskDetail(idx) {
     <span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon||''}${cat.label}</span>
     ${t.time?`<span class="task-time">⏰ ${t.time}</span>`:''}
     ${t.priority==='high'?`<span class="task-tag" style="background:#ff6b6b20;color:#ff6b6b">HIGH</span>`:''}
-    ${t.done?`<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71">✓ DONE</span>`:t.date>today()?`<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe">🗓️ UPCOMING</span>`:`<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
+    ${t.done?`<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71">✓ DONE</span>`:`<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
     ${t.approval?`<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe;font-weight:600">🏷️ ${t.approval}</span>`:''}
     <span class="task-time">📅 ${t.date}</span>
   `;
