@@ -3957,19 +3957,31 @@ async function doLogin() {
           profile = { uid: cred.user.uid, username: ADMIN_USERNAME, name: 'Administrator', email: ADMIN_EMAIL, role: 'admin', status: 'approved', createdAt: new Date().toISOString() };
           await db.collection('users').doc(cred.user.uid).set(profile);
         }
+        // Ensure admin fields are always correct
+        if (profile.role !== 'admin') {
+          await db.collection('users').doc(cred.user.uid).update({ role: 'admin', status: 'approved' });
+          profile.role = 'admin'; profile.status = 'approved';
+        }
         currentUser = cred.user;
-        appStarted = true; // prevent onAuthStateChanged from firing again
+        appStarted = true;
         enterApp(profile);
       } catch(e) {
-        try {
-          const cred = await auth.createUserWithEmailAndPassword(ADMIN_EMAIL, ADMIN_PASSWORD);
-          const profile = { uid: cred.user.uid, username: ADMIN_USERNAME, name: 'Administrator', email: ADMIN_EMAIL, role: 'admin', status: 'approved', createdAt: new Date().toISOString() };
-          await db.collection('users').doc(cred.user.uid).set(profile);
-          currentUser = cred.user;
-          appStarted = true;
-          enterApp(profile);
-        } catch(e2) {
-          showMsg('loginMsg', 'Admin error: ' + e2.message, 'error');
+        if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential') {
+          // First time — create the admin account
+          try {
+            const cred = await auth.createUserWithEmailAndPassword(ADMIN_EMAIL, ADMIN_PASSWORD);
+            const profile = { uid: cred.user.uid, username: ADMIN_USERNAME, name: 'Administrator', email: ADMIN_EMAIL, role: 'admin', status: 'approved', createdAt: new Date().toISOString() };
+            await db.collection('users').doc(cred.user.uid).set(profile);
+            currentUser = cred.user;
+            appStarted = true;
+            enterApp(profile);
+          } catch(e2) {
+            appStarted = false;
+            showMsg('loginMsg', '❌ Admin setup error: ' + e2.message, 'error');
+          }
+        } else {
+          appStarted = false;
+          showMsg('loginMsg', '❌ Admin login error: ' + e.message, 'error');
         }
       }
       return;
@@ -4350,7 +4362,7 @@ function renderMobStats() {
 }
 
 function renderMobMenu() {
-  const session = getSession();
+  const session = currentUserProfile;
   if (!session) return;
   document.getElementById('mobMonthLabel').textContent =
     new Date(currentDate.getFullYear(), currentDate.getMonth()).toLocaleString('default', {month:'long', year:'numeric'});
@@ -4359,7 +4371,7 @@ function renderMobMenu() {
   document.getElementById('mobUserName').textContent = session.name;
   if (session.role === 'admin') {
     const ab = document.getElementById('mobAdminBtn');
-    ab.style.display = 'flex';
+    if (ab) ab.style.display = 'flex';
   }
   updateMobNotifBtn();
   renderMobMiniCal();
