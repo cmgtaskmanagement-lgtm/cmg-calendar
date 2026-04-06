@@ -4463,6 +4463,9 @@ function enterApp(profile) {
   updateNotifBtn();
   rescheduleAll();
   initNewFeatures();
+
+  // Always init tracking tab on login so categories are fresh
+  window._trackingInited = false;
 }
 
 // ── FIREBASE AUTH STATE LISTENER ──
@@ -5521,6 +5524,10 @@ function switchAppTab(tab) {
     if (!window._trackingInited) {
       window._trackingInited = true;
       initTrackingTab();
+    } else {
+      // Always re-render categories and filter bar to reflect latest TT_CATEGORIES
+      tt_renderCategories();
+      tt_renderCatFilterBar();
     }
   }
 }
