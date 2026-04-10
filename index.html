@@ -2682,6 +2682,27 @@ function dateKey(d) {
 }
 function today() { return dateKey(new Date()); }
 
+// Build the ✓ DONE tag with completion date + leadtime
+function buildDoneTag(t) {
+  if (!t.done) return `<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`;
+  let extra = '';
+  if (t.doneAt) {
+    const doneDate = new Date(t.doneAt);
+    const doneDateStr = doneDate.toLocaleDateString('en-PH', { month: 'short', day: 'numeric', year: 'numeric' });
+    // Calculate leadtime from task date to done date
+    if (t.date) {
+      const taskDate = new Date(t.date + 'T00:00:00');
+      const diffMs = doneDate - taskDate;
+      const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+      const leadStr = diffDays === 0 ? 'same day' : diffDays === 1 ? '1 day' : `${diffDays} days`;
+      extra = ` · ${doneDateStr} · ${leadStr}`;
+    } else {
+      extra = ` · ${doneDateStr}`;
+    }
+  }
+  return `<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71;font-weight:700" title="Completed${t.doneAt ? ' on ' + new Date(t.doneAt).toLocaleString('en-PH') : ''}">✓ DONE${extra}</span>`;
+}
+
 // ── FIRESTORE TASK OPS ──
 async function saveTask(taskData) {
   const ref = await db.collection('tasks').add(taskData);
@@ -2941,7 +2962,7 @@ function renderPanel() {
         <span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon ? cat.icon + ' ' : ''}${cat.label}</span>
         ${t.time ? `<span class="task-time">⏰ ${t.time}</span>` : ''}
         ${t.priority === 'high' ? `<span class="task-tag" style="background:#ff6b6b20;color:#ff6b6b">HIGH</span>` : ''}
-        ${t.done ? `<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71;font-weight:700">✓ DONE</span>` : `<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
+        ${buildDoneTag(t)}
         ${t.approval ? `<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe;font-weight:600">🏷️ ${t.approval}</span>` : ''}
         ${t.assignedTo ? `<span class="task-tag" style="background:rgba(107,159,255,0.12);color:#74b9ff">👤 ${t.assignedTo}</span>` : ''}
       </div>
@@ -2954,7 +2975,7 @@ function renderPanel() {
     el.onclick = async () => {
       const i = parseInt(el.dataset.idx);
       const t = tasks[i];
-      await updateTaskInDB(t._id, { done: !t.done });
+      await updateTaskInDB(t._id, { done: !t.done, doneAt: !t.done ? new Date().toISOString() : null });
     };
   });
   container.querySelectorAll('.edit-btn').forEach(el => {
@@ -4849,7 +4870,7 @@ function renderMobDayPanel(key) {
           <span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon||''}${cat.label}</span>
           ${t.time?`<span class="task-time">⏰ ${t.time}</span>`:''}
           ${t.priority==='high'?`<span class="task-tag" style="background:#ff6b6b20;color:#ff6b6b">HIGH</span>`:''}
-          ${t.done?`<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71;font-weight:700">✓ DONE</span>`:`<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
+          ${buildDoneTag(t)}
           ${t.approval?`<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe;font-weight:600">🏷️ ${t.approval}</span>`:''}
         </div>
         ${t.notes?`<div class="task-notes">${t.notes}</div>`:''}
@@ -4860,14 +4881,7 @@ function renderMobDayPanel(key) {
       el.onclick = async () => {
         const i = parseInt(el.dataset.idx);
         const t = tasks[i];
-        await updateTaskInDB(t._id, { done: !t.done });
-      };
-    });
-    container.querySelectorAll('.edit-btn').forEach(el => {
-      el.onclick = () => {
-        const i = parseInt(el.dataset.edit);
-        document.getElementById('mobDayPanel').classList.remove('open');
-        openEditModal(i);
+        await updateTaskInDB(t._id, { done: !t.done, doneAt: !t.done ? new Date().toISOString() : null });
       };
     });
     container.querySelectorAll('.dup-btn').forEach(el => {
@@ -5066,7 +5080,7 @@ function renderAgendaView() {
             <span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon||''}${cat.label}</span>
             ${t.time?`<span class="task-time">⏰ ${t.time}</span>`:''}
             ${t.assignedTo?`<span class="task-time">👤 ${t.assignedTo}</span>`:''}
-            ${t.done?`<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71">✓ DONE</span>`:`<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
+            ${buildDoneTag(t)}
             ${t.approval?`<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe;font-weight:600">🏷️ ${t.approval}</span>`:''}
             ${isPast && !t.done?`<span class="task-tag" style="background:rgba(255,107,107,0.2);color:#ff6b6b">⚠️ OVERDUE</span>`:''}
           </div>
@@ -5096,7 +5110,7 @@ function openTaskDetail(idx) {
     <span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon||''}${cat.label}</span>
     ${t.time?`<span class="task-time">⏰ ${t.time}</span>`:''}
     ${t.priority==='high'?`<span class="task-tag" style="background:#ff6b6b20;color:#ff6b6b">HIGH</span>`:''}
-    ${t.done?`<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71">✓ DONE</span>`:`<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
+    ${buildDoneTag(t)}
     ${t.approval?`<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe;font-weight:600">🏷️ ${t.approval}</span>`:''}
     <span class="task-time">📅 ${t.date}</span>
   `;
@@ -5969,13 +5983,13 @@ function tt_renderPanel() {
         <span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon||''}${cat.label}</span>
         ${t.time ? `<span class="task-time">⏰ ${t.time}</span>` : ''}
         ${t.priority === 'high' ? `<span class="task-tag" style="background:#ff6b6b20;color:#ff6b6b">HIGH</span>` : ''}
-        ${t.done ? `<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71">✓ DONE</span>` : `<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}
+        ${buildDoneTag(t)}
         ${t.approval ? `<span class="task-tag" style="background:rgba(162,155,254,0.15);color:#a29bfe">🏷️ ${t.approval}</span>` : ''}
         ${t.assignedTo ? `<span class="task-tag" style="background:rgba(107,159,255,0.12);color:#74b9ff">👤 ${t.assignedTo}</span>` : ''}
       </div>
       ${t.notes ? `<div class="task-notes">${t.notes}</div>` : ''}
     `;
-    item.querySelector('.task-check').onclick = async () => { await tt_updateTask(t._id, { done: !t.done }); };
+    item.querySelector('.task-check').onclick = async () => { await tt_updateTask(t._id, { done: !t.done, doneAt: !t.done ? new Date().toISOString() : null }); };
     item.querySelector('.edit-btn').onclick = () => tt_openEditModal(t._id);
     item.querySelector('.del-btn').onclick = async () => { if (confirm('Delete this task?')) await tt_deleteTask(t._id); };
     item.onclick = (e) => { if (!['task-check','edit-btn','del-btn'].some(c => e.target.closest?.('.'+c))) tt_openTaskDetail(t._id); };
@@ -6008,7 +6022,7 @@ function tt_renderMobDayPanel(key) {
         <div class="agenda-task-meta">
           <span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon||''}${cat.label}</span>
           ${t.time ? `<span class="task-time">⏰ ${t.time}</span>` : ''}
-          ${t.done ? `<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71">✓ DONE</span>` : ''}
+          ${t.done ? buildDoneTag(t) : ''}
         </div>
       </div>
     `;
@@ -6171,7 +6185,7 @@ function tt_renderAgendaView() {
     grouped[date].forEach(t => {
       const cat=tt_findCat(t.category);
       const row=document.createElement('div'); row.className='agenda-task';
-      row.innerHTML=`<div class="agenda-task-bar" style="background:${cat.color}"></div><div class="agenda-task-content"><div class="agenda-task-title">${t.title}</div><div class="agenda-task-meta"><span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon||''}${cat.label}</span>${t.time?`<span class="task-time">⏰ ${t.time}</span>`:''} ${t.done?`<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71">✓ DONE</span>`:`<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}${t.priority==='high'?`<span class="task-tag" style="background:#ff6b6b20;color:#ff6b6b">HIGH</span>`:''}</div></div>`;
+      row.innerHTML=`<div class="agenda-task-bar" style="background:${cat.color}"></div><div class="agenda-task-content"><div class="agenda-task-title">${t.title}</div><div class="agenda-task-meta"><span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon||''}${cat.label}</span>${t.time?`<span class="task-time">⏰ ${t.time}</span>`:''} ${buildDoneTag(t)}${t.priority==='high'?`<span class="task-tag" style="background:#ff6b6b20;color:#ff6b6b">HIGH</span>`:''}</div></div>`;
       row.onclick=()=>tt_openTaskDetail(t._id);
       section.appendChild(row);
     });
@@ -6381,7 +6395,7 @@ function tt_openTaskDetail(taskId) {
   const parentCat = tt_findParentCat(t.category);
   const catLabel = parentCat ? `${parentCat.label} › ${cat.label}` : cat.label;
   const dateStr=new Date(t.date+'T12:00:00').toLocaleString('default',{month:'long',day:'numeric',year:'numeric'});
-  document.getElementById('tt_tdMeta').innerHTML=`<span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon||''}${catLabel}</span><span class="task-tag" style="background:var(--surface2);color:var(--text-dim)">📅 ${dateStr}</span>${t.time?`<span class="task-tag" style="background:var(--surface2);color:var(--text-dim)">⏰ ${t.time}</span>`:''} ${t.done?`<span class="task-tag" style="background:rgba(46,204,113,0.15);color:#2ecc71">✓ DONE</span>`:`<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ PENDING</span>`}`;
+  document.getElementById('tt_tdMeta').innerHTML=`<span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon||''}${catLabel}</span><span class="task-tag" style="background:var(--surface2);color:var(--text-dim)">📅 ${dateStr}</span>${t.time?`<span class="task-tag" style="background:var(--surface2);color:var(--text-dim)">⏰ ${t.time}</span>`:''} ${buildDoneTag(t)}`;
   document.getElementById('tt_tdCreatedBy').textContent = t.createdByName || t.createdBy || '—';
   document.getElementById('tt_tdAssignedTo').textContent = t.assignedTo || '— Unassigned —';
 
