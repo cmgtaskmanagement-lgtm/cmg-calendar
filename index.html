@@ -4107,14 +4107,14 @@ function generatePDFReport() {
   <title>CMG ${periodLabel} Report — ${rangeLabel}</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 30px; color: #222; font-size: 13px; }
-    h1 { color: #0a0a0f; margin-bottom: 2px; font-size: 20px; }
+    h1 { color: #0a0a0f; margin-bottom: 2px; font-size: 20px; text-align: center; }
     .badge { display:inline-block; background:#0a0a0f; color:#c8f135; border-radius:4px; padding:2px 10px; font-size:11px; font-weight:800; letter-spacing:0.1em; text-transform:uppercase; margin-left:8px; vertical-align:middle; }
-    .meta { color: #666; font-size: 12px; margin: 6px 0 20px; }
-    .stats { display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap; }
+    .meta { color: #666; font-size: 12px; margin: 6px 0 20px; text-align: center; }
+    .stats { display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap; justify-content:center; }
     .stat { background:#f5f5f5; border-radius:8px; padding:10px 16px; text-align:center; min-width:80px; }
     .stat-val { font-size:22px; font-weight:800; }
     .stat-label { font-size:10px; color:#888; text-transform:uppercase; }
-    h2 { color:#0a0a0f; font-size:14px; margin:26px 0 8px; border-bottom:2px solid #0a0a0f; padding-bottom:5px; }
+    h2 { color:#0a0a0f; font-size:14px; margin:26px 0 8px; border-bottom:2px solid #0a0a0f; padding-bottom:5px; text-align: center; }
     table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:6px; }
     thead { background:#0a0a0f; color:white; }
     thead th { padding:8px; text-align:left; }
@@ -4290,9 +4290,9 @@ function bindAllEvents() {
   document.getElementById('vtWeek')?.addEventListener('click', () => switchView('week'));
   document.getElementById('vtAgenda')?.addEventListener('click', () => switchView('agenda'));
 
-  // Analytics
+  // Analytics — only bind buttons inside SocMed tab
   document.querySelector('[onclick="openAnalytics()"]')?.removeAttribute('onclick');
-  document.querySelectorAll('button').forEach(btn => {
+  document.querySelectorAll('#appTabCalendar button').forEach(btn => {
     if (btn.textContent.includes('Analytics') && !btn.id) {
       btn.addEventListener('click', openAnalytics);
     }
@@ -4328,9 +4328,9 @@ function bindAllEvents() {
     }
   });
 
-  // Mobile analytics
+  // Mobile analytics — only bind SocMed tab buttons, not TT tab
   document.querySelectorAll('button').forEach(btn => {
-    if (btn.textContent.includes('Analytics & Reports')) {
+    if (btn.textContent.includes('Analytics & Reports') && btn.closest('#appTabCalendar')) {
       btn.addEventListener('click', () => { openAnalytics(); closeMobDrawer('mobMenuDrawer'); });
     }
   });
@@ -6678,12 +6678,165 @@ function tt_selectReportPeriod(period){
 }
 window.tt_selectReportPeriod=tt_selectReportPeriod;
 
+function tt_getReportRange() {
+  const now = new Date();
+  const p = tt_currentReportPeriod;
+  let from, to;
+  if (p === 'weekly') {
+    const day = now.getDay();
+    const mon = new Date(now); mon.setDate(now.getDate() - ((day+6)%7));
+    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+    from = dateKey(mon); to = dateKey(sun);
+  } else if (p === 'monthly') {
+    from = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`;
+    to = dateKey(new Date(now.getFullYear(), now.getMonth()+1, 0));
+  } else if (p === 'quarterly') {
+    const q = Math.floor(now.getMonth()/3);
+    from = dateKey(new Date(now.getFullYear(), q*3, 1));
+    to = dateKey(new Date(now.getFullYear(), q*3+3, 0));
+  } else {
+    from = `${now.getFullYear()}-01-01`;
+    to = `${now.getFullYear()}-12-31`;
+  }
+  return { from, to };
+}
+
 function tt_generatePDFReport() {
-  // Minimal PDF gen (reuse same pattern as original)
-  if(typeof exportToPDF==='function'){
-    // swap tasks temporarily
-    const orig=tasks; tasks=tt_tasks; exportToPDF(); tasks=orig;
-  } else { alert('PDF export: use the Excel export for now, or open the main calendar tab for full PDF support.'); }
+  const { from, to } = tt_getReportRange();
+  if (!from || !to) { alert('Could not determine report range.'); return; }
+
+  const periodLabels = { weekly:'Weekly', monthly:'Monthly', quarterly:'Quarterly', annual:'Annual' };
+  const periodLabel  = periodLabels[tt_currentReportPeriod];
+  const todayKey     = today();
+
+  const filtered = tt_tasks.filter(t => t.date >= from && t.date <= to);
+  const done     = filtered.filter(t => t.done).length;
+  const overdue  = filtered.filter(t => !t.done && t.date < todayKey).length;
+  const rate     = filtered.length ? Math.round(done / filtered.length * 100) : 0;
+
+  // Task rows
+  const taskRows = filtered
+    .sort((a,b) => a.date.localeCompare(b.date))
+    .map(t => {
+      const cat = tt_findCat(t.category);
+      const isOverdue = !t.done && t.date < todayKey;
+      const leadtime = t.done && t.doneAt && t.date
+        ? (() => { const d = Math.round((new Date(t.doneAt)-new Date(t.date+'T00:00:00'))/(86400000)); return d===0?'Same day':d===1?'1 day':`${d} days`; })()
+        : '—';
+      return `<tr style="border-bottom:1px solid #eee">
+        <td style="padding:7px 8px">${t.title}</td>
+        <td style="padding:7px 8px">${cat.label}</td>
+        <td style="padding:7px 8px">${t.assignedTo||'—'}</td>
+        <td style="padding:7px 8px">${t.date}</td>
+        <td style="padding:7px 8px">${t.priority||'normal'}</td>
+        <td style="padding:7px 8px;color:${t.done?'#2ecc71':isOverdue?'#e74c3c':'#c0392b'};font-weight:600">${t.done?'✓ Done':isOverdue?'⚠️ Overdue':'⏳ Pending'}</td>
+        <td style="padding:7px 8px;text-align:center">${leadtime}</td>
+      </tr>`;
+    }).join('');
+
+  // Assignee rows
+  const assigneeMap = {};
+  filtered.forEach(t => {
+    const n = t.assignedTo||'Unassigned';
+    if (!assigneeMap[n]) assigneeMap[n]={total:0,done:0,overdue:0};
+    assigneeMap[n].total++;
+    if (t.done) assigneeMap[n].done++;
+    if (!t.done && t.date<todayKey) assigneeMap[n].overdue++;
+  });
+  const assigneeRows = Object.keys(assigneeMap).map(name => {
+    const r=assigneeMap[name]; const rA=r.total?Math.round(r.done/r.total*100):0;
+    return `<tr style="border-bottom:1px solid #eee">
+      <td style="padding:7px 8px;font-weight:600">${name}</td>
+      <td style="padding:7px 8px;text-align:center">${r.total}</td>
+      <td style="padding:7px 8px;text-align:center;color:#2ecc71;font-weight:600">${r.done}</td>
+      <td style="padding:7px 8px;text-align:center;color:#c0392b">${r.total-r.done}</td>
+      <td style="padding:7px 8px;text-align:center;color:#e74c3c;font-weight:600">${r.overdue}</td>
+      <td style="padding:7px 8px;text-align:center;color:#0984e3;font-weight:700">${rA}%</td>
+    </tr>`;
+  }).join('');
+
+  // Category rows
+  const catRows = TT_CATEGORIES.map(cat => {
+    const childIds=(cat.children||[]).map(c=>c.id);
+    const ct=filtered.filter(t=>t.category===cat.id||childIds.includes(t.category));
+    const cd=ct.filter(t=>t.done).length;
+    const cr=ct.length?Math.round(cd/ct.length*100):0;
+    return `<tr style="border-bottom:1px solid #eee">
+      <td style="padding:7px 8px">${cat.icon||''} ${cat.label}</td>
+      <td style="padding:7px 8px;text-align:center">${ct.length}</td>
+      <td style="padding:7px 8px;text-align:center;color:#2ecc71;font-weight:600">${cd}</td>
+      <td style="padding:7px 8px;text-align:center;color:#c0392b">${ct.length-cd}</td>
+      <td style="padding:7px 8px;text-align:center;color:#0984e3;font-weight:700">${cr}%</td>
+    </tr>`;
+  }).join('');
+
+  // Overdue rows
+  const overdueRows = filtered
+    .filter(t=>!t.done&&t.date<todayKey)
+    .sort((a,b)=>a.date.localeCompare(b.date))
+    .map(t => {
+      const cat=tt_findCat(t.category);
+      const days=Math.floor((new Date(todayKey)-new Date(t.date))/86400000);
+      return `<tr style="border-bottom:1px solid #eee">
+        <td style="padding:7px 8px">${t.title}</td>
+        <td style="padding:7px 8px">${t.assignedTo||'—'}</td>
+        <td style="padding:7px 8px">${cat.label}</td>
+        <td style="padding:7px 8px">${t.date}</td>
+        <td style="padding:7px 8px;color:#e74c3c;font-weight:700">${days} day${days!==1?'s':''}</td>
+      </tr>`;
+    }).join('');
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>CMG Task Tracking — ${periodLabel} Report</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 30px; color: #222; font-size: 13px; }
+    h1 { color: #0a0a0f; margin-bottom: 2px; font-size: 20px; text-align: center; }
+    .badge { display:inline-block; background:#0a0a0f; color:#c8f135; border-radius:4px; padding:2px 10px; font-size:11px; font-weight:800; letter-spacing:0.1em; text-transform:uppercase; margin-left:8px; vertical-align:middle; }
+    .meta { color: #666; font-size: 12px; margin: 6px 0 20px; text-align: center; }
+    .stats { display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap; justify-content:center; }
+    .stat { background:#f5f5f5; border-radius:8px; padding:10px 16px; text-align:center; min-width:80px; }
+    .stat-val { font-size:22px; font-weight:800; }
+    .stat-label { font-size:10px; color:#888; text-transform:uppercase; }
+    h2 { color:#0a0a0f; font-size:14px; margin:26px 0 8px; border-bottom:2px solid #0a0a0f; padding-bottom:5px; text-align: center; }
+    table { width:100%; border-collapse:collapse; font-size:12px; margin-bottom:6px; }
+    thead { background:#0a0a0f; color:white; }
+    thead th { padding:8px; text-align:left; }
+    tbody tr:nth-child(even) { background:#f9f9f9; }
+    .no-data { text-align:center; padding:14px; color:#999; background:#f9f9f9; border-radius:6px; }
+    .no-overdue { text-align:center; padding:14px; color:#2ecc71; font-weight:600; background:#f0fff4; border-radius:6px; }
+    @media print { body { padding:10px; } }
+  </style></head><body>
+
+  <h1>📋 CMG Task Tracking <span class="badge">${periodLabel} Report</span></h1>
+  <div class="meta">Dubeon Corporation &nbsp;·&nbsp; Period: <strong>${from}</strong> to <strong>${to}</strong> &nbsp;·&nbsp; Generated on ${new Date().toLocaleString()}</div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-val">${filtered.length}</div><div class="stat-label">Total Tasks</div></div>
+    <div class="stat"><div class="stat-val" style="color:#2ecc71">${done}</div><div class="stat-label">Completed</div></div>
+    <div class="stat"><div class="stat-val" style="color:#c0392b">${filtered.length-done}</div><div class="stat-label">Pending</div></div>
+    <div class="stat"><div class="stat-val" style="color:#e74c3c">${overdue}</div><div class="stat-label">Overdue</div></div>
+    <div class="stat"><div class="stat-val" style="color:#0984e3">${rate}%</div><div class="stat-label">Completion Rate</div></div>
+  </div>
+
+  <h2>👤 By Assignee</h2>
+  ${assigneeRows ? `<table><thead><tr><th>Assignee</th><th>Total</th><th>Completed</th><th>Pending</th><th>Overdue</th><th>Rate</th></tr></thead><tbody>${assigneeRows}</tbody></table>` : '<div class="no-data">No assignee data for this period.</div>'}
+
+  <h2>🗂️ By Category</h2>
+  ${catRows ? `<table><thead><tr><th>Category</th><th>Total</th><th>Completed</th><th>Pending</th><th>Rate</th></tr></thead><tbody>${catRows}</tbody></table>` : '<div class="no-data">No category data for this period.</div>'}
+
+  <h2>⚠️ Overdue Tasks</h2>
+  ${overdueRows ? `<table><thead><tr><th>Title</th><th>Assigned To</th><th>Category</th><th>Due Date</th><th>Days Overdue</th></tr></thead><tbody>${overdueRows}</tbody></table>` : '<div class="no-overdue">🎉 No overdue tasks in this period!</div>'}
+
+  <h2>📋 All Tasks in Period</h2>
+  ${taskRows ? `<table><thead><tr><th>Title</th><th>Category</th><th>Assigned To</th><th>Date</th><th>Priority</th><th>Status</th><th>Leadtime</th></tr></thead><tbody>${taskRows}</tbody></table>` : '<div class="no-data">No tasks found for this period.</div>'}
+
+  </body></html>`;
+
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+  setTimeout(() => win.print(), 500);
+  tt_closeReportModal();
 }
 window.tt_generatePDFReport=tt_generatePDFReport;
 
