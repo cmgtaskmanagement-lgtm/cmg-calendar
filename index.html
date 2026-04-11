@@ -3923,11 +3923,12 @@ function renderReportPeriodSelector(period) {
   const now = new Date();
 
   if (period === 'weekly') {
-    // Build last 12 weeks
+    // Build last 12 weeks — Monday to Sunday
     const options = [];
     for (let i = 0; i < 12; i++) {
+      const day = now.getDay();
       const start = new Date(now);
-      start.setDate(now.getDate() - now.getDay() - (i * 7));
+      start.setDate(now.getDate() - ((day + 6) % 7) - (i * 7));
       start.setHours(0,0,0,0);
       const end = new Date(start); end.setDate(start.getDate() + 6);
       const label = `${start.toLocaleString('default',{month:'short',day:'numeric'})} – ${end.toLocaleString('default',{month:'short',day:'numeric',year:'numeric'})}`;
@@ -7177,6 +7178,7 @@ function tt_generatePDFReport() {
       text-align: center;
       overflow: hidden;
       min-width: 0;
+      max-width: 100%;
     }
     .chart-title {
       font-size: 10px;
@@ -7188,7 +7190,14 @@ function tt_generatePDFReport() {
     }
     .chart-box canvas {
       display: block;
-      max-width: 100%;
+      max-width: 100% !important;
+      height: auto !important;
+    }
+    @media print {
+      .charts-wrap { page-break-inside: avoid; }
+      .charts-row { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; }
+      .chart-box { overflow: hidden !important; max-width: 100% !important; }
+      .chart-box canvas { max-width: 100% !important; height: auto !important; }
     }
 
     /* ═══ TABLES ═══ */
@@ -7361,12 +7370,16 @@ function tt_generatePDFReport() {
     const assigneeData = ${assigneeChartData};
     const catData2     = ${catChartData};
     const FONT = { family: "'Segoe UI', Arial, sans-serif" };
+    const charts = {};
 
-    window.addEventListener('load', function() {
+    function buildCharts() {
       const catFiltered = catData2.filter(c => c.total > 0);
 
-      /* ── Doughnut: Task Status ── */
-      new Chart(document.getElementById('chartStatus'), {
+      if (charts.status) charts.status.destroy();
+      if (charts.assignee) charts.assignee.destroy();
+      if (charts.category) charts.category.destroy();
+
+      charts.status = new Chart(document.getElementById('chartStatus'), {
         type: 'doughnut',
         data: {
           labels: statusData.map(d => d.label),
@@ -7375,13 +7388,13 @@ function tt_generatePDFReport() {
         options: {
           responsive: true,
           maintainAspectRatio: true,
-          aspectRatio: 1.4,
+          aspectRatio: 1.3,
+          animation: false,
           plugins: { legend: { position: 'bottom', labels: { font: { size: 11, family: FONT.family }, padding: 10, boxWidth: 12 } } }
         }
       });
 
-      /* ── Bar: By Assignee ── */
-      new Chart(document.getElementById('chartAssignee'), {
+      charts.assignee = new Chart(document.getElementById('chartAssignee'), {
         type: 'bar',
         data: {
           labels: assigneeData.map(d => d.name),
@@ -7393,7 +7406,8 @@ function tt_generatePDFReport() {
         options: {
           responsive: true,
           maintainAspectRatio: true,
-          aspectRatio: 1.6,
+          aspectRatio: 1.8,
+          animation: false,
           scales: {
             x: { stacked: true, ticks: { font: { size: 11, family: FONT.family } }, grid: { color: '#eee' } },
             y: { stacked: true, beginAtZero: true, ticks: { font: { size: 11, family: FONT.family } }, grid: { color: '#eee' } }
@@ -7402,8 +7416,7 @@ function tt_generatePDFReport() {
         }
       });
 
-      /* ── Horizontal Bar: By Category ── */
-      new Chart(document.getElementById('chartCategory'), {
+      charts.category = new Chart(document.getElementById('chartCategory'), {
         type: 'bar',
         data: {
           labels: catFiltered.map(c => c.label.replace(/^[^ ]+ /, '')),
@@ -7415,7 +7428,8 @@ function tt_generatePDFReport() {
         options: {
           responsive: true,
           maintainAspectRatio: true,
-          aspectRatio: 1.6,
+          aspectRatio: 1.8,
+          animation: false,
           indexAxis: 'y',
           scales: {
             x: { stacked: true, beginAtZero: true, ticks: { font: { size: 10, family: FONT.family } }, grid: { color: '#eee' } },
@@ -7424,14 +7438,34 @@ function tt_generatePDFReport() {
           plugins: { legend: { position: 'bottom', labels: { font: { size: 11, family: FONT.family }, padding: 10, boxWidth: 12 } } }
         }
       });
+    }
+
+    window.addEventListener('load', function() {
+      buildCharts();
+      // Resize charts to container, then print
+      setTimeout(function() {
+        Object.values(charts).forEach(c => { if(c){ c.resize(); c.update('none'); } });
+        setTimeout(function() { window.print(); }, 500);
+      }, 1800);
     });
+
+    // Also handle beforeprint for any manual Ctrl+P
+    function prepareChartsForPrint() {
+      Object.values(charts).forEach(chart => {
+        if (chart) { chart.resize(); chart.update('none'); }
+      });
+    }
+    window.onbeforeprint = prepareChartsForPrint;
+    if (window.matchMedia) {
+      const mql = window.matchMedia('print');
+      if (mql.addEventListener) mql.addEventListener('change', e => { if (e.matches) prepareChartsForPrint(); });
+    }
   <\/script>
   </body></html>`;
 
   const win = window.open('', '_blank');
   win.document.write(html);
   win.document.close();
-  setTimeout(() => win.print(), 2500);
   tt_closeReportModal();
 }
 window.tt_generatePDFReport=tt_generatePDFReport;
