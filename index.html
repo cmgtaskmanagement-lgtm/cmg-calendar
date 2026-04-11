@@ -7165,7 +7165,7 @@ function tt_generatePDFReport() {
     }
     .charts-row {
       display: grid;
-      grid-template-columns: 240px 1fr 1fr;
+      grid-template-columns: repeat(3, 1fr);
       gap: 14px;
       align-items: start;
     }
@@ -7176,6 +7176,7 @@ function tt_generatePDFReport() {
       padding: 12px;
       text-align: center;
       overflow: hidden;
+      min-width: 0;
     }
     .chart-title {
       font-size: 10px;
@@ -7356,75 +7357,73 @@ function tt_generatePDFReport() {
   </table></div>` : '<div class="no-data">No completed tasks for this period.</div>'}
 
   <script>
-    const statusData  = ${statusChartData};
-    const assigneeData= ${assigneeChartData};
-    const catData2    = ${catChartData};
-
+    const statusData   = ${statusChartData};
+    const assigneeData = ${assigneeChartData};
+    const catData2     = ${catChartData};
     const FONT = { family: "'Segoe UI', Arial, sans-serif" };
 
-    // Status doughnut — fixed square size
-    const statusCanvas = document.getElementById('chartStatus');
-    statusCanvas.width  = 220;
-    statusCanvas.height = 220;
-    new Chart(statusCanvas, {
-      type: 'doughnut',
-      data: {
-        labels: statusData.map(d=>d.label),
-        datasets:[{ data: statusData.map(d=>d.val), backgroundColor: statusData.map(d=>d.color), borderWidth: 2 }]
-      },
-      options:{
-        responsive: false,
-        maintainAspectRatio: false,
-        plugins:{ legend:{ position:'bottom', labels:{ font:{ size:11, family: FONT.family }, padding: 10, boxWidth: 12 } } }
-      }
-    });
+    window.addEventListener('load', function() {
+      const catFiltered = catData2.filter(c => c.total > 0);
 
-    // Assignee bar — fixed height
-    const assigneeCanvas = document.getElementById('chartAssignee');
-    assigneeCanvas.height = 200;
-    new Chart(assigneeCanvas, {
-      type: 'bar',
-      data: {
-        labels: assigneeData.map(d=>d.name),
-        datasets:[
-          { label:'Completed', data: assigneeData.map(d=>d.done),    backgroundColor:'#2ecc71cc', borderRadius:4 },
-          { label:'Pending',   data: assigneeData.map(d=>d.pending), backgroundColor:'#e74c3c99', borderRadius:4 }
-        ]
-      },
-      options:{
-        responsive: true,
-        maintainAspectRatio: false,
-        scales:{
-          x:{ stacked:true, ticks:{ font:{ size:11, family: FONT.family } }, grid:{ color:'#eee' } },
-          y:{ stacked:true, beginAtZero:true, ticks:{ font:{ size:11, family: FONT.family } }, grid:{ color:'#eee' } }
+      /* ── Doughnut: Task Status ── */
+      new Chart(document.getElementById('chartStatus'), {
+        type: 'doughnut',
+        data: {
+          labels: statusData.map(d => d.label),
+          datasets: [{ data: statusData.map(d => d.val), backgroundColor: statusData.map(d => d.color), borderWidth: 2 }]
         },
-        plugins:{ legend:{ position:'bottom', labels:{ font:{ size:11, family: FONT.family }, padding:10, boxWidth:12 } } }
-      }
-    });
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          aspectRatio: 1.4,
+          plugins: { legend: { position: 'bottom', labels: { font: { size: 11, family: FONT.family }, padding: 10, boxWidth: 12 } } }
+        }
+      });
 
-    // Category bar — height scales with number of categories
-    const catFiltered = catData2.filter(c=>c.total>0);
-    const catCanvas = document.getElementById('chartCategory');
-    catCanvas.height = Math.max(180, catFiltered.length * 30 + 60);
-    new Chart(catCanvas, {
-      type: 'bar',
-      data: {
-        labels: catFiltered.map(c=>c.label.replace(/^[^ ]+ /,'')),
-        datasets:[
-          { label:'Done',    data: catFiltered.map(c=>c.done),    backgroundColor: catFiltered.map(c=>c.color+'cc'), borderRadius:4 },
-          { label:'Pending', data: catFiltered.map(c=>c.pending), backgroundColor: catFiltered.map(c=>c.color+'55'), borderRadius:4 }
-        ]
-      },
-      options:{
-        responsive: true,
-        maintainAspectRatio: false,
-        indexAxis:'y',
-        scales:{
-          x:{ stacked:true, beginAtZero:true, ticks:{ font:{ size:10, family: FONT.family } }, grid:{ color:'#eee' } },
-          y:{ stacked:true, ticks:{ font:{ size:10, family: FONT.family } }, grid:{ color:'#eee' } }
+      /* ── Bar: By Assignee ── */
+      new Chart(document.getElementById('chartAssignee'), {
+        type: 'bar',
+        data: {
+          labels: assigneeData.map(d => d.name),
+          datasets: [
+            { label: 'Completed', data: assigneeData.map(d => d.done),    backgroundColor: '#2ecc71cc', borderRadius: 4 },
+            { label: 'Pending',   data: assigneeData.map(d => d.pending), backgroundColor: '#e74c3c99', borderRadius: 4 }
+          ]
         },
-        plugins:{ legend:{ position:'bottom', labels:{ font:{ size:11, family: FONT.family }, padding:10, boxWidth:12 } } }
-      }
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          aspectRatio: 1.6,
+          scales: {
+            x: { stacked: true, ticks: { font: { size: 11, family: FONT.family } }, grid: { color: '#eee' } },
+            y: { stacked: true, beginAtZero: true, ticks: { font: { size: 11, family: FONT.family } }, grid: { color: '#eee' } }
+          },
+          plugins: { legend: { position: 'bottom', labels: { font: { size: 11, family: FONT.family }, padding: 10, boxWidth: 12 } } }
+        }
+      });
+
+      /* ── Horizontal Bar: By Category ── */
+      new Chart(document.getElementById('chartCategory'), {
+        type: 'bar',
+        data: {
+          labels: catFiltered.map(c => c.label.replace(/^[^ ]+ /, '')),
+          datasets: [
+            { label: 'Done',    data: catFiltered.map(c => c.done),    backgroundColor: catFiltered.map(c => c.color + 'cc'), borderRadius: 4 },
+            { label: 'Pending', data: catFiltered.map(c => c.pending), backgroundColor: catFiltered.map(c => c.color + '55'), borderRadius: 4 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          aspectRatio: 1.6,
+          indexAxis: 'y',
+          scales: {
+            x: { stacked: true, beginAtZero: true, ticks: { font: { size: 10, family: FONT.family } }, grid: { color: '#eee' } },
+            y: { stacked: true, ticks: { font: { size: 10, family: FONT.family } }, grid: { color: '#eee' } }
+          },
+          plugins: { legend: { position: 'bottom', labels: { font: { size: 11, family: FONT.family }, padding: 10, boxWidth: 12 } } }
+        }
+      });
     });
   <\/script>
   </body></html>`;
@@ -7432,7 +7431,7 @@ function tt_generatePDFReport() {
   const win = window.open('', '_blank');
   win.document.write(html);
   win.document.close();
-  setTimeout(() => win.print(), 1200);
+  setTimeout(() => win.print(), 2500);
   tt_closeReportModal();
 }
 window.tt_generatePDFReport=tt_generatePDFReport;
