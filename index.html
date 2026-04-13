@@ -4076,8 +4076,9 @@ function generatePDFReport() {
     return `<span style="color:#c0392b">⏳ Pending</span>`;
   };
   const commentsHtml = t => (t.comments||[]).map(c =>
-    `<div style="margin-top:3px;font-size:10px;color:#555;padding-left:6px;border-left:2px solid #ddd">
-      <strong>${c.authorName||c.author||'?'}</strong> · ${new Date(c.time).toLocaleDateString('en-PH',{month:'short',day:'numeric'})}: ${c.text}
+    `<div style="margin-top:6px;padding:5px 8px 5px 10px;border-left:3px solid #c8f135;background:#f9f9f9;border-radius:0 4px 4px 0;">
+      <div style="font-size:10px;font-weight:700;color:#333;margin-bottom:3px">${c.authorName||c.author||'?'} <span style="font-weight:400;color:#888">· ${new Date(c.time).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'})}</span></div>
+      <div style="font-size:11px;color:#444;white-space:pre-wrap;line-height:1.6">${(c.text||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
     </div>`).join('');
 
   // ── Task rows (all) ──
@@ -4087,8 +4088,8 @@ function generatePDFReport() {
       const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
       const cmts = commentsHtml(t);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
-        <td style="padding:7px 8px">${t.title}${cmts?`<div style="margin-top:4px">${cmts}</div>`:''}</td>
-        <td style="padding:7px 8px">${t.notes||'—'}</td>
+        <td style="padding:7px 8px"><div style="font-weight:600;margin-bottom:${cmts?'4px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
+        <td style="padding:7px 8px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
         <td style="padding:7px 8px">${cat.label}</td>
         <td style="padding:7px 8px">${t.assignedTo||'—'}</td>
         <td style="padding:7px 8px;text-align:center">${t.date}</td>
@@ -4109,8 +4110,8 @@ function generatePDFReport() {
       const isOv = ref < todayKey;
       const cmts = commentsHtml(t);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
-        <td style="padding:7px 8px">${t.title}${cmts?`<div style="margin-top:4px">${cmts}</div>`:''}</td>
-        <td style="padding:7px 8px">${t.notes||'—'}</td>
+        <td style="padding:7px 8px"><div style="font-weight:600;margin-bottom:${cmts?'4px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
+        <td style="padding:7px 8px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
         <td style="padding:7px 8px">${cat.label}</td>
         <td style="padding:7px 8px">${t.assignedTo||'—'}</td>
         <td style="padding:7px 8px;text-align:center">${t.date}</td>
@@ -4168,7 +4169,7 @@ function generatePDFReport() {
       const days = Math.floor((new Date(todayKey) - new Date(ref)) / 86400000);
       const cmts = commentsHtml(t);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
-        <td style="padding:7px 8px">${t.title}${cmts?`<div style="margin-top:4px">${cmts}</div>`:''}</td>
+        <td style="padding:7px 8px"><div style="font-weight:600;margin-bottom:${cmts?'4px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
         <td style="padding:7px 8px">${t.assignedTo||'—'}</td>
         <td style="padding:7px 8px">${cat.label}</td>
         <td style="padding:7px 8px;text-align:center">${t.date}</td>
@@ -4186,8 +4187,8 @@ function generatePDFReport() {
       const cmts = commentsHtml(t);
       const doneDate = t.doneAt ? fmtDate(t.doneAt) : '—';
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
-        <td style="padding:7px 8px">${t.title}${cmts?`<div style="margin-top:4px">${cmts}</div>`:''}</td>
-        <td style="padding:7px 8px">${t.notes||'—'}</td>
+        <td style="padding:7px 8px"><div style="font-weight:600;margin-bottom:${cmts?'4px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
+        <td style="padding:7px 8px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
         <td style="padding:7px 8px">${cat.label}</td>
         <td style="padding:7px 8px">${t.assignedTo||'—'}</td>
         <td style="padding:7px 8px;text-align:center">${t.date}</td>
@@ -6900,20 +6901,23 @@ function tt_generatePDFReport() {
     return `<span style="color:#c0392b">⏳ Pending</span>`;
   };
 
+  // shared comment formatter for TT report
+  const ttCommentHtml = comments => (comments||[]).map(c =>
+    `<div style="margin-top:6px;padding:5px 8px 5px 10px;border-left:3px solid #c8f135;background:#f9f9f9;border-radius:0 4px 4px 0;">
+      <div style="font-size:10px;font-weight:700;color:#333;margin-bottom:3px">${c.authorName||c.author||'?'} <span style="font-weight:400;color:#888">· ${new Date(c.time).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'})}</span></div>
+      <div style="font-size:11px;color:#444;white-space:pre-wrap;line-height:1.6">${(c.text||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+    </div>`
+  ).join('');
+
   // ── Task rows ──
   const taskRows = filtered
     .sort((a,b) => a.date.localeCompare(b.date))
     .map(t => {
       const cat = tt_findCat(t.category);
-      const comments = (t.comments||[]).map(c =>
-        `<div style="margin-top:3px;font-size:10px;color:#555;padding-left:6px;border-left:2px solid #ddd">
-          <strong>${c.authorName||c.author||'?'}</strong> · ${new Date(c.time).toLocaleDateString('en-PH',{month:'short',day:'numeric'})}:
-          ${c.text}
-        </div>`
-      ).join('');
+      const cmts = ttCommentHtml(t.comments);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
-        <td style="padding:7px 8px">${t.title}${comments ? `<div style="margin-top:4px">${comments}</div>` : ''}</td>
-        <td style="padding:7px 8px">${t.notes||'—'}</td>
+        <td style="padding:7px 8px"><div style="font-weight:600;margin-bottom:${cmts?'4px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
+        <td style="padding:7px 8px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
         <td style="padding:7px 8px">${cat.label}</td>
         <td style="padding:7px 8px">${t.assignedTo||'—'}</td>
         <td style="padding:7px 8px;text-align:center">${t.date}</td>
@@ -6969,14 +6973,9 @@ function tt_generatePDFReport() {
       const cat=tt_findCat(t.category);
       const ref=tt_overdueRef(t);
       const days=Math.floor((new Date(todayKey)-new Date(ref))/86400000);
-      const comments = (t.comments||[]).map(c =>
-        `<div style="margin-top:3px;font-size:10px;color:#555;padding-left:6px;border-left:2px solid #ddd">
-          <strong>${c.authorName||c.author||'?'}</strong> · ${new Date(c.time).toLocaleDateString('en-PH',{month:'short',day:'numeric'})}:
-          ${c.text}
-        </div>`
-      ).join('');
+      const cmts = ttCommentHtml(t.comments);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
-        <td style="padding:7px 8px">${t.title}${comments ? `<div style="margin-top:4px">${comments}</div>` : ''}</td>
+        <td style="padding:7px 8px"><div style="font-weight:600;margin-bottom:${cmts?'4px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
         <td style="padding:7px 8px">${t.assignedTo||'—'}</td>
         <td style="padding:7px 8px">${cat.label}</td>
         <td style="padding:7px 8px;text-align:center">${t.date}</td>
@@ -6993,15 +6992,10 @@ function tt_generatePDFReport() {
       const cat = tt_findCat(t.category);
       const ref = tt_overdueRef(t);
       const isOv = ref < todayKey;
-      const comments = (t.comments||[]).map(c =>
-        `<div style="margin-top:3px;font-size:10px;color:#555;padding-left:6px;border-left:2px solid #ddd">
-          <strong>${c.authorName||c.author||'?'}</strong> · ${new Date(c.time).toLocaleDateString('en-PH',{month:'short',day:'numeric'})}:
-          ${c.text}
-        </div>`
-      ).join('');
+      const cmts = ttCommentHtml(t.comments);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
-        <td style="padding:7px 8px">${t.title}${comments?`<div style="margin-top:4px">${comments}</div>`:''}</td>
-        <td style="padding:7px 8px">${t.notes||'—'}</td>
+        <td style="padding:7px 8px"><div style="font-weight:600;margin-bottom:${cmts?'4px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
+        <td style="padding:7px 8px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
         <td style="padding:7px 8px">${cat.label}</td>
         <td style="padding:7px 8px">${t.assignedTo||'—'}</td>
         <td style="padding:7px 8px;text-align:center">${t.date}</td>
@@ -7017,15 +7011,10 @@ function tt_generatePDFReport() {
     .sort((a,b) => (a.doneAt||a.date).localeCompare(b.doneAt||b.date))
     .map(t => {
       const cat = tt_findCat(t.category);
-      const comments = (t.comments||[]).map(c =>
-        `<div style="margin-top:3px;font-size:10px;color:#555;padding-left:6px;border-left:2px solid #ddd">
-          <strong>${c.authorName||c.author||'?'}</strong> · ${new Date(c.time).toLocaleDateString('en-PH',{month:'short',day:'numeric'})}:
-          ${c.text}
-        </div>`
-      ).join('');
+      const cmts = ttCommentHtml(t.comments);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
-        <td style="padding:7px 8px">${t.title}${comments ? `<div style="margin-top:4px">${comments}</div>` : ''}</td>
-        <td style="padding:7px 8px">${t.notes||'—'}</td>
+        <td style="padding:7px 8px"><div style="font-weight:600;margin-bottom:${cmts?'4px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
+        <td style="padding:7px 8px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
         <td style="padding:7px 8px">${cat.label}</td>
         <td style="padding:7px 8px">${t.assignedTo||'—'}</td>
         <td style="padding:7px 8px;text-align:center">${t.date}</td>
