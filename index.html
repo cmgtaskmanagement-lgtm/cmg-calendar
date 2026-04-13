@@ -4127,6 +4127,27 @@ function generatePDFReport() {
       </tr>`;
     }).join('');
 
+  // ── Pending leadtime: count days from Scheduled→DueDate, excluding Sundays ──
+  const calcPendingLeadtime = t => {
+    const start = t.date;
+    const end   = t.dueDate || t.date;
+    if (!start || !end) return '—';
+    const s = new Date(start + 'T00:00:00');
+    const e = new Date(end   + 'T00:00:00');
+    if (s > e) return '—';
+    let count = 0;
+    const cur = new Date(s);
+    while (cur <= e) {
+      if (cur.getDay() !== 0) count++; // 0 = Sunday
+      cur.setDate(cur.getDate() + 1);
+    }
+    // subtract 1 so same-day = 0
+    count = Math.max(0, count - 1);
+    if (count === 0) return '<span style="color:#2ecc71;font-weight:700">Same day</span>';
+    const color = count <= 3 ? '#e74c3c' : count <= 7 ? '#e17055' : '#555';
+    return `<span style="color:${color};font-weight:600">${count} day${count!==1?'s':''}</span>`;
+  };
+
   // ── Pending rows ──
   const pendingRows = filtered
     .filter(t => !t.done)
@@ -4136,6 +4157,7 @@ function generatePDFReport() {
       const ref = t.dueDate || t.date;
       const isOv = ref < todayKey;
       const cmts = commentsHtml(t);
+      const lt   = calcPendingLeadtime(t);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
         <td style="padding:3px 7px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
         <td style="padding:3px 7px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
@@ -4145,7 +4167,7 @@ function generatePDFReport() {
         <td style="padding:3px 7px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
         <td style="padding:3px 7px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
         <td style="padding:3px 7px;color:${isOv?'#e74c3c':'#c0392b'};font-weight:700">${isOv?'⚠️ Overdue':'⏳ Pending'}</td>
-        <td style="padding:3px 7px;text-align:center">—</td>
+        <td style="padding:3px 7px;text-align:center">${lt}</td>
       </tr>`;
     }).join('');
 
@@ -7062,6 +7084,26 @@ function tt_generatePDFReport() {
       </tr>`;
     }).join('');
 
+  // ── Pending leadtime: count days from Scheduled→DueDate, excluding Sundays ──
+  const calcPendingLeadtime = t => {
+    const start = t.date;
+    const end   = t.dueDate || t.date;
+    if (!start || !end) return '—';
+    const s = new Date(start + 'T00:00:00');
+    const e = new Date(end   + 'T00:00:00');
+    if (s > e) return '—';
+    let count = 0;
+    const cur = new Date(s);
+    while (cur <= e) {
+      if (cur.getDay() !== 0) count++;
+      cur.setDate(cur.getDate() + 1);
+    }
+    count = Math.max(0, count - 1);
+    if (count === 0) return '<span style="color:#2ecc71;font-weight:700">Same day</span>';
+    const color = count <= 3 ? '#e74c3c' : count <= 7 ? '#e17055' : '#555';
+    return `<span style="color:${color};font-weight:600">${count} day${count!==1?'s':''}</span>`;
+  };
+
   // ── Pending rows ──
   const pendingRows = filtered
     .filter(t => !t.done)
@@ -7071,6 +7113,7 @@ function tt_generatePDFReport() {
       const ref = tt_overdueRef(t);
       const isOv = ref < todayKey;
       const cmts = ttCommentHtml(t.comments);
+      const lt   = calcPendingLeadtime(t);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
         <td style="padding:3px 7px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
         <td style="padding:3px 7px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
@@ -7080,7 +7123,7 @@ function tt_generatePDFReport() {
         <td style="padding:3px 7px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
         <td style="padding:3px 7px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
         <td style="padding:3px 7px;color:${isOv?'#e74c3c':'#c0392b'};font-weight:700">${isOv?'⚠️ Overdue':'⏳ Pending'}</td>
-        <td style="padding:3px 7px;text-align:center">—</td>
+        <td style="padding:3px 7px;text-align:center">${lt}</td>
       </tr>`;
     }).join('');
   // ── Done rows ──
