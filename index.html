@@ -4235,6 +4235,7 @@ function generatePDFReport() {
       const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
       const cmts = commentsHtml(t);
       const doneDate = t.doneAt ? fmtDate(t.doneAt) : '—';
+      const lt = calcPendingLeadtime(t);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
         <td style="padding:3px 7px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
         <td style="padding:3px 7px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
@@ -4244,7 +4245,7 @@ function generatePDFReport() {
         <td style="padding:3px 7px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
         <td style="padding:3px 7px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
         <td style="padding:3px 7px;color:#2ecc71;font-weight:700">${doneDate}</td>
-        <td style="padding:3px 7px;text-align:center">${calcLeadtime(t)}</td>
+        <td style="padding:3px 7px;text-align:center">${lt}</td>
       </tr>`;
     }).join('');
 
@@ -7133,6 +7134,7 @@ function tt_generatePDFReport() {
     .map(t => {
       const cat = tt_findCat(t.category);
       const cmts = ttCommentHtml(t.comments);
+      const lt = calcPendingLeadtime(t);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
         <td style="padding:3px 7px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
         <td style="padding:3px 7px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
@@ -7142,7 +7144,7 @@ function tt_generatePDFReport() {
         <td style="padding:3px 7px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
         <td style="padding:3px 7px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
         <td style="padding:3px 7px;color:#2ecc71;font-weight:700">${t.doneAt ? fmtDate(t.doneAt) : '—'}</td>
-        <td style="padding:3px 7px;text-align:center">${leadtime(t)}</td>
+        <td style="padding:3px 7px;text-align:center">${lt}</td>
       </tr>`;
     }).join('');
 
