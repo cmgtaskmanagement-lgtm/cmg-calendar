@@ -2334,6 +2334,7 @@
           <button class="report-period-btn"        onclick="tt_selectReportPeriod('monthly')"  id="tt_rp-monthly">📆 Monthly</button>
           <button class="report-period-btn"        onclick="tt_selectReportPeriod('quarterly')" id="tt_rp-quarterly">📊 Quarterly</button>
           <button class="report-period-btn"        onclick="tt_selectReportPeriod('annual')"   id="tt_rp-annual">📈 Annual</button>
+          <button class="report-period-btn"        onclick="tt_selectReportPeriod('custom')"   id="tt_rp-custom" style="grid-column:1/-1">📌 Custom Date Range</button>
         </div>
       </div>
       <div id="tt_reportPeriodSelector" style="margin-bottom:1.25rem"></div>
@@ -2461,6 +2462,7 @@
           <button class="report-period-btn"        onclick="selectReportPeriod('monthly')"  id="rp-monthly">  📆 Monthly</button>
           <button class="report-period-btn"        onclick="selectReportPeriod('quarterly')" id="rp-quarterly">📊 Quarterly</button>
           <button class="report-period-btn"        onclick="selectReportPeriod('annual')"   id="rp-annual">   📈 Annual</button>
+          <button class="report-period-btn"        onclick="selectReportPeriod('custom')"   id="rp-custom" style="grid-column:1/-1">📌 Custom Date Range</button>
         </div>
       </div>
 
@@ -3912,7 +3914,7 @@ function closeReportModal() {
 
 function selectReportPeriod(period) {
   currentReportPeriod = period;
-  ['weekly','monthly','quarterly','annual'].forEach(p => {
+  ['weekly','monthly','quarterly','annual','custom'].forEach(p => {
     document.getElementById(`rp-${p}`)?.classList.toggle('active', p === period);
   });
   renderReportPeriodSelector(period);
@@ -3994,12 +3996,36 @@ function renderReportPeriodSelector(period) {
       <select id="reportRangeSelect" onchange="updateReportPreview()" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.82rem;outline:none">
         ${options.join('')}
       </select>`;
+
+  } else if (period === 'custom') {
+    const todayStr = dateKey(now);
+    sel.innerHTML = `
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Custom Date Range</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <div style="font-size:0.68rem;color:var(--text-muted);margin-bottom:4px;font-family:'Syne',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:0.08em">From</div>
+          <input type="date" id="reportCustomFrom" value="${todayStr}"
+            onchange="updateReportPreview()"
+            style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.82rem;outline:none;cursor:pointer">
+        </div>
+        <div>
+          <div style="font-size:0.68rem;color:var(--text-muted);margin-bottom:4px;font-family:'Syne',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:0.08em">To</div>
+          <input type="date" id="reportCustomTo" value="${todayStr}"
+            onchange="updateReportPreview()"
+            style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.82rem;outline:none;cursor:pointer">
+        </div>
+      </div>`;
   }
 
   updateReportPreview();
 }
 
 function getReportRange() {
+  if (currentReportPeriod === 'custom') {
+    const from = document.getElementById('reportCustomFrom')?.value || '';
+    const to   = document.getElementById('reportCustomTo')?.value   || '';
+    return { from, to };
+  }
   const val = document.getElementById('reportRangeSelect')?.value || '';
   const [from, to] = val.split('|');
   return { from, to };
@@ -4044,11 +4070,12 @@ function updateReportPreview() {
 }
 
 function generatePDFReport() {
-  const { from, to } = getReportRange();
+  let { from, to } = getReportRange();
   if (!from || !to) { alert('Please select a period first.'); return; }
+  if (from > to) { const tmp = from; from = to; to = tmp; }
 
-  const periodLabels = { weekly: 'Weekly', monthly: 'Monthly', quarterly: 'Quarterly', annual: 'Annual' };
-  const periodLabel  = periodLabels[currentReportPeriod];
+  const periodLabels = { weekly: 'Weekly', monthly: 'Monthly', quarterly: 'Quarterly', annual: 'Annual', custom: 'Custom' };
+  const periodLabel  = periodLabels[currentReportPeriod] || 'Custom';
   const rangeLabel   = `${from} to ${to}`;
   const todayKey     = today();
 
@@ -6841,9 +6868,30 @@ window.tt_openReportModal=tt_openReportModal; window.tt_closeReportModal=tt_clos
 
 function tt_selectReportPeriod(period){
   tt_currentReportPeriod=period;
-  ['weekly','monthly','quarterly','annual'].forEach(p=>document.getElementById(`tt_rp-${p}`)?.classList.toggle('active',p===period));
+  ['weekly','monthly','quarterly','annual','custom'].forEach(p=>document.getElementById(`tt_rp-${p}`)?.classList.toggle('active',p===period));
   const sel=document.getElementById('tt_reportPeriodSelector'); if(!sel)return;
-  sel.innerHTML=`<div style="font-size:0.78rem;color:var(--text-muted);font-family:'DM Mono',monospace">Period selected: <strong style="color:var(--accent)">${period}</strong></div>`;
+  if (period === 'custom') {
+    const todayStr = today();
+    sel.innerHTML = `
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.7rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:8px">Custom Date Range</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <div style="font-size:0.68rem;color:var(--text-muted);margin-bottom:4px;font-family:'Syne',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:0.08em">From</div>
+          <input type="date" id="tt_reportCustomFrom" value="${todayStr}"
+            onchange="tt_updateReportPreview()"
+            style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.82rem;outline:none;cursor:pointer">
+        </div>
+        <div>
+          <div style="font-size:0.68rem;color:var(--text-muted);margin-bottom:4px;font-family:'Syne',sans-serif;font-weight:600;text-transform:uppercase;letter-spacing:0.08em">To</div>
+          <input type="date" id="tt_reportCustomTo" value="${todayStr}"
+            onchange="tt_updateReportPreview()"
+            style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.82rem;outline:none;cursor:pointer">
+        </div>
+      </div>`;
+    tt_updateReportPreview();
+  } else {
+    sel.innerHTML=`<div style="font-size:0.78rem;color:var(--text-muted);font-family:'DM Mono',monospace">Period selected: <strong style="color:var(--accent)">${period}</strong></div>`;
+  }
 }
 window.tt_selectReportPeriod=tt_selectReportPeriod;
 
@@ -6851,7 +6899,12 @@ function tt_getReportRange() {
   const now = new Date();
   const p = tt_currentReportPeriod;
   let from, to;
-  if (p === 'weekly') {
+  if (p === 'custom') {
+    from = document.getElementById('tt_reportCustomFrom')?.value || today();
+    to   = document.getElementById('tt_reportCustomTo')?.value   || today();
+    if (from > to) { const tmp = from; from = to; to = tmp; } // swap if reversed
+    return { from, to };
+  } else if (p === 'weekly') {
     const day = now.getDay();
     const mon = new Date(now); mon.setDate(now.getDate() - ((day+6)%7));
     const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
@@ -6870,12 +6923,33 @@ function tt_getReportRange() {
   return { from, to };
 }
 
+function tt_updateReportPreview() {
+  const { from, to } = tt_getReportRange();
+  if (!from || !to) return;
+  const filtered = tt_tasks.filter(t => t.date >= from && t.date <= to);
+  const done     = filtered.filter(t => t.done).length;
+  const overdue  = filtered.filter(t => tt_isOverdue(t)).length;
+  const rate     = filtered.length ? Math.round(done / filtered.length * 100) : 0;
+  const preview  = document.getElementById('tt_reportPreview');
+  if (preview) preview.style.display = 'block';
+  const content = document.getElementById('tt_reportPreviewContent');
+  if (content) content.innerHTML = `
+    <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:var(--accent)">${filtered.length}</div><div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Total Tasks</div></div>
+    <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:#2ecc71">${done}</div><div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Completed</div></div>
+    <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:#74b9ff">${rate}%</div><div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Rate</div></div>
+    <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:#ff6b6b">${overdue}</div><div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Overdue</div></div>
+    <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:#ff9f43">${filtered.length - done}</div><div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Pending</div></div>
+    <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:#a29bfe">${[...new Set(filtered.map(t=>t.assignedTo||'Unassigned'))].length}</div><div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Members</div></div>
+  `;
+}
+window.tt_updateReportPreview = tt_updateReportPreview;
+
 function tt_generatePDFReport() {
   const { from, to } = tt_getReportRange();
   if (!from || !to) { alert('Could not determine report range.'); return; }
 
-  const periodLabels = { weekly:'Weekly', monthly:'Monthly', quarterly:'Quarterly', annual:'Annual' };
-  const periodLabel  = periodLabels[tt_currentReportPeriod];
+  const periodLabels = { weekly:'Weekly', monthly:'Monthly', quarterly:'Quarterly', annual:'Annual', custom:'Custom' };
+  const periodLabel  = periodLabels[tt_currentReportPeriod] || 'Custom';
   const todayKey     = today();
 
   const filtered = tt_tasks.filter(t => t.date >= from && t.date <= to);
