@@ -1486,6 +1486,9 @@
       </div>
       <div class="auth-msg" id="loginMsg"></div>
       <button class="auth-btn" id="loginBtn">Sign In</button>
+      <div style="text-align:center;margin-top:10px">
+        <button onclick="openForgotPassword()" style="background:none;border:none;color:var(--accent);font-family:'DM Mono',monospace;font-size:0.78rem;cursor:pointer;text-decoration:underline;opacity:0.8;letter-spacing:0.02em;">🔑 Forgot Password?</button>
+      </div>
     </div>
 
     <!-- REGISTER -->
@@ -1516,7 +1519,29 @@
   </div>
 </div>
 
-<!-- ─── ADMIN PANEL ─── -->
+<!-- ─── FORGOT PASSWORD MODAL ─── -->
+<div class="modal-overlay" id="forgotPasswordOverlay" style="z-index:600">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-title">
+      <span>🔑 Reset Password</span>
+      <button class="modal-close" onclick="closeForgotPassword()">✕</button>
+    </div>
+    <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1.25rem;line-height:1.6">
+      Enter your email address and we'll send you a link to reset your password.
+    </p>
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <div class="auth-input-wrap" style="margin-bottom:0">
+        <span class="auth-input-icon">📧</span>
+        <input class="auth-input" id="forgotEmail" type="email" placeholder="your@email.com" />
+      </div>
+    </div>
+    <div class="auth-msg" id="forgotMsg" style="margin-bottom:0.75rem"></div>
+    <button onclick="doForgotPassword()" style="width:100%;background:var(--accent);color:#0a0a0f;border:none;border-radius:8px;padding:12px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.9rem;cursor:pointer;letter-spacing:0.03em;transition:transform 0.15s,box-shadow 0.15s;" onmouseenter="this.style.boxShadow='0 4px 20px rgba(200,241,53,0.4)'" onmouseleave="this.style.boxShadow=''">
+      Send Reset Link
+    </button>
+  </div>
+</div>
 <div class="admin-overlay hidden" id="adminOverlay">
   <div class="admin-card">
     <div class="admin-title">
@@ -1633,7 +1658,7 @@
         </div>
         <div class="stat-card red" onclick="openStatModal('pending')" title="View pending tasks this month">
           <div class="stat-val" id="statPending">0</div>
-          <div class="stat-label">Pending</div>
+          <div class="stat-label">Ongoing</div>
         </div>
       </div>
       <div class="progress-wrap" style="margin-top:12px">
@@ -1804,7 +1829,7 @@
       <div class="stat-card" onclick="openStatModal('all')"><div class="stat-val" id="mStatTotal">0</div><div class="stat-label">Total Tasks</div></div>
       <div class="stat-card green" onclick="openStatModal('completed')"><div class="stat-val" id="mStatDone">0</div><div class="stat-label">Completed</div></div>
       <div class="stat-card blue" onclick="openStatModal('month')"><div class="stat-val" id="mStatMonth">0</div><div class="stat-label">This Month</div></div>
-      <div class="stat-card red" onclick="openStatModal('pending')"><div class="stat-val" id="mStatPending">0</div><div class="stat-label">Pending</div></div>
+      <div class="stat-card red" onclick="openStatModal('pending')"><div class="stat-val" id="mStatPending">0</div><div class="stat-label">Ongoing</div></div>
     </div>
     <div class="progress-wrap"><div class="progress-bar" id="mProgressBar" style="width:0%"></div></div>
     <div class="progress-label"><span>Progress this month</span><span id="mProgressPct">0%</span></div>
@@ -1947,7 +1972,7 @@
         <div class="stat-card"       onclick="tt_openStatModal('all')"       title="View all tasks"><div class="stat-val" id="tt_statTotal">0</div><div class="stat-label">Total Tasks</div></div>
         <div class="stat-card green" onclick="tt_openStatModal('completed')" title="View completed"><div class="stat-val" id="tt_statDone">0</div><div class="stat-label">Completed</div></div>
         <div class="stat-card blue"  onclick="tt_openStatModal('month')"     title="This month"><div class="stat-val" id="tt_statMonth">0</div><div class="stat-label">This Month</div></div>
-        <div class="stat-card red"   onclick="tt_openStatModal('pending')"   title="View pending"><div class="stat-val" id="tt_statPending">0</div><div class="stat-label">Pending</div></div>
+        <div class="stat-card red"   onclick="tt_openStatModal('pending')"   title="View pending"><div class="stat-val" id="tt_statPending">0</div><div class="stat-label">Ongoing</div></div>
       </div>
       <div class="progress-wrap" style="margin-top:12px">
         <div class="progress-bar" id="tt_progressBar" style="width:0%"></div>
@@ -2066,7 +2091,7 @@
       <div class="stat-card" onclick="tt_openStatModal('all')"><div class="stat-val" id="tt_mStatTotal">0</div><div class="stat-label">Total Tasks</div></div>
       <div class="stat-card green" onclick="tt_openStatModal('completed')"><div class="stat-val" id="tt_mStatDone">0</div><div class="stat-label">Completed</div></div>
       <div class="stat-card blue" onclick="tt_openStatModal('month')"><div class="stat-val" id="tt_mStatMonth">0</div><div class="stat-label">This Month</div></div>
-      <div class="stat-card red" onclick="tt_openStatModal('pending')"><div class="stat-val" id="tt_mStatPending">0</div><div class="stat-label">Pending</div></div>
+      <div class="stat-card red" onclick="tt_openStatModal('pending')"><div class="stat-val" id="tt_mStatPending">0</div><div class="stat-label">Ongoing</div></div>
     </div>
     <div class="progress-wrap"><div class="progress-bar" id="tt_mProgressBar" style="width:0%"></div></div>
     <div class="progress-label"><span>Progress this month</span><span id="tt_mProgressPct">0%</span></div>
@@ -4056,11 +4081,11 @@ function updateReportPreview() {
     </div>
     <div style="text-align:center">
       <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:#ff6b6b">${overdue}</div>
-      <div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Overdue</div>
+      <div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Pending</div>
     </div>
     <div style="text-align:center">
       <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:#ff9f43">${filtered.length - done}</div>
-      <div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Pending</div>
+      <div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Ongoing</div>
     </div>
     <div style="text-align:center">
       <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:#a29bfe">${[...new Set(filtered.map(t=>t.assignedTo||'Unassigned'))].length}</div>
@@ -4099,8 +4124,8 @@ function generatePDFReport() {
       return `<span style="color:#2ecc71;font-weight:700">✓ Done</span>${dt ? `<br><span style="font-size:10px;color:#555">${dt} · ${lt}</span>` : ''}`;
     }
     const ref = t.dueDate || t.date;
-    if (ref < todayKey) return `<span style="color:#e74c3c;font-weight:700">⚠️ Overdue</span>`;
-    return `<span style="color:#c0392b">⏳ Pending</span>`;
+    if (ref < todayKey) return `<span style="color:#e74c3c;font-weight:700">⚠️ Pending</span>`;
+    return `<span style="color:#c0392b">⏳ Ongoing</span>`;
   };
   const commentsHtml = t => (t.comments||[]).map(c =>
     `<div class="cmt-block">
@@ -4166,7 +4191,7 @@ function generatePDFReport() {
         <td style="padding:3px 7px;text-align:center">${t.date}</td>
         <td style="padding:3px 7px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
         <td style="padding:3px 7px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
-        <td style="padding:3px 7px;color:${isOv?'#e74c3c':'#c0392b'};font-weight:700">${isOv?'⚠️ Overdue':'⏳ Pending'}</td>
+        <td style="padding:3px 7px;color:${isOv?'#e74c3c':'#c0392b'};font-weight:700">${isOv?'⚠️ Pending':'⏳ Ongoing'}</td>
         <td style="padding:3px 7px;text-align:center">${lt}</td>
       </tr>`;
     }).join('');
@@ -4320,8 +4345,8 @@ function generatePDFReport() {
   <div class="stats">
     <div class="stat"><div class="stat-val">${filtered.length}</div><div class="stat-label">Total Tasks</div></div>
     <div class="stat"><div class="stat-val" style="color:#2ecc71">${done}</div><div class="stat-label">Completed</div></div>
-    <div class="stat"><div class="stat-val" style="color:#c0392b">${filtered.length-done}</div><div class="stat-label">Pending</div></div>
-    <div class="stat"><div class="stat-val" style="color:#e74c3c">${overdue}</div><div class="stat-label">Overdue</div></div>
+    <div class="stat"><div class="stat-val" style="color:#c0392b">${filtered.length-done}</div><div class="stat-label">Ongoing</div></div>
+    <div class="stat"><div class="stat-val" style="color:#e74c3c">${overdue}</div><div class="stat-label">Pending</div></div>
     <div class="stat"><div class="stat-val" style="color:#0984e3">${rate}%</div><div class="stat-label">Completion Rate</div></div>
   </div>
 
@@ -4331,10 +4356,10 @@ function generatePDFReport() {
   <div class="section-head">📱 Platform Breakdown</div>
   <div class="table-wrap"><table><thead><tr><th class="left">Platform</th><th class="num">Total</th><th class="num">Completed</th><th class="num">Pending</th><th class="num">Rate</th></tr></thead><tbody>${platRows}</tbody></table></div>
 
-  <div class="section-head">⏳ Pending Tasks</div>
+  <div class="section-head">⏳ Ongoing Tasks</div>
   ${pendingRows ? `<div class="table-wrap"><table><thead><tr>${TASK_TH}</tr></thead><tbody>${pendingRows}</tbody></table></div>` : '<div class="no-data">No pending tasks for this period. 🎉</div>'}
 
-  <div class="section-head">⚠️ Overdue Tasks</div>
+  <div class="section-head">⚠️ Pending Tasks</div>
   ${overdueRows ? `<div class="table-wrap"><table><thead><tr><th class="left">Title &amp; Comments</th><th class="left">Assigned To</th><th class="left">Category</th><th class="num">Scheduled</th><th class="num">Due Date</th><th class="num">Days Overdue</th></tr></thead><tbody>${overdueRows}</tbody></table></div>` : '<div class="no-overdue">🎉 No overdue tasks!</div>'}
 
   <div class="section-head">✅ Done Tasks</div>
@@ -4403,7 +4428,7 @@ function openCatModal(catId) {
           <span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon||''}${cat.label}</span>
           ${t.time ? `<span class="task-time">⏰ ${t.time}</span>` : ''}
           ${t.priority === 'high' ? `<span class="task-tag" style="background:#ff6b6b20;color:#ff6b6b">HIGH</span>` : ''}
-          ${t.done ? `<span class="task-tag" style="background:rgba(46,204,113,0.12);color:#2ecc71">✓ Done</span>` : `<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ Pending</span>`}
+          ${t.done ? `<span class="task-tag" style="background:rgba(46,204,113,0.12);color:#2ecc71">✓ Done</span>` : `<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ Ongoing</span>`}
         </div>
         ${t.notes ? `<div class="task-notes" style="margin-top:6px">${t.notes}</div>` : ''}
       `;
@@ -4549,6 +4574,64 @@ function switchTab(tab) {
   document.getElementById('loginMsg').className = 'auth-msg';
   document.getElementById('registerMsg').className = 'auth-msg';
 }
+
+// ─── FORGOT PASSWORD ───
+function openForgotPassword() {
+  document.getElementById('forgotEmail').value = '';
+  document.getElementById('forgotMsg').className = 'auth-msg';
+  document.getElementById('forgotMsg').textContent = '';
+  document.getElementById('forgotPasswordOverlay').classList.add('open');
+}
+function closeForgotPassword() {
+  document.getElementById('forgotPasswordOverlay').classList.remove('open');
+}
+async function doForgotPassword() {
+  const email = document.getElementById('forgotEmail').value.trim();
+  const msgEl = document.getElementById('forgotMsg');
+  if (!email) {
+    msgEl.className = 'auth-msg error';
+    msgEl.textContent = 'Please enter your email address.';
+    return;
+  }
+  // Look up email in Firestore users collection first
+  try {
+    const snap = await db.collection('users').where('email', '==', email).get();
+    if (snap.empty) {
+      msgEl.className = 'auth-msg error';
+      msgEl.textContent = 'No account found with that email address.';
+      return;
+    }
+    msgEl.className = 'auth-msg pending';
+    msgEl.textContent = 'Sending reset link...';
+    await auth.sendPasswordResetEmail(email);
+    msgEl.className = 'auth-msg success';
+    msgEl.textContent = '✅ Reset link sent! Check your email inbox.';
+    document.getElementById('forgotEmail').value = '';
+    // Auto-close after 3 seconds
+    setTimeout(() => closeForgotPassword(), 3000);
+  } catch (e) {
+    msgEl.className = 'auth-msg error';
+    if (e.code === 'auth/invalid-email') {
+      msgEl.textContent = 'Invalid email format.';
+    } else if (e.code === 'auth/user-not-found') {
+      msgEl.textContent = 'No account found with that email.';
+    } else {
+      msgEl.textContent = 'Error: ' + e.message;
+    }
+  }
+}
+window.openForgotPassword = openForgotPassword;
+window.closeForgotPassword = closeForgotPassword;
+window.doForgotPassword = doForgotPassword;
+
+// Close on backdrop click
+document.getElementById('forgotPasswordOverlay')?.addEventListener('click', e => {
+  if (e.target === document.getElementById('forgotPasswordOverlay')) closeForgotPassword();
+});
+// Enter key on email field
+document.getElementById('forgotEmail')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') doForgotPassword();
+});
 
 async function doLogin() {
   const usernameOrEmail = document.getElementById('loginUsername').value.trim();
@@ -6569,7 +6652,7 @@ function tt_openCatModal(catId) {
       const tCat = tt_findCat(t.category);
       const dateStr = new Date(t.date+'T12:00:00').toLocaleString('default',{month:'short',day:'numeric',year:'numeric'});
       const item = document.createElement('div'); item.className = 'stat-task-item'+(t.done?' done':'');
-      item.innerHTML = `<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${tCat.color};border-radius:3px 0 0 3px"></div><div class="stat-task-row"><div class="stat-task-title">${t.title}</div><div class="stat-task-date">📅 ${dateStr}</div></div><div class="stat-task-meta"><span class="task-tag" style="background:${tCat.color}20;color:${tCat.color}">${tCat.icon||''}${tCat.label}</span>${t.time?`<span class="task-time">⏰ ${t.time}</span>`:''} ${t.done?`<span class="task-tag" style="background:rgba(46,204,113,0.12);color:#2ecc71">✓ Done</span>`:`<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ Pending</span>`}</div>`;
+      item.innerHTML = `<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${tCat.color};border-radius:3px 0 0 3px"></div><div class="stat-task-row"><div class="stat-task-title">${t.title}</div><div class="stat-task-date">📅 ${dateStr}</div></div><div class="stat-task-meta"><span class="task-tag" style="background:${tCat.color}20;color:${tCat.color}">${tCat.icon||''}${tCat.label}</span>${t.time?`<span class="task-time">⏰ ${t.time}</span>`:''} ${t.done?`<span class="task-tag" style="background:rgba(46,204,113,0.12);color:#2ecc71">✓ Done</span>`:`<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ Ongoing</span>`}</div>`;
       item.onclick = () => { tt_closeStatModal(); tt_selectDay(t.date); };
       body.appendChild(item);
     });
@@ -6597,7 +6680,7 @@ function tt_openTaskDetail(taskId) {
       dueDateEl.textContent = t.dueDate;
       dueDateEl.style.color = isPastDue ? '#e74c3c' : 'var(--accent2)';
       dueDateEl.style.fontWeight = isPastDue ? '700' : '400';
-      if (isPastDue) dueDateEl.textContent += ' ⚠️ Overdue';
+      if (isPastDue) dueDateEl.textContent += ' ⚠️ Pending';
     } else {
       dueDateEl.textContent = '— Not set';
       dueDateEl.style.color = 'var(--text-muted)';
@@ -6964,8 +7047,8 @@ function tt_updateReportPreview() {
     <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:var(--accent)">${filtered.length}</div><div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Total Tasks</div></div>
     <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:#2ecc71">${done}</div><div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Completed</div></div>
     <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:#74b9ff">${rate}%</div><div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Rate</div></div>
-    <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:#ff6b6b">${overdue}</div><div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Overdue</div></div>
-    <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:#ff9f43">${filtered.length - done}</div><div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Pending</div></div>
+    <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:#ff6b6b">${overdue}</div><div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Pending</div></div>
+    <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:#ff9f43">${filtered.length - done}</div><div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Ongoing</div></div>
     <div style="text-align:center"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.4rem;color:#a29bfe">${[...new Set(filtered.map(t=>t.assignedTo||'Unassigned'))].length}</div><div style="font-size:0.62rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em">Members</div></div>
   `;
 }
@@ -6998,8 +7081,8 @@ function tt_generatePDFReport() {
       const lt = leadtime(t);
       return `<span style="color:#2ecc71;font-weight:700">✓ Done</span>${dt ? `<br><span style="font-size:10px;color:#555">${dt} · ${lt}</span>` : ''}`;
     }
-    if (tt_isOverdue(t)) return `<span style="color:#e74c3c;font-weight:700">⚠️ Overdue</span>`;
-    return `<span style="color:#c0392b">⏳ Pending</span>`;
+    if (tt_isOverdue(t)) return `<span style="color:#e74c3c;font-weight:700">⚠️ Pending</span>`;
+    return `<span style="color:#c0392b">⏳ Ongoing</span>`;
   };
 
   // shared comment formatter for TT report
@@ -7123,7 +7206,7 @@ function tt_generatePDFReport() {
         <td style="padding:3px 7px;text-align:center">${t.date}</td>
         <td style="padding:3px 7px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
         <td style="padding:3px 7px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
-        <td style="padding:3px 7px;color:${isOv?'#e74c3c':'#c0392b'};font-weight:700">${isOv?'⚠️ Overdue':'⏳ Pending'}</td>
+        <td style="padding:3px 7px;color:${isOv?'#e74c3c':'#c0392b'};font-weight:700">${isOv?'⚠️ Pending':'⏳ Ongoing'}</td>
         <td style="padding:3px 7px;text-align:center">${lt}</td>
       </tr>`;
     }).join('');
@@ -7396,8 +7479,8 @@ function tt_generatePDFReport() {
   <div class="stats">
     <div class="stat"><div class="stat-val">${filtered.length}</div><div class="stat-label">Total Tasks</div></div>
     <div class="stat"><div class="stat-val" style="color:#2ecc71">${done}</div><div class="stat-label">Completed</div></div>
-    <div class="stat"><div class="stat-val" style="color:#c0392b">${filtered.length-done}</div><div class="stat-label">Pending</div></div>
-    <div class="stat"><div class="stat-val" style="color:#e74c3c">${overdue}</div><div class="stat-label">Overdue</div></div>
+    <div class="stat"><div class="stat-val" style="color:#c0392b">${filtered.length-done}</div><div class="stat-label">Ongoing</div></div>
+    <div class="stat"><div class="stat-val" style="color:#e74c3c">${overdue}</div><div class="stat-label">Pending</div></div>
     <div class="stat"><div class="stat-val" style="color:#0984e3">${rate}%</div><div class="stat-label">Completion Rate</div></div>
   </div>
 
@@ -7436,7 +7519,7 @@ function tt_generatePDFReport() {
     <tbody>${catRows}</tbody>
   </table></div>` : '<div class="no-data">No category data for this period.</div>'}
 
-  <div class="section-head">⏳ Pending Tasks</div>
+  <div class="section-head">⏳ Ongoing Tasks</div>
   ${pendingRows ? `<div class="table-wrap"><table>
     <thead><tr>
       <th class="left">Title &amp; Comments</th>
@@ -7452,7 +7535,7 @@ function tt_generatePDFReport() {
     <tbody>${pendingRows}</tbody>
   </table></div>` : '<div class="no-data">No pending tasks for this period. 🎉</div>'}
 
-  <div class="section-head">⚠️ Overdue Tasks</div>
+  <div class="section-head">⚠️ Pending Tasks</div>
   ${overdueRows ? `<div class="table-wrap"><table>
     <thead><tr>
       <th class="left">Title &amp; Comments</th>
