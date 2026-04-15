@@ -1363,7 +1363,7 @@
   .view-tab:hover:not(.active) { color:var(--text); background:var(--surface2); }
 
   /* ─── CATEGORY FILTER BAR ─── */
-  .cat-filter-bar { display:flex; gap:6px; flex-wrap:wrap; padding:0.6rem 1.5rem; border-bottom:1px solid var(--border); background:var(--bg); overflow-x:auto; }
+  .cat-filter-bar { display:none; }
   .cat-filter-btn { padding:4px 12px; border-radius:20px; border:1.5px solid var(--border); background:none; color:var(--text-muted); font-family:'DM Mono',monospace; font-size:0.7rem; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
   .cat-filter-btn.active { color:#0a0a0f; font-weight:600; }
 
@@ -2824,7 +2824,7 @@ function renderCalendar() {
   renderMiniCal();
   renderStats();
   renderCategories();
-  renderCatFilterBar();
+  // renderCatFilterBar(); // hidden
 }
 
 function isMobile() { return window.innerWidth <= 900; }
@@ -5680,7 +5680,7 @@ document.getElementById('saveTask').addEventListener('click', async () => {
 
 // ── INIT NEW FEATURES ON APP START ──
 function initNewFeatures() {
-  renderCatFilterBar();
+  // renderCatFilterBar(); // hidden
   renderNotifDropdown();
   populateAssigneeDropdown();
   // Check overdue and daily summary after slight delay
@@ -5878,7 +5878,7 @@ function switchAppTab(tab) {
       initTrackingTab();
     } else {
       tt_renderCategories();
-      tt_renderCatFilterBar();
+      // tt_renderCatFilterBar(); // hidden
     }
   }
 }
@@ -7703,7 +7703,7 @@ function initTrackingTab() {
   tt_renderCalendar();
   tt_renderStats();
   tt_renderCategories();
-  tt_renderCatFilterBar();
+  // tt_renderCatFilterBar(); // hidden
   tt_renderNotifDropdown();
   tt_populateAssigneeDropdown();
 
