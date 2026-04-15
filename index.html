@@ -754,15 +754,14 @@
   .cat-sub-item {
     display: flex;
     align-items: center;
-    gap: 6px;
-    padding: 2px 6px 2px 14px;
+    gap: 4px;
+    padding: 2px 6px 2px 12px;
     border-radius: 6px;
     cursor: pointer;
     transition: background 0.15s;
     font-size: clamp(0.6rem, 1vw, 0.7rem);
-    line-height: 1.3;
+    line-height: 1.2;
     min-width: 0;
-    margin-top: 1px;
   }
   .cat-sub-item span:not(.cat-count) {
     white-space: nowrap;
@@ -3134,8 +3133,8 @@ function renderCategories() {
         sub.style.cursor = 'pointer';
         sub.title = `View ${p.label} tasks`;
         sub.innerHTML = `
-          <span style="font-size:0.9rem">${p.icon}</span>
-          <span style="color:${p.color};flex:1">${p.label}</span>
+          <span style="font-size:0.7rem;flex-shrink:0">${p.icon}</span>
+          <span style="color:${p.color};flex:1;font-size:clamp(0.6rem,1vw,0.7rem);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.label}</span>
           <span class="cat-count">${pCount}</span>
         `;
         sub.onclick = () => openCatModal(p.id);
@@ -6445,7 +6444,7 @@ function tt_renderCategories() {
       cat.children.forEach(ch => {
         const chCount = mt.filter(t => t.category === ch.id).length;
         const sub = document.createElement('div'); sub.className = 'cat-sub-item';
-        sub.innerHTML = `<span style="font-size:0.9rem">${ch.icon||'•'}</span><span style="color:${ch.color};flex:1">${ch.label}</span><span class="cat-count">${chCount}</span>`;
+        sub.innerHTML = `<span style="font-size:0.7rem;flex-shrink:0">${ch.icon||'•'}</span><span style="color:${ch.color};flex:1;font-size:clamp(0.6rem,1vw,0.7rem);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ch.label}</span><span class="cat-count">${chCount}</span>`;
         sub.onclick = () => tt_openCatModal(ch.id);
         container.appendChild(sub);
       });
