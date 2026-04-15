@@ -7416,6 +7416,54 @@ function tt_generatePDFReport() {
       </tr>`;
     }).join('');
 
+  // ── RFQ Assist rows ──
+  const rfqRows = filtered
+    .filter(t => t.category === 'rfq_assist')
+    .sort((a,b) => a.date.localeCompare(b.date))
+    .map(t => {
+      const cmts = ttCommentHtml(t.comments);
+      const lt   = calcPendingLeadtime(t);
+      const statusColor = t.done ? '#2ecc71' : tt_isOverdue(t) ? '#e74c3c' : '#c0392b';
+      const statusText  = t.done ? `✓ Done${t.doneAt ? `<br><span style="font-size:9px;color:#555">${fmtDate(t.doneAt)}</span>` : ''}` : tt_isOverdue(t) ? '⚠️ Pending' : '⏳ Ongoing';
+      return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
+        <td style="padding:3px 7px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
+        <td style="padding:3px 7px;white-space:pre-wrap;line-height:1.35">${t.notes||'—'}</td>
+        <td style="padding:3px 7px">${t.assignedTo||'—'}</td>
+        <td style="padding:3px 7px;text-align:center">${t.date}</td>
+        <td style="padding:3px 7px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
+        <td style="padding:3px 7px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
+        <td style="padding:3px 7px;color:${statusColor};font-weight:700">${statusText}</td>
+        <td style="padding:3px 7px;text-align:center">${lt}</td>
+      </tr>`;
+    }).join('');
+
+  // ── Quotation Generation rows ──
+  const quotationIds = ['quotation','quotation_socmed','quotation_website'];
+  const quotationRows = filtered
+    .filter(t => quotationIds.includes(t.category))
+    .sort((a,b) => a.date.localeCompare(b.date))
+    .map(t => {
+      const cat  = tt_findCat(t.category);
+      const cmts = ttCommentHtml(t.comments);
+      const lt   = calcPendingLeadtime(t);
+      const statusColor = t.done ? '#2ecc71' : tt_isOverdue(t) ? '#e74c3c' : '#c0392b';
+      const statusText  = t.done ? `✓ Done${t.doneAt ? `<br><span style="font-size:9px;color:#555">${fmtDate(t.doneAt)}</span>` : ''}` : tt_isOverdue(t) ? '⚠️ Pending' : '⏳ Ongoing';
+      return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
+        <td style="padding:3px 7px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
+        <td style="padding:3px 7px">${cat.label}</td>
+        <td style="padding:3px 7px;white-space:pre-wrap;line-height:1.35">${t.notes||'—'}</td>
+        <td style="padding:3px 7px">${t.companyName||'—'}</td>
+        <td style="padding:3px 7px">${t.quotationNumber||'—'}</td>
+        <td style="padding:3px 7px">${t.amount||'—'}</td>
+        <td style="padding:3px 7px">${t.assignedTo||'—'}</td>
+        <td style="padding:3px 7px;text-align:center">${t.date}</td>
+        <td style="padding:3px 7px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
+        <td style="padding:3px 7px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
+        <td style="padding:3px 7px;color:${statusColor};font-weight:700">${statusText}</td>
+        <td style="padding:3px 7px;text-align:center">${lt}</td>
+      </tr>`;
+    }).join('');
+
   const assigneeChartData = JSON.stringify(Object.entries(assigneeMap).map(([n,r])=>({name:n,done:r.done,pending:r.total-r.done})));
   const catChartData      = JSON.stringify(catData.map(c=>({label:c.label,total:c.total,done:c.done,pending:c.pending,color:c.color})));
   const statusChartData   = JSON.stringify([{label:'Completed',val:done,color:'#2ecc71'},{label:'Pending',val:filtered.length-done-overdue,color:'#fdcb6e'},{label:'Overdue',val:overdue,color:'#e74c3c'}]);
@@ -7748,6 +7796,40 @@ function tt_generatePDFReport() {
     </tr></thead>
     <tbody>${doneRows}</tbody>
   </table></div>` : '<div class="no-data">No completed tasks for this period.</div>'}
+
+  <div class="section-head">📋 RFQ Assist</div>
+  ${rfqRows ? `<div class="table-wrap"><table>
+    <thead><tr>
+      <th class="left">Title &amp; Comments</th>
+      <th class="left">Description</th>
+      <th class="left">Assigned To</th>
+      <th class="num">Scheduled</th>
+      <th class="num">Due Date</th>
+      <th class="num">Priority</th>
+      <th class="left">Status</th>
+      <th class="num">Leadtime</th>
+    </tr></thead>
+    <tbody>${rfqRows}</tbody>
+  </table></div>` : '<div class="no-data">No RFQ Assist tasks for this period.</div>'}
+
+  <div class="section-head">💰 Quotation Generation</div>
+  ${quotationRows ? `<div class="table-wrap"><table>
+    <thead><tr>
+      <th class="left">Title &amp; Comments</th>
+      <th class="left">Sub-Category</th>
+      <th class="left">Description</th>
+      <th class="left">Company Name</th>
+      <th class="left">Quotation No.</th>
+      <th class="left">Amount</th>
+      <th class="left">Assigned To</th>
+      <th class="num">Scheduled</th>
+      <th class="num">Due Date</th>
+      <th class="num">Priority</th>
+      <th class="left">Status</th>
+      <th class="num">Leadtime</th>
+    </tr></thead>
+    <tbody>${quotationRows}</tbody>
+  </table></div>` : '<div class="no-data">No Quotation Generation tasks for this period.</div>'}
 
   <script>
     const statusData   = ${statusChartData};
