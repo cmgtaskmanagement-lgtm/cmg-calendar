@@ -288,8 +288,8 @@
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 16px;
-    width: 520px; max-width: 95vw;
-    max-height: 80vh;
+    width: 620px; max-width: 96vw;
+    max-height: 85vh;
     overflow-y: auto;
     transform: translateY(20px) scale(0.97);
     transition: transform 0.25s;
@@ -755,13 +755,25 @@
     display: flex;
     align-items: center;
     gap: 6px;
-    padding: 3px 6px 3px 18px;
+    padding: 4px 6px 4px 22px;
     border-radius: 6px;
     cursor: pointer;
     transition: background 0.15s;
     font-size: clamp(0.6rem, 1vw, 0.7rem);
     line-height: 1.3;
     min-width: 0;
+    margin-top: 2px;
+    position: relative;
+  }
+  .cat-sub-item::before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 5px;
+    height: 1px;
+    background: var(--border);
   }
   .cat-sub-item span:not(.cat-count) {
     white-space: nowrap;
@@ -4416,8 +4428,54 @@ function openCatModal(catId) {
       const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
       const d = new Date(t.date + 'T12:00:00');
       const dateStr = d.toLocaleString('default', { month: 'short', day: 'numeric', year: 'numeric' });
+      const comments = t.comments || [];
+      const links    = t.links    || [];
+
       const item = document.createElement('div');
       item.className = 'stat-task-item' + (t.done ? ' done' : '');
+      item.style.cursor = 'default';
+
+      // Build comments HTML
+      const commentsHTML = comments.length ? `
+        <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
+          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">💬 Comments (${comments.length})</div>
+          ${comments.map(c => `
+            <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px">
+              <div style="width:24px;height:24px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:700;color:var(--accent);flex-shrink:0">${(c.authorName||c.author||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:0.7rem;font-weight:700;color:var(--text-dim)">${c.authorName||c.author||'Unknown'} <span style="font-weight:400;color:var(--text-muted)">· ${new Date(c.time).toLocaleString('en-PH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span></div>
+                <div style="font-size:0.78rem;color:var(--text-dim);margin-top:2px;white-space:pre-wrap;line-height:1.5">${(c.text||'').replace(/</g,'&lt;')}</div>
+              </div>
+            </div>`).join('')}
+          <div style="display:flex;gap:6px;margin-top:6px">
+            <input id="soc_commentInput_${t._id}" type="text" placeholder="Add a comment..." style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.75rem;outline:none" onkeydown="if(event.key==='Enter')socAddComment('${t._id}')">
+            <button onclick="socAddComment('${t._id}')" style="background:var(--accent);color:#0a0a0f;border:none;border-radius:6px;padding:6px 12px;font-weight:700;font-size:0.75rem;cursor:pointer">Send</button>
+          </div>
+        </div>` : `
+        <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
+          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">💬 Comments</div>
+          <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:6px">No comments yet.</div>
+          <div style="display:flex;gap:6px">
+            <input id="soc_commentInput_${t._id}" type="text" placeholder="Add a comment..." style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.75rem;outline:none" onkeydown="if(event.key==='Enter')socAddComment('${t._id}')">
+            <button onclick="socAddComment('${t._id}')" style="background:var(--accent);color:#0a0a0f;border:none;border-radius:6px;padding:6px 12px;font-weight:700;font-size:0.75rem;cursor:pointer">Send</button>
+          </div>
+        </div>`;
+
+      // Build links HTML
+      const linksHTML = `
+        <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
+          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">🔗 Links ${links.length ? `(${links.length})` : ''}</div>
+          ${links.map((url,i) => `
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+              <a href="${url}" target="_blank" style="flex:1;font-size:0.75rem;color:var(--accent3);word-break:break-all;text-decoration:none" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${url}</a>
+              <button onclick="socRemoveLink('${t._id}',${i})" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.75rem;flex-shrink:0">✕</button>
+            </div>`).join('')}
+          <div style="display:flex;gap:6px;margin-top:4px">
+            <input id="soc_linkInput_${t._id}" type="text" placeholder="https://..." style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.75rem;outline:none" onkeydown="if(event.key==='Enter')socAddLink('${t._id}')">
+            <button onclick="socAddLink('${t._id}')" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-weight:700;font-size:0.75rem;cursor:pointer">Add</button>
+          </div>
+        </div>`;
+
       item.innerHTML = `
         <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${cat.color};border-radius:3px 0 0 3px"></div>
         <div class="stat-task-row">
@@ -4429,16 +4487,53 @@ function openCatModal(catId) {
           ${t.time ? `<span class="task-time">⏰ ${t.time}</span>` : ''}
           ${t.priority === 'high' ? `<span class="task-tag" style="background:#ff6b6b20;color:#ff6b6b">HIGH</span>` : ''}
           ${t.done ? `<span class="task-tag" style="background:rgba(46,204,113,0.12);color:#2ecc71">✓ Done</span>` : `<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ Ongoing</span>`}
+          ${t.assignedTo ? `<span class="task-tag" style="background:rgba(107,159,255,0.12);color:#74b9ff">👤 ${t.assignedTo}</span>` : ''}
         </div>
         ${t.notes ? `<div class="task-notes" style="margin-top:6px">${t.notes}</div>` : ''}
+        ${commentsHTML}
+        ${linksHTML}
       `;
-      item.onclick = () => { closeStatModal(); selectDay(t.date); };
       body.appendChild(item);
     });
   }
 
   document.getElementById('statModalOverlay').classList.add('open');
 }
+
+// SocMed comment/link helpers for category modal
+async function socAddComment(taskId) {
+  const input = document.getElementById(`soc_commentInput_${taskId}`);
+  if (!input) return;
+  const text = input.value.trim(); if (!text) return;
+  const t = tasks.find(x => x._id === taskId); if (!t) return;
+  const comment = { author: currentUserProfile?.name||'Unknown', authorName: currentUserProfile?.name||'Unknown', text, time: new Date().toISOString() };
+  const comments = [...(t.comments||[]), comment];
+  await updateTaskInDB(taskId, { comments });
+  input.value = '';
+  // Refresh modal
+  const cat = CATEGORIES.find(c => c.id === t.category);
+  openCatModal(t.category);
+}
+async function socAddLink(taskId) {
+  const input = document.getElementById(`soc_linkInput_${taskId}`);
+  if (!input) return;
+  let url = input.value.trim(); if (!url) return;
+  if (!url.startsWith('http')) url = 'https://' + url;
+  const t = tasks.find(x => x._id === taskId); if (!t) return;
+  const links = [...(t.links||[]), url];
+  await updateTaskInDB(taskId, { links });
+  input.value = '';
+  openCatModal(t.category);
+}
+async function socRemoveLink(taskId, idx) {
+  const t = tasks.find(x => x._id === taskId); if (!t) return;
+  const links = (t.links||[]).filter((_,i) => i !== idx);
+  await updateTaskInDB(taskId, { links });
+  openCatModal(t.category);
+}
+window.socAddComment  = socAddComment;
+window.socAddLink     = socAddLink;
+window.socRemoveLink  = socRemoveLink;
 
 window.openAnalytics  = openAnalytics;
 window.closeAnalytics = closeAnalytics;
@@ -6651,15 +6746,95 @@ function tt_openCatModal(catId) {
     filtered.forEach(t => {
       const tCat = tt_findCat(t.category);
       const dateStr = new Date(t.date+'T12:00:00').toLocaleString('default',{month:'short',day:'numeric',year:'numeric'});
-      const item = document.createElement('div'); item.className = 'stat-task-item'+(t.done?' done':'');
-      item.innerHTML = `<div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${tCat.color};border-radius:3px 0 0 3px"></div><div class="stat-task-row"><div class="stat-task-title">${t.title}</div><div class="stat-task-date">📅 ${dateStr}</div></div><div class="stat-task-meta"><span class="task-tag" style="background:${tCat.color}20;color:${tCat.color}">${tCat.icon||''}${tCat.label}</span>${t.time?`<span class="task-time">⏰ ${t.time}</span>`:''} ${t.done?`<span class="task-tag" style="background:rgba(46,204,113,0.12);color:#2ecc71">✓ Done</span>`:`<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ Ongoing</span>`}</div>`;
-      item.onclick = () => { tt_closeStatModal(); tt_selectDay(t.date); };
+      const comments = t.comments || [];
+      const links    = t.links    || [];
+
+      const item = document.createElement('div');
+      item.className = 'stat-task-item'+(t.done?' done':'');
+      item.style.cursor = 'default';
+
+      const commentsHTML = `
+        <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
+          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">💬 Comments${comments.length ? ` (${comments.length})` : ''}</div>
+          ${comments.length ? comments.map(c => `
+            <div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:6px">
+              <div style="width:24px;height:24px;border-radius:50%;background:var(--surface2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:700;color:var(--accent);flex-shrink:0">${(c.authorName||c.author||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</div>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:0.7rem;font-weight:700;color:var(--text-dim)">${c.authorName||c.author||'Unknown'} <span style="font-weight:400;color:var(--text-muted)">· ${new Date(c.time).toLocaleString('en-PH',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})}</span></div>
+                <div style="font-size:0.78rem;color:var(--text-dim);margin-top:2px;white-space:pre-wrap;line-height:1.5">${(c.text||'').replace(/</g,'&lt;')}</div>
+              </div>
+            </div>`).join('') : '<div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:6px">No comments yet.</div>'}
+          <div style="display:flex;gap:6px;margin-top:6px">
+            <input id="tt_catCommentInput_${t._id}" type="text" placeholder="Add a comment..." style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.75rem;outline:none" onkeydown="if(event.key==='Enter')ttCatAddComment('${t._id}','${catId}')">
+            <button onclick="ttCatAddComment('${t._id}','${catId}')" style="background:var(--accent);color:#0a0a0f;border:none;border-radius:6px;padding:6px 12px;font-weight:700;font-size:0.75rem;cursor:pointer">Send</button>
+          </div>
+        </div>`;
+
+      const linksHTML = `
+        <div style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
+          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.65rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">🔗 Links${links.length ? ` (${links.length})` : ''}</div>
+          ${links.map((url,i) => `
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+              <a href="${url}" target="_blank" style="flex:1;font-size:0.75rem;color:var(--accent3);word-break:break-all;text-decoration:none" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${url}</a>
+              <button onclick="ttCatRemoveLink('${t._id}',${i},'${catId}')" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.75rem;flex-shrink:0">✕</button>
+            </div>`).join('')}
+          ${!links.length ? '<div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:4px">No links yet.</div>' : ''}
+          <div style="display:flex;gap:6px;margin-top:4px">
+            <input id="tt_catLinkInput_${t._id}" type="text" placeholder="https://..." style="flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.75rem;outline:none" onkeydown="if(event.key==='Enter')ttCatAddLink('${t._id}','${catId}')">
+            <button onclick="ttCatAddLink('${t._id}','${catId}')" style="background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-weight:700;font-size:0.75rem;cursor:pointer">Add</button>
+          </div>
+        </div>`;
+
+      item.innerHTML = `
+        <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${tCat.color};border-radius:3px 0 0 3px"></div>
+        <div class="stat-task-row"><div class="stat-task-title">${t.title}</div><div class="stat-task-date">📅 ${dateStr}</div></div>
+        <div class="stat-task-meta">
+          <span class="task-tag" style="background:${tCat.color}20;color:${tCat.color}">${tCat.icon||''}${tCat.label}</span>
+          ${t.time?`<span class="task-time">⏰ ${t.time}</span>`:''}
+          ${t.done?`<span class="task-tag" style="background:rgba(46,204,113,0.12);color:#2ecc71">✓ Done</span>`:`<span class="task-tag" style="background:rgba(192,57,43,0.12);color:#e74c3c">⏳ Ongoing</span>`}
+          ${t.assignedTo?`<span class="task-tag" style="background:rgba(107,159,255,0.12);color:#74b9ff">👤 ${t.assignedTo}</span>`:''}
+        </div>
+        ${t.notes ? `<div class="task-notes" style="margin-top:6px">${t.notes}</div>` : ''}
+        ${commentsHTML}
+        ${linksHTML}`;
       body.appendChild(item);
     });
   }
   document.getElementById('tt_statModalOverlay').classList.add('open');
 }
-window.tt_openCatModal = tt_openCatModal;
+
+// TT category modal comment/link helpers
+async function ttCatAddComment(taskId, catId) {
+  const input = document.getElementById(`tt_catCommentInput_${taskId}`);
+  if (!input) return;
+  const text = input.value.trim(); if (!text) return;
+  const t = tt_tasks.find(x => x._id === taskId); if (!t) return;
+  const comment = { author: currentUserProfile?.name||'Unknown', authorName: currentUserProfile?.name||'Unknown', text, time: new Date().toISOString() };
+  const comments = [...(t.comments||[]), comment];
+  const activity = [...(t.activity||[]), {text:`💬 Comment by ${comment.author}`, time: comment.time}];
+  await tt_updateTask(taskId, { comments, activity });
+  tt_openCatModal(catId);
+}
+async function ttCatAddLink(taskId, catId) {
+  const input = document.getElementById(`tt_catLinkInput_${taskId}`);
+  if (!input) return;
+  let url = input.value.trim(); if (!url) return;
+  if (!url.startsWith('http')) url = 'https://' + url;
+  const t = tt_tasks.find(x => x._id === taskId); if (!t) return;
+  const links = [...(t.links||[]), url];
+  await tt_updateTask(taskId, { links });
+  tt_openCatModal(catId);
+}
+async function ttCatRemoveLink(taskId, idx, catId) {
+  const t = tt_tasks.find(x => x._id === taskId); if (!t) return;
+  const links = (t.links||[]).filter((_,i) => i !== idx);
+  await tt_updateTask(taskId, { links });
+  tt_openCatModal(catId);
+}
+window.tt_openCatModal   = tt_openCatModal;
+window.ttCatAddComment   = ttCatAddComment;
+window.ttCatAddLink      = ttCatAddLink;
+window.ttCatRemoveLink   = ttCatRemoveLink;
 
 // ── Task Detail Modal ──
 function tt_openTaskDetail(taskId) {
