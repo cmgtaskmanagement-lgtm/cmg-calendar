@@ -754,6 +754,7 @@
   .cat-sub-item {
     display: flex;
     align-items: center;
+    flex-direction: row;
     gap: 4px;
     padding: 2px 6px 2px 12px;
     border-radius: 6px;
@@ -763,12 +764,27 @@
     line-height: 1.2;
     min-width: 0;
   }
-  .cat-sub-item span:not(.cat-count) {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .cat-sub-item .sub-icon {
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    line-height: 1;
+    width: 14px;
+    text-align: center;
+  }
+  .cat-sub-item .sub-label {
     flex: 1;
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: clamp(0.6rem, 1vw, 0.7rem);
+  }
+  .cat-sub-item span:not(.cat-count):not(.sub-icon):not(.sub-label) {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .cat-sub-item:hover { background: var(--surface2); }
 
@@ -3132,11 +3148,7 @@ function renderCategories() {
         sub.className = 'cat-sub-item';
         sub.style.cursor = 'pointer';
         sub.title = `View ${p.label} tasks`;
-        sub.innerHTML = `
-          <span style="font-size:0.7rem;flex-shrink:0">${p.icon}</span>
-          <span style="color:${p.color};flex:1;font-size:clamp(0.6rem,1vw,0.7rem);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.label}</span>
-          <span class="cat-count">${pCount}</span>
-        `;
+        sub.innerHTML = `<span class="sub-icon">${p.icon}</span><span class="sub-label" style="color:${p.color}">${p.label}</span><span class="cat-count">${pCount}</span>`;
         sub.onclick = () => openCatModal(p.id);
         container.appendChild(sub);
       });
@@ -5116,7 +5128,7 @@ function renderMobStats() {
         const sub = document.createElement('div');
         sub.className = 'cat-sub-item';
         sub.style.cursor = 'pointer';
-        sub.innerHTML = `<span style="font-size:0.9rem">${p.icon}</span><span style="color:${p.color};flex:1">${p.label}</span><span class="cat-count">${pCount}</span>`;
+        sub.innerHTML = `<span class="sub-icon">${p.icon}</span><span class="sub-label" style="color:${p.color}">${p.label}</span><span class="cat-count">${pCount}</span>`;
         sub.onclick = () => { closeMobDrawer('mobStatsDrawer'); openCatModal(p.id); };
         container.appendChild(sub);
       });
@@ -6444,7 +6456,7 @@ function tt_renderCategories() {
       cat.children.forEach(ch => {
         const chCount = mt.filter(t => t.category === ch.id).length;
         const sub = document.createElement('div'); sub.className = 'cat-sub-item';
-        sub.innerHTML = `<span style="font-size:0.7rem;flex-shrink:0">${ch.icon||'•'}</span><span style="color:${ch.color};flex:1;font-size:clamp(0.6rem,1vw,0.7rem);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ch.label}</span><span class="cat-count">${chCount}</span>`;
+        sub.innerHTML = `<span class="sub-icon">${ch.icon||'•'}</span><span class="sub-label" style="color:${ch.color}">${ch.label}</span><span class="cat-count">${chCount}</span>`;
         sub.onclick = () => tt_openCatModal(ch.id);
         container.appendChild(sub);
       });
