@@ -473,9 +473,26 @@
 
   .more-tasks {
     font-size: 0.6rem;
-    color: var(--text-muted);
-    padding: 2px 4px;
+    color: var(--accent);
+    padding: 2px 6px;
+    cursor: pointer;
+    border-radius: 4px;
+    border: 1px solid rgba(200,241,53,0.3);
+    background: rgba(200,241,53,0.06);
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    margin-top: 1px;
+    transition: background 0.15s, border-color 0.15s;
+    user-select: none;
+    font-family: 'DM Mono', monospace;
+    font-weight: 600;
   }
+  .more-tasks:hover { background: rgba(200,241,53,0.14); border-color: rgba(200,241,53,0.5); }
+  .more-tasks.expanded { color: var(--accent2); border-color: rgba(255,107,107,0.3); background: rgba(255,107,107,0.06); }
+  .more-tasks.expanded:hover { background: rgba(255,107,107,0.12); }
+  .hidden-tasks { display: none; }
+  .hidden-tasks.open { display: block; }
 
   /* ─── RIGHT PANEL ─── */
   .right-panel {
@@ -2934,9 +2951,30 @@ function makeDayCell(d, otherMonth) {
       cell.appendChild(chip);
     });
     if (dayTasks.length > 3) {
+      // Hidden tasks container
+      const hiddenWrap = document.createElement('div');
+      hiddenWrap.className = 'hidden-tasks';
+      dayTasks.slice(3).forEach(t => {
+        const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
+        const chip = document.createElement('div');
+        chip.className = 'task-chip' + (t.done ? ' done' : '');
+        chip.style.background = cat.color;
+        const iconHtml = cat.icon ? `<span style="font-size:0.7rem;line-height:1;flex-shrink:0">${cat.icon}</span>` : `<span class="chip-dot"></span>`;
+        chip.innerHTML = `${iconHtml}<span class="chip-title">${t.title}</span>${t.done ? '<span class="done-tag">DONE</span>' : ''}`;
+        chip.onclick = (e) => { e.stopPropagation(); openTaskDetail(tasks.indexOf(t)); };
+        hiddenWrap.appendChild(chip);
+      });
+      cell.appendChild(hiddenWrap);
+      // Toggle button
       const more = document.createElement('div');
       more.className = 'more-tasks';
-      more.textContent = `+${dayTasks.length - 3} more`;
+      more.innerHTML = `▾ +${dayTasks.length - 3} more`;
+      more.onclick = (e) => {
+        e.stopPropagation();
+        const isOpen = hiddenWrap.classList.toggle('open');
+        more.classList.toggle('expanded', isOpen);
+        more.innerHTML = isOpen ? `▴ hide` : `▾ +${dayTasks.length - 3} more`;
+      };
       cell.appendChild(more);
     }
   }
@@ -6255,9 +6293,29 @@ function tt_makeDayCell(key, dayNum, otherMonth) {
     cell.appendChild(chip);
   });
   if (dayTasks.length > maxShow) {
+    // Hidden tasks container
+    const hiddenWrap = document.createElement('div');
+    hiddenWrap.className = 'hidden-tasks';
+    dayTasks.slice(maxShow).forEach(t => {
+      const cat = tt_findCat(t.category);
+      const chip = document.createElement('div');
+      chip.className = 'task-chip' + (t.done ? ' done' : '');
+      chip.style.background = cat.color;
+      chip.innerHTML = `<span class="chip-dot"></span><span class="chip-title">${t.title}</span>${t.done ? '<span class="done-tag">DONE</span>' : ''}`;
+      chip.onclick = (e) => { e.stopPropagation(); tt_openTaskDetail(t._id); };
+      hiddenWrap.appendChild(chip);
+    });
+    cell.appendChild(hiddenWrap);
+    // Toggle button
     const more = document.createElement('div');
     more.className = 'more-tasks';
-    more.textContent = `+${dayTasks.length - maxShow} more`;
+    more.innerHTML = `▾ +${dayTasks.length - maxShow} more`;
+    more.onclick = (e) => {
+      e.stopPropagation();
+      const isOpen = hiddenWrap.classList.toggle('open');
+      more.classList.toggle('expanded', isOpen);
+      more.innerHTML = isOpen ? `▴ hide` : `▾ +${dayTasks.length - maxShow} more`;
+    };
     cell.appendChild(more);
   }
 
