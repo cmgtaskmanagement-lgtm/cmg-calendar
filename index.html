@@ -7024,7 +7024,12 @@ window.tt_switchATab=tt_switchATab;
 
 function tt_renderCategoryChart() {
   if(tt_chartCategory)tt_chartCategory.destroy();
-  const data=TT_CATEGORIES.map(cat=>{const childIds=(cat.children||[]).map(c=>c.id);const count=tt_tasks.filter(t=>t.category===cat.id||childIds.includes(t.category)).length;return{label:cat.label,count,color:cat.color};});
+  const alwaysShow = ['rfq_assist','quotation'];
+  const data=TT_CATEGORIES.map(cat=>{
+    const childIds=(cat.children||[]).map(c=>c.id);
+    const count=tt_tasks.filter(t=>t.category===cat.id||childIds.includes(t.category)).length;
+    return{label:cat.label,count,color:cat.color,id:cat.id};
+  }).filter(d=>d.count>0||alwaysShow.includes(d.id));
   const ctx=document.getElementById('tt_chartCategory')?.getContext('2d'); if(!ctx)return;
   tt_chartCategory=new Chart(ctx,{type:'doughnut',data:{labels:data.map(d=>d.label),datasets:[{data:data.map(d=>d.count),backgroundColor:data.map(d=>d.color+'cc'),borderColor:'#0a0a0f',borderWidth:2}]},options:{...TT_CHART_DEFAULTS,plugins:{legend:{display:true,labels:{color:'#9090aa',font:{size:11}}}}}});
   document.getElementById('tt_categoryLegend').innerHTML=data.map(d=>`<div class="legend-item"><div class="legend-dot" style="background:${d.color}"></div><span class="legend-label">${d.label}</span><span class="legend-val" style="color:${d.color}">${d.count}</span></div>`).join('');
@@ -7064,6 +7069,8 @@ function tt_renderAssigneeChart() {
 
 function tt_renderPlatformChart() {
   if(tt_chartPlatform)tt_chartPlatform.destroy();
+  // Always-show category IDs (even if zero tasks)
+  const alwaysShow = ['rfq_assist','quotation','quotation_socmed','quotation_website'];
   // Build flat map of all TT categories including children
   const platMap={};
   TT_CATEGORIES.forEach(cat=>{
@@ -7071,12 +7078,15 @@ function tt_renderPlatformChart() {
     if(cat.children)cat.children.forEach(ch=>{platMap[ch.id]={label:ch.label,icon:ch.icon||'•',color:ch.color,total:0,done:0};});
   });
   tt_tasks.forEach(t=>{if(platMap[t.category]){platMap[t.category].total++;if(t.done)platMap[t.category].done++;}});
-  const allCats=Object.values(platMap).filter(p=>p.total>0);
-  const topCat=allCats.length?allCats.reduce((a,b)=>a.total>=b.total?a:b,allCats[0]):{icon:'—',label:'None'};
+  // Show categories that have tasks OR are in alwaysShow list
+  const allCats=Object.entries(platMap)
+    .filter(([id,p])=>p.total>0||alwaysShow.includes(id))
+    .map(([id,p])=>p);
+  const topCat=allCats.filter(p=>p.total>0).length?allCats.filter(p=>p.total>0).reduce((a,b)=>a.total>=b.total?a:b):{icon:'—',label:'None'};
   const totalAll=allCats.reduce((s,p)=>s+p.total,0),doneAll=allCats.reduce((s,p)=>s+p.done,0);
   document.getElementById('tt_platformSummary').innerHTML=`<div class="asummary-card"><div class="asummary-val" style="color:var(--accent)">${totalAll}</div><div class="asummary-label">Total Tasks</div></div><div class="asummary-card"><div class="asummary-val" style="color:#2ecc71">${doneAll}</div><div class="asummary-label">Completed</div></div><div class="asummary-card"><div class="asummary-val" style="color:#ff9f43;font-size:0.85rem">${topCat.icon} ${topCat.label}</div><div class="asummary-label">Most Active</div></div>`;
   const ctx=document.getElementById('tt_chartPlatform')?.getContext('2d'); if(!ctx)return;
-  tt_chartPlatform=new Chart(ctx,{type:'bar',data:{labels:allCats.map(p=>`${p.icon} ${p.label}`),datasets:[{label:'Completed',data:allCats.map(p=>p.done),backgroundColor:allCats.map(p=>p.color+'cc'),borderRadius:4},{label:'Pending',data:allCats.map(p=>p.total-p.done),backgroundColor:allCats.map(p=>p.color+'44'),borderRadius:4}]},options:{...TT_CHART_DEFAULTS,plugins:{legend:{display:true,labels:{color:'#9090aa',font:{size:11}}}},scales:{x:{stacked:true,ticks:{color:'#6b6b80',font:{size:10}},grid:{color:'#2a2a3a'}},y:{stacked:true,ticks:{color:'#6b6b80'},grid:{color:'#2a2a3a'},beginAtZero:true}}}});
+  tt_chartPlatform=new Chart(ctx,{type:'bar',data:{labels:allCats.map(p=>`${p.icon} ${p.label}`),datasets:[{label:'Completed',data:allCats.map(p=>p.done),backgroundColor:allCats.map(p=>p.color+'cc'),borderRadius:4},{label:'Ongoing',data:allCats.map(p=>p.total-p.done),backgroundColor:allCats.map(p=>p.color+'44'),borderRadius:4}]},options:{...TT_CHART_DEFAULTS,plugins:{legend:{display:true,labels:{color:'#9090aa',font:{size:11}}}},scales:{x:{stacked:true,ticks:{color:'#6b6b80',font:{size:10}},grid:{color:'#2a2a3a'}},y:{stacked:true,ticks:{color:'#6b6b80'},grid:{color:'#2a2a3a'},beginAtZero:true}}}});
   document.getElementById('tt_platformLegend').innerHTML=allCats.map(p=>{const rate=p.total?Math.round(p.done/p.total*100):0;return`<div class="legend-item"><div class="legend-dot" style="background:${p.color}"></div><span class="legend-label">${p.icon} ${p.label}</span><span class="legend-val" style="color:${p.color}">${p.done}/${p.total}</span><span style="font-size:0.65rem;color:var(--text-muted);margin-left:2px">${rate}%</span></div>`;}).join('');
 }
 
