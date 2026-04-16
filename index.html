@@ -4294,14 +4294,12 @@ function generatePDFReport() {
     return `<span style="color:${color};font-weight:600">${count} day${count!==1?'s':''}</span>`;
   };
 
-  // ── Pending rows ──
-  const pendingRows = filtered
-    .filter(t => !t.done)
+  // ── Ongoing rows (not done AND no due date OR due date >= today) ──
+  const ongoingRows = filtered
+    .filter(t => !t.done && (!t.dueDate || t.dueDate >= todayKey))
     .sort((a,b) => a.date.localeCompare(b.date))
     .map(t => {
       const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
-      const ref = t.dueDate || t.date;
-      const isOv = ref < todayKey;
       const cmts = commentsHtml(t);
       const lt   = calcPendingLeadtime(t);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
@@ -4312,7 +4310,28 @@ function generatePDFReport() {
         <td style="padding:6px 10px;text-align:center">${t.date}</td>
         <td style="padding:6px 10px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
         <td style="padding:6px 10px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
-        <td style="padding:6px 10px;color:${isOv?'#e74c3c':'#c0392b'};font-weight:700">${isOv?'⚠️ Pending':'⏳ Ongoing'}</td>
+        <td style="padding:6px 10px;color:#2ecc71;font-weight:700">⏳ Ongoing</td>
+        <td style="padding:6px 10px;text-align:center">${lt}</td>
+      </tr>`;
+    }).join('');
+
+  // ── Pending rows (not done AND due date is set AND due date < today) ──
+  const pendingRows = filtered
+    .filter(t => !t.done && t.dueDate && t.dueDate < todayKey)
+    .sort((a,b) => a.dueDate.localeCompare(b.dueDate))
+    .map(t => {
+      const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
+      const cmts = commentsHtml(t);
+      const lt   = calcPendingLeadtime(t);
+      return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
+        <td style="padding:6px 10px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
+        <td style="padding:6px 10px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
+        <td style="padding:6px 10px">${cat.label}</td>
+        <td style="padding:6px 10px">${t.assignedTo||'—'}</td>
+        <td style="padding:6px 10px;text-align:center">${t.date}</td>
+        <td style="padding:6px 10px;text-align:center;color:#e17055;font-weight:700">${t.dueDate}</td>
+        <td style="padding:6px 10px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
+        <td style="padding:6px 10px;color:#e74c3c;font-weight:700">⚠️ Pending</td>
         <td style="padding:6px 10px;text-align:center">${lt}</td>
       </tr>`;
     }).join('');
@@ -4478,10 +4497,10 @@ function generatePDFReport() {
   <div class="table-wrap"><table><thead><tr><th class="left">Platform</th><th class="num">Total</th><th class="num">Completed</th><th class="num">Pending</th><th class="num">Rate</th></tr></thead><tbody>${platRows}</tbody></table></div>
 
   <div class="section-head">⏳ Ongoing Tasks</div>
-  ${pendingRows ? `<div class="table-wrap"><table><thead><tr>${TASK_TH}</tr></thead><tbody>${pendingRows}</tbody></table></div>` : '<div class="no-data">No pending tasks for this period. 🎉</div>'}
+  ${ongoingRows ? `<div class="table-wrap"><table><thead><tr>${TASK_TH}</tr></thead><tbody>${ongoingRows}</tbody></table></div>` : '<div class="no-data">No ongoing tasks for this period. 🎉</div>'}
 
   <div class="section-head">⚠️ Pending Tasks</div>
-  ${overdueRows ? `<div class="table-wrap"><table><thead><tr><th class="left">Title &amp; Comments</th><th class="left">Assigned To</th><th class="left">Category</th><th class="num">Scheduled</th><th class="num">Due Date</th><th class="num">Days Overdue</th></tr></thead><tbody>${overdueRows}</tbody></table></div>` : '<div class="no-overdue">🎉 No overdue tasks!</div>'}
+  ${pendingRows ? `<div class="table-wrap"><table><thead><tr>${TASK_TH}</tr></thead><tbody>${pendingRows}</tbody></table></div>` : '<div class="no-overdue">🎉 No pending tasks!</div>'}
 
   <div class="section-head">✅ Done Tasks</div>
   ${socDoneRows ? `<div class="table-wrap"><table><thead><tr><th class="left">Title &amp; Comments</th><th class="left">Description</th><th class="left">Category</th><th class="left">Assigned To</th><th class="num">Scheduled</th><th class="num">Due Date</th><th class="num">Priority</th><th class="left">Done Date</th><th class="num">Leadtime</th></tr></thead><tbody>${socDoneRows}</tbody></table></div>` : '<div class="no-data">No completed tasks for this period.</div>'}
@@ -7562,14 +7581,12 @@ function tt_generatePDFReport() {
     return `<span style="color:${color};font-weight:600">${count} day${count!==1?'s':''}</span>`;
   };
 
-  // ── Pending rows ──
-  const pendingRows = filtered
-    .filter(t => !t.done)
+  // ── Ongoing rows (not done AND no due date OR due date >= today) ──
+  const ongoingRows = filtered
+    .filter(t => !t.done && (!t.dueDate || t.dueDate >= todayKey))
     .sort((a,b) => a.date.localeCompare(b.date))
     .map(t => {
       const cat = tt_findCat(t.category);
-      const ref = tt_overdueRef(t);
-      const isOv = ref < todayKey;
       const cmts = ttCommentHtml(t.comments);
       const lt   = calcPendingLeadtime(t);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
@@ -7580,7 +7597,28 @@ function tt_generatePDFReport() {
         <td style="padding:6px 10px;text-align:center">${t.date}</td>
         <td style="padding:6px 10px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
         <td style="padding:6px 10px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
-        <td style="padding:6px 10px;color:${isOv?'#e74c3c':'#c0392b'};font-weight:700">${isOv?'⚠️ Pending':'⏳ Ongoing'}</td>
+        <td style="padding:6px 10px;color:#2ecc71;font-weight:700">⏳ Ongoing</td>
+        <td style="padding:6px 10px;text-align:center">${lt}</td>
+      </tr>`;
+    }).join('');
+
+  // ── Pending rows (not done AND due date is set AND due date < today) ──
+  const pendingRows = filtered
+    .filter(t => !t.done && t.dueDate && t.dueDate < todayKey)
+    .sort((a,b) => a.dueDate.localeCompare(b.dueDate))
+    .map(t => {
+      const cat = tt_findCat(t.category);
+      const cmts = ttCommentHtml(t.comments);
+      const lt   = calcPendingLeadtime(t);
+      return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
+        <td style="padding:6px 10px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
+        <td style="padding:6px 10px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
+        <td style="padding:6px 10px">${cat.label}</td>
+        <td style="padding:6px 10px">${t.assignedTo||'—'}</td>
+        <td style="padding:6px 10px;text-align:center">${t.date}</td>
+        <td style="padding:6px 10px;text-align:center;color:#e17055;font-weight:700">${t.dueDate}</td>
+        <td style="padding:6px 10px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
+        <td style="padding:6px 10px;color:#e74c3c;font-weight:700">⚠️ Pending</td>
         <td style="padding:6px 10px;text-align:center">${lt}</td>
       </tr>`;
     }).join('');
@@ -7799,6 +7837,22 @@ function tt_generatePDFReport() {
   </table></div>` : '<div class="no-data">No category data for this period.</div>'}
 
   <div class="section-head">⏳ Ongoing Tasks</div>
+  ${ongoingRows ? `<div class="table-wrap"><table>
+    <thead><tr>
+      <th class="left">Title &amp; Comments</th>
+      <th class="left">Description</th>
+      <th class="left">Category</th>
+      <th class="left">Assigned To</th>
+      <th class="num">Scheduled</th>
+      <th class="num">Due Date</th>
+      <th class="num">Priority</th>
+      <th class="left">Status</th>
+      <th class="num">Leadtime</th>
+    </tr></thead>
+    <tbody>${ongoingRows}</tbody>
+  </table></div>` : '<div class="no-data">No ongoing tasks for this period. 🎉</div>'}
+
+  <div class="section-head">⚠️ Pending Tasks</div>
   ${pendingRows ? `<div class="table-wrap"><table>
     <thead><tr>
       <th class="left">Title &amp; Comments</th>
@@ -7812,20 +7866,7 @@ function tt_generatePDFReport() {
       <th class="num">Leadtime</th>
     </tr></thead>
     <tbody>${pendingRows}</tbody>
-  </table></div>` : '<div class="no-data">No pending tasks for this period. 🎉</div>'}
-
-  <div class="section-head">⚠️ Pending Tasks</div>
-  ${overdueRows ? `<div class="table-wrap"><table>
-    <thead><tr>
-      <th class="left">Title &amp; Comments</th>
-      <th class="left">Assigned To</th>
-      <th class="left">Category</th>
-      <th class="num">Scheduled</th>
-      <th class="num">Due Date</th>
-      <th class="num">Days Overdue</th>
-    </tr></thead>
-    <tbody>${overdueRows}</tbody>
-  </table></div>` : '<div class="no-overdue">🎉 No overdue tasks in this period!</div>'}
+  </table></div>` : '<div class="no-overdue">🎉 No pending tasks!</div>'}
 
   <div class="section-head">✅ Done Tasks</div>
   ${doneRows ? `<div class="table-wrap"><table>
