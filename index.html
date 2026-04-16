@@ -7706,14 +7706,14 @@ function tt_generatePDFReport() {
     .charts-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: stretch; }
     .chart-box { background: #fff; border: 1px solid #e8e8e8; border-radius: 6px; padding: 14px; text-align: center; overflow: hidden; min-width: 0; max-width: 100%; display: flex; flex-direction: column; }
     .chart-title { font-size: 12px; font-weight: 700; color: #444; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; flex-shrink: 0; }
-    .chart-canvas-wrap { flex: 1; position: relative; height: 260px; }
-    .chart-box canvas { position: absolute; top: 0; left: 0; width: 100% !important; height: 100% !important; }
+    .chart-canvas-wrap { flex: 1; width: 100%; height: 260px; min-height: 260px; }
+    .chart-canvas-wrap canvas { display: block; width: 100% !important; height: 260px !important; }
     @media print {
       .charts-wrap { page-break-inside: avoid; }
       .charts-row { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; align-items: stretch !important; }
       .chart-box { overflow: hidden !important; max-width: 100% !important; }
-      .chart-canvas-wrap { height: 260px !important; }
-      .chart-box canvas { width: 100% !important; height: 100% !important; }
+      .chart-canvas-wrap { height: 260px !important; min-height: 260px !important; }
+      .chart-canvas-wrap canvas { width: 100% !important; height: 260px !important; }
     }
 
     /* ═══ TABLES ═══ */
@@ -7891,21 +7891,30 @@ function tt_generatePDFReport() {
       if (charts.assignee) charts.assignee.destroy();
       if (charts.category) charts.category.destroy();
 
-      charts.status = new Chart(document.getElementById('chartStatus'), {
+      const statusCanvas   = document.getElementById('chartStatus');
+      const assigneeCanvas = document.getElementById('chartAssignee');
+      const categoryCanvas = document.getElementById('chartCategory');
+
+      // Set explicit pixel dimensions so Chart.js has a concrete size to work with
+      [statusCanvas, assigneeCanvas, categoryCanvas].forEach(c => {
+        c.width  = c.parentElement.offsetWidth  || 400;
+        c.height = 260;
+      });
+
+      charts.status = new Chart(statusCanvas, {
         type: 'doughnut',
         data: {
           labels: statusData.map(d => d.label),
           datasets: [{ data: statusData.map(d => d.val), backgroundColor: statusData.map(d => d.color), borderWidth: 2 }]
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
+          responsive: false,
           animation: false,
           plugins: { legend: { position: 'bottom', labels: { font: { size: 13, family: FONT.family }, padding: 12, boxWidth: 14 } } }
         }
       });
 
-      charts.assignee = new Chart(document.getElementById('chartAssignee'), {
+      charts.assignee = new Chart(assigneeCanvas, {
         type: 'bar',
         data: {
           labels: assigneeData.map(d => d.name),
@@ -7915,8 +7924,7 @@ function tt_generatePDFReport() {
           ]
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
+          responsive: false,
           animation: false,
           scales: {
             x: { stacked: true, ticks: { font: { size: 13, family: FONT.family } }, grid: { color: '#eee' } },
@@ -7926,7 +7934,7 @@ function tt_generatePDFReport() {
         }
       });
 
-      charts.category = new Chart(document.getElementById('chartCategory'), {
+      charts.category = new Chart(categoryCanvas, {
         type: 'bar',
         data: {
           labels: catFiltered.map(c => c.label.replace(/^[^ ]+ /, '')),
@@ -7936,8 +7944,7 @@ function tt_generatePDFReport() {
           ]
         },
         options: {
-          responsive: true,
-          maintainAspectRatio: false,
+          responsive: false,
           animation: false,
           indexAxis: 'y',
           scales: {
@@ -7951,18 +7958,11 @@ function tt_generatePDFReport() {
 
     window.addEventListener('load', function() {
       buildCharts();
-      // Resize charts to container, then print
-      setTimeout(function() {
-        Object.values(charts).forEach(c => { if(c){ c.resize(); c.update('none'); } });
-        setTimeout(function() { window.print(); }, 500);
-      }, 1800);
+      setTimeout(function() { window.print(); }, 2000);
     });
 
-    // Also handle beforeprint for any manual Ctrl+P
     function prepareChartsForPrint() {
-      Object.values(charts).forEach(chart => {
-        if (chart) { chart.resize(); chart.update('none'); }
-      });
+      Object.values(charts).forEach(chart => { if (chart) chart.update('none'); });
     }
     window.onbeforeprint = prepareChartsForPrint;
     if (window.matchMedia) {
