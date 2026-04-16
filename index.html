@@ -1962,6 +1962,7 @@
       <button class="view-tab active" id="tt_vtMonth"  onclick="tt_switchView('month')">📅 Month</button>
       <button class="view-tab"        id="tt_vtWeek"   onclick="tt_switchView('week')">📆 Week</button>
       <button class="view-tab"        id="tt_vtAgenda" onclick="tt_switchView('agenda')">📋 Agenda</button>
+      <button class="view-tab"        id="tt_vtSearch" onclick="tt_openSearch()">🔍 Search</button>
     </div>
     <div class="notif-bell-wrap">
       <button class="notif-bell-btn" id="tt_notifBellBtn" onclick="tt_toggleNotifDropdown()">
@@ -2419,6 +2420,43 @@
         <div id="tt_reportPreviewContent" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px"></div>
       </div>
       <button onclick="tt_generatePDFReport()" style="width:100%;background:var(--accent);color:#0a0a0f;border:none;border-radius:8px;padding:13px;font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1rem;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;">Generate & Download PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- TT SEARCH MODAL -->
+<div class="modal-overlay" id="tt_searchOverlay" style="z-index:800">
+  <div class="modal" style="max-width:580px;width:95vw">
+    <div class="modal-title">
+      <span>🔍 Search Tasks</span>
+      <button class="modal-close" onclick="tt_closeSearch()">✕</button>
+    </div>
+    <div class="form-group">
+      <input class="form-input" id="tt_searchInput" type="text" placeholder="Search by title, notes, assignee, category..." autocomplete="off"
+        style="font-size:0.95rem;padding:12px 16px"
+        oninput="tt_doSearch()" />
+    </div>
+    <!-- Filters row -->
+    <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+      <select id="tt_searchStatus" onchange="tt_doSearch()" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.75rem;outline:none">
+        <option value="">All Status</option>
+        <option value="ongoing">⏳ Ongoing</option>
+        <option value="pending">⚠️ Pending</option>
+        <option value="done">✅ Done</option>
+      </select>
+      <select id="tt_searchAssignee" onchange="tt_doSearch()" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.75rem;outline:none">
+        <option value="">All Assignees</option>
+      </select>
+      <select id="tt_searchCat" onchange="tt_doSearch()" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.75rem;outline:none">
+        <option value="">All Categories</option>
+      </select>
+      <button onclick="tt_clearSearch()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 12px;color:var(--text-muted);font-family:'DM Mono',monospace;font-size:0.75rem;cursor:pointer">✕ Clear</button>
+    </div>
+    <!-- Results count -->
+    <div id="tt_searchCount" style="font-size:0.72rem;color:var(--text-muted);margin-bottom:8px;font-family:'DM Mono',monospace"></div>
+    <!-- Results list -->
+    <div id="tt_searchResults" style="max-height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
+      <div style="text-align:center;padding:2rem;color:var(--text-muted);font-size:0.82rem">Type to search tasks...</div>
     </div>
   </div>
 </div>
@@ -6789,12 +6827,125 @@ function tt_switchView(v) {
   document.getElementById('tt_viewMonth').style.display = v==='month' ? '' : 'none';
   document.getElementById('tt_viewWeek').style.display  = v==='week'  ? '' : 'none';
   document.getElementById('tt_viewAgenda').style.display= v==='agenda'? '' : 'none';
-  ['tt_vtMonth','tt_vtWeek','tt_vtAgenda'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+  ['tt_vtMonth','tt_vtWeek','tt_vtAgenda','tt_vtSearch'].forEach(id => document.getElementById(id)?.classList.remove('active'));
   document.getElementById(v==='month'?'tt_vtMonth':v==='week'?'tt_vtWeek':'tt_vtAgenda')?.classList.add('active');
   if (v==='week') tt_renderWeekView();
   if (v==='agenda') tt_renderAgendaView();
 }
 window.tt_switchView = tt_switchView;
+
+// ── Search ──
+function tt_openSearch() {
+  ['tt_vtMonth','tt_vtWeek','tt_vtAgenda','tt_vtSearch'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+  document.getElementById('tt_vtSearch')?.classList.add('active');
+  // Populate assignee dropdown
+  const assigneeSel = document.getElementById('tt_searchAssignee');
+  const names = [...new Set(tt_tasks.map(t => t.assignedTo).filter(Boolean))].sort();
+  assigneeSel.innerHTML = '<option value="">All Assignees</option>' + names.map(n => `<option value="${n}">${n}</option>`).join('');
+  // Populate category dropdown
+  const catSel = document.getElementById('tt_searchCat');
+  catSel.innerHTML = '<option value="">All Categories</option>' + TT_CATEGORIES.map(c => `<option value="${c.id}">${c.icon||''} ${c.label}</option>`).join('');
+  document.getElementById('tt_searchOverlay').classList.add('open');
+  document.getElementById('tt_searchInput').focus();
+  tt_doSearch();
+}
+function tt_closeSearch() {
+  document.getElementById('tt_searchOverlay').classList.remove('open');
+  // Restore previous active view tab
+  const v = tt_currentView || 'month';
+  ['tt_vtMonth','tt_vtWeek','tt_vtAgenda','tt_vtSearch'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+  document.getElementById(v==='month'?'tt_vtMonth':v==='week'?'tt_vtWeek':'tt_vtAgenda')?.classList.add('active');
+}
+function tt_clearSearch() {
+  document.getElementById('tt_searchInput').value = '';
+  document.getElementById('tt_searchStatus').value = '';
+  document.getElementById('tt_searchAssignee').value = '';
+  document.getElementById('tt_searchCat').value = '';
+  tt_doSearch();
+}
+function tt_doSearch() {
+  const query    = (document.getElementById('tt_searchInput')?.value || '').toLowerCase().trim();
+  const status   = document.getElementById('tt_searchStatus')?.value || '';
+  const assignee = document.getElementById('tt_searchAssignee')?.value || '';
+  const catId    = document.getElementById('tt_searchCat')?.value || '';
+  const todayKey = today();
+
+  let results = tt_tasks.filter(t => {
+    // Status filter
+    if (status === 'done'    && !t.done) return false;
+    if (status === 'ongoing' && (t.done || (t.dueDate && t.dueDate < todayKey))) return false;
+    if (status === 'pending' && (t.done || !t.dueDate || t.dueDate >= todayKey)) return false;
+    // Assignee filter
+    if (assignee && t.assignedTo !== assignee) return false;
+    // Category filter
+    if (catId && t.category !== catId) return false;
+    // Text search
+    if (query) {
+      const cat = tt_findCat(t.category);
+      const haystack = [t.title, t.notes, t.assignedTo, cat.label, t.dueDate, t.date].join(' ').toLowerCase();
+      if (!haystack.includes(query)) return false;
+    }
+    return true;
+  }).sort((a,b) => a.date.localeCompare(b.date));
+
+  const countEl = document.getElementById('tt_searchCount');
+  const listEl  = document.getElementById('tt_searchResults');
+  if (countEl) countEl.textContent = results.length ? `${results.length} task${results.length!==1?'s':''} found` : '';
+
+  if (!results.length) {
+    listEl.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);font-size:0.82rem">
+      ${query||status||assignee||catId ? '😕 No tasks match your search.' : 'Type to search tasks...'}
+    </div>`;
+    return;
+  }
+
+  listEl.innerHTML = '';
+  results.forEach(t => {
+    const cat = tt_findCat(t.category);
+    const todayKey2 = today();
+    const isOv = !t.done && t.dueDate && t.dueDate < todayKey2;
+    const statusTag = t.done
+      ? `<span style="font-size:0.6rem;background:rgba(46,204,113,0.15);color:#2ecc71;border-radius:3px;padding:1px 6px;font-weight:700">✅ Done</span>`
+      : isOv
+        ? `<span style="font-size:0.6rem;background:rgba(231,76,60,0.15);color:#e74c3c;border-radius:3px;padding:1px 6px;font-weight:700">⚠️ Pending</span>`
+        : `<span style="font-size:0.6rem;background:rgba(116,185,255,0.15);color:#74b9ff;border-radius:3px;padding:1px 6px;font-weight:700">⏳ Ongoing</span>`;
+
+    const item = document.createElement('div');
+    item.style.cssText = `background:var(--surface);border:1px solid ${isOv?'rgba(231,76,60,0.3)':'var(--border)'};border-left:3px solid ${cat.color};border-radius:8px;padding:10px 14px;cursor:pointer;transition:background 0.15s`;
+    item.onmouseenter = () => item.style.background = 'var(--surface2)';
+    item.onmouseleave = () => item.style.background = 'var(--surface)';
+    item.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px">
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.title}</div>
+        ${statusTag}
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <span style="font-size:0.65rem;background:${cat.color}20;color:${cat.color};border-radius:3px;padding:1px 6px">${cat.icon||''}${cat.label}</span>
+        <span style="font-size:0.65rem;color:var(--text-muted)">📅 ${t.date}</span>
+        ${t.dueDate ? `<span style="font-size:0.65rem;color:${isOv?'#e74c3c':'#e17055'}">⏰ Due: ${t.dueDate}</span>` : ''}
+        ${t.assignedTo ? `<span style="font-size:0.65rem;color:var(--text-muted)">👤 ${t.assignedTo}</span>` : ''}
+        ${t.notes ? `<span style="font-size:0.65rem;color:var(--text-muted);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px">${t.notes.slice(0,60)}${t.notes.length>60?'…':''}</span>` : ''}
+      </div>`;
+    item.onclick = () => {
+      tt_closeSearch();
+      // Switch to month view and jump to the task's date
+      tt_switchView('month');
+      const taskDate = new Date(t.date + 'T12:00:00');
+      tt_currentDate = new Date(taskDate.getFullYear(), taskDate.getMonth(), 1);
+      tt_renderCalendar();
+      tt_renderStats();
+      tt_renderCategories();
+      tt_selectDay(t.date);
+      // Highlight the task by opening its detail after a short delay
+      setTimeout(() => tt_openTaskDetail(t._id), 300);
+    };
+    listEl.appendChild(item);
+  });
+}
+window.tt_openSearch  = tt_openSearch;
+window.tt_closeSearch = tt_closeSearch;
+window.tt_clearSearch = tt_clearSearch;
+window.tt_doSearch    = tt_doSearch;
 
 // ── Modal ──
 function tt_buildCatSelector() {
@@ -8170,6 +8321,8 @@ function initTrackingTab() {
   // Task detail close
   document.getElementById('tt_taskDetailOverlay').onclick = e => { if(e.target===document.getElementById('tt_taskDetailOverlay'))tt_closeTaskDetail(); };
   document.getElementById('tt_statModalOverlay').onclick = e => { if(e.target===document.getElementById('tt_statModalOverlay'))tt_closeStatModal(); };
+  document.getElementById('tt_searchOverlay')?.addEventListener('click', e => { if(e.target===document.getElementById('tt_searchOverlay'))tt_closeSearch(); });
+  document.getElementById('tt_searchInput')?.addEventListener('keydown', e => { if(e.key==='Escape')tt_closeSearch(); });
   document.getElementById('tt_analyticsOverlay').onclick = e => { if(e.target===document.getElementById('tt_analyticsOverlay'))tt_closeAnalytics(); };
 
   // Overdue check
