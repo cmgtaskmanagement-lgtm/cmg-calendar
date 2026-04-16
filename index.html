@@ -4261,15 +4261,15 @@ function generatePDFReport() {
       const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
       const cmts = commentsHtml(t);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
-        <td style="padding:3px 7px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
-        <td style="padding:3px 7px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
-        <td style="padding:3px 7px">${cat.label}</td>
-        <td style="padding:3px 7px">${t.assignedTo||'—'}</td>
-        <td style="padding:3px 7px;text-align:center">${t.date}</td>
-        <td style="padding:3px 7px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
-        <td style="padding:3px 7px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
-        <td style="padding:3px 7px">${statusCell(t)}</td>
-        <td style="padding:3px 7px;text-align:center">${calcLeadtime(t)}</td>
+        <td style="padding:6px 10px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
+        <td style="padding:6px 10px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
+        <td style="padding:6px 10px">${cat.label}</td>
+        <td style="padding:6px 10px">${t.assignedTo||'—'}</td>
+        <td style="padding:6px 10px;text-align:center">${t.date}</td>
+        <td style="padding:6px 10px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
+        <td style="padding:6px 10px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
+        <td style="padding:6px 10px">${statusCell(t)}</td>
+        <td style="padding:6px 10px;text-align:center">${calcLeadtime(t)}</td>
       </tr>`;
     }).join('');
 
@@ -4305,15 +4305,15 @@ function generatePDFReport() {
       const cmts = commentsHtml(t);
       const lt   = calcPendingLeadtime(t);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
-        <td style="padding:3px 7px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
-        <td style="padding:3px 7px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
-        <td style="padding:3px 7px">${cat.label}</td>
-        <td style="padding:3px 7px">${t.assignedTo||'—'}</td>
-        <td style="padding:3px 7px;text-align:center">${t.date}</td>
-        <td style="padding:3px 7px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
-        <td style="padding:3px 7px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
-        <td style="padding:3px 7px;color:${isOv?'#e74c3c':'#c0392b'};font-weight:700">${isOv?'⚠️ Pending':'⏳ Ongoing'}</td>
-        <td style="padding:3px 7px;text-align:center">${lt}</td>
+        <td style="padding:6px 10px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
+        <td style="padding:6px 10px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
+        <td style="padding:6px 10px">${cat.label}</td>
+        <td style="padding:6px 10px">${t.assignedTo||'—'}</td>
+        <td style="padding:6px 10px;text-align:center">${t.date}</td>
+        <td style="padding:6px 10px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
+        <td style="padding:6px 10px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
+        <td style="padding:6px 10px;color:${isOv?'#e74c3c':'#c0392b'};font-weight:700">${isOv?'⚠️ Pending':'⏳ Ongoing'}</td>
+        <td style="padding:6px 10px;text-align:center">${lt}</td>
       </tr>`;
     }).join('');
 
@@ -4331,12 +4331,12 @@ function generatePDFReport() {
     const r = assigneeMap[name];
     const rA = r.total ? Math.round(r.done/r.total*100) : 0;
     return `<tr style="border-bottom:1px solid #eee">
-      <td style="padding:3px 7px;font-weight:600">${name}</td>
-      <td style="padding:3px 7px;text-align:center">${r.total}</td>
-      <td style="padding:3px 7px;text-align:center;color:#2ecc71;font-weight:600">${r.done}</td>
-      <td style="padding:3px 7px;text-align:center;color:#c0392b">${r.total-r.done}</td>
-      <td style="padding:3px 7px;text-align:center;color:#e74c3c;font-weight:600">${r.overdue}</td>
-      <td style="padding:3px 7px;text-align:center;color:#0984e3;font-weight:700">${rA}%</td>
+      <td style="padding:6px 10px;font-weight:600">${name}</td>
+      <td style="padding:6px 10px;text-align:center">${r.total}</td>
+      <td style="padding:6px 10px;text-align:center;color:#2ecc71;font-weight:600">${r.done}</td>
+      <td style="padding:6px 10px;text-align:center;color:#c0392b">${r.total-r.done}</td>
+      <td style="padding:6px 10px;text-align:center;color:#e74c3c;font-weight:600">${r.overdue}</td>
+      <td style="padding:6px 10px;text-align:center;color:#0984e3;font-weight:700">${rA}%</td>
     </tr>`;
   }).join('');
 
@@ -4346,11 +4346,11 @@ function generatePDFReport() {
     const pd = pt.filter(t => t.done).length;
     const pr = pt.length ? Math.round(pd/pt.length*100) : 0;
     return `<tr style="border-bottom:1px solid #eee">
-      <td style="padding:3px 7px;font-weight:600">${p.icon} ${p.label}</td>
-      <td style="padding:3px 7px;text-align:center">${pt.length}</td>
-      <td style="padding:3px 7px;text-align:center;color:#2ecc71;font-weight:600">${pd}</td>
-      <td style="padding:3px 7px;text-align:center;color:#c0392b">${pt.length-pd}</td>
-      <td style="padding:3px 7px;text-align:center;color:#0984e3;font-weight:700">${pr}%</td>
+      <td style="padding:6px 10px;font-weight:600">${p.icon} ${p.label}</td>
+      <td style="padding:6px 10px;text-align:center">${pt.length}</td>
+      <td style="padding:6px 10px;text-align:center;color:#2ecc71;font-weight:600">${pd}</td>
+      <td style="padding:6px 10px;text-align:center;color:#c0392b">${pt.length-pd}</td>
+      <td style="padding:6px 10px;text-align:center;color:#0984e3;font-weight:700">${pr}%</td>
     </tr>`;
   }).join('');
 
@@ -4364,12 +4364,12 @@ function generatePDFReport() {
       const days = Math.floor((new Date(todayKey) - new Date(ref)) / 86400000);
       const cmts = commentsHtml(t);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
-        <td style="padding:3px 7px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
-        <td style="padding:3px 7px">${t.assignedTo||'—'}</td>
-        <td style="padding:3px 7px">${cat.label}</td>
-        <td style="padding:3px 7px;text-align:center">${t.date}</td>
-        <td style="padding:3px 7px;text-align:center;color:#e17055;font-weight:700">${t.dueDate||'—'}</td>
-        <td style="padding:3px 7px;text-align:center;color:#e74c3c;font-weight:700">${days} day${days!==1?'s':''}</td>
+        <td style="padding:6px 10px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
+        <td style="padding:6px 10px">${t.assignedTo||'—'}</td>
+        <td style="padding:6px 10px">${cat.label}</td>
+        <td style="padding:6px 10px;text-align:center">${t.date}</td>
+        <td style="padding:6px 10px;text-align:center;color:#e17055;font-weight:700">${t.dueDate||'—'}</td>
+        <td style="padding:6px 10px;text-align:center;color:#e74c3c;font-weight:700">${days} day${days!==1?'s':''}</td>
       </tr>`;
     }).join('');
 
@@ -4383,15 +4383,15 @@ function generatePDFReport() {
       const doneDate = t.doneAt ? fmtDate(t.doneAt) : '—';
       const lt = calcPendingLeadtime(t);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
-        <td style="padding:3px 7px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
-        <td style="padding:3px 7px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
-        <td style="padding:3px 7px">${cat.label}</td>
-        <td style="padding:3px 7px">${t.assignedTo||'—'}</td>
-        <td style="padding:3px 7px;text-align:center">${t.date}</td>
-        <td style="padding:3px 7px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
-        <td style="padding:3px 7px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
-        <td style="padding:3px 7px;color:#2ecc71;font-weight:700">${doneDate}</td>
-        <td style="padding:3px 7px;text-align:center">${lt}</td>
+        <td style="padding:6px 10px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
+        <td style="padding:6px 10px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
+        <td style="padding:6px 10px">${cat.label}</td>
+        <td style="padding:6px 10px">${t.assignedTo||'—'}</td>
+        <td style="padding:6px 10px;text-align:center">${t.date}</td>
+        <td style="padding:6px 10px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
+        <td style="padding:6px 10px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
+        <td style="padding:6px 10px;color:#2ecc71;font-weight:700">${doneDate}</td>
+        <td style="padding:6px 10px;text-align:center">${lt}</td>
       </tr>`;
     }).join('');
 
@@ -4401,55 +4401,55 @@ function generatePDFReport() {
   <title>CMG ${periodLabel} Report — ${rangeLabel}</title>
   <style>
     /* ═══ PAGE SETUP ═══ */
-    @page { size: legal landscape; margin: 12mm 14mm; }
+    @page { size: A3 landscape; margin: 12mm 16mm; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12px; color: #1a1a1a; background: #fff; width: 100%; }
-    body { padding: 20px 24px; }
+    html, body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; color: #1a1a1a; background: #fff; width: 100%; }
+    body { padding: 22px 28px; }
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 
     /* ═══ REPORT HEADER ═══ */
-    .report-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #0a0a0f; padding-bottom: 10px; margin-bottom: 4px; }
-    .report-side { font-size: 10px; color: #666; letter-spacing: 0.06em; text-transform: uppercase; min-width: 160px; }
+    .report-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #0a0a0f; padding-bottom: 12px; margin-bottom: 6px; }
+    .report-side { font-size: 12px; color: #666; letter-spacing: 0.06em; text-transform: uppercase; min-width: 180px; }
     .report-side.right { text-align: right; }
-    .report-title { flex: 1; text-align: center; font-size: 19px; font-weight: 800; color: #0a0a0f; line-height: 1.2; }
-    .badge { display: inline-block; background: #0a0a0f; color: #c8f135; border-radius: 4px; padding: 2px 10px; font-size: 10px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; margin-left: 8px; vertical-align: middle; }
-    .meta { text-align: center; font-size: 11px; color: #555; margin: 5px 0 14px; }
+    .report-title { flex: 1; text-align: center; font-size: 22px; font-weight: 800; color: #0a0a0f; line-height: 1.2; }
+    .badge { display: inline-block; background: #0a0a0f; color: #c8f135; border-radius: 4px; padding: 3px 12px; font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; margin-left: 10px; vertical-align: middle; }
+    .meta { text-align: center; font-size: 13px; color: #555; margin: 6px 0 16px; }
 
     /* ═══ STAT CARDS ═══ */
-    .stats { display: flex; gap: 10px; justify-content: center; margin-bottom: 10px; flex-wrap: wrap; }
-    .stat { background: #f7f7f7; border: 1px solid #ddd; border-radius: 8px; padding: 10px 20px; text-align: center; min-width: 100px; }
-    .stat-val { font-size: 24px; font-weight: 800; line-height: 1.1; }
-    .stat-label { font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 0.07em; margin-top: 3px; }
+    .stats { display: flex; gap: 12px; justify-content: center; margin-bottom: 14px; flex-wrap: wrap; }
+    .stat { background: #f7f7f7; border: 1px solid #ddd; border-radius: 8px; padding: 12px 24px; text-align: center; min-width: 110px; }
+    .stat-val { font-size: 28px; font-weight: 800; line-height: 1.1; }
+    .stat-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.07em; margin-top: 4px; }
 
     /* ═══ SECTION HEADINGS ═══ */
-    .section-head { background: #0a0a0f !important; color: #ffffff !important; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 7px 14px; border-radius: 6px 6px 0 0; margin-top: 12px; margin-bottom: 0; display: block; }
+    .section-head { background: #0a0a0f !important; color: #ffffff !important; font-size: 14px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 8px 16px; border-radius: 6px 6px 0 0; margin-top: 14px; margin-bottom: 0; display: block; }
 
     /* ═══ TABLES ═══ */
-    .table-wrap { border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px; overflow: hidden; margin-bottom: 10px; }
-    table { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .table-wrap { border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px; overflow: hidden; margin-bottom: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
     thead tr { background: #1e1e2e !important; }
-    thead th { color: #ffffff !important; padding: 6px 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.03em; border-right: 1px solid #3a3a55; white-space: nowrap; }
+    thead th { color: #ffffff !important; padding: 8px 10px; font-size: 13px; font-weight: 700; letter-spacing: 0.03em; border-right: 1px solid #3a3a55; white-space: nowrap; }
     thead th:last-child { border-right: none; }
     thead th.num { text-align: center; }
     thead th.left { text-align: left; }
     tbody tr { border-bottom: 1px solid #ebebeb; }
     tbody tr:nth-child(even) { background: #f6f6fb; }
-    tbody td { padding: 4px 8px; vertical-align: top; font-size: 11px; border-right: 1px solid #ebebeb; line-height: 1.35; }
+    tbody td { padding: 6px 10px; vertical-align: top; font-size: 14px; border-right: 1px solid #ebebeb; line-height: 1.4; }
     tbody td:last-child { border-right: none; }
     tbody td.num { text-align: center; }
-    /* compact comment blocks */
-    .cmt-block { margin-top: 4px; padding: 3px 6px 3px 8px; border-left: 2px solid #c8f135; background: #f9f9f9; border-radius: 0 3px 3px 0; }
-    .cmt-author { font-size: 9px; font-weight: 700; color: #333; margin-bottom: 1px; }
-    .cmt-text { font-size: 10px; color: #444; white-space: pre-wrap; line-height: 1.3; }
+    /* comment blocks */
+    .cmt-block { margin-top: 5px; padding: 4px 8px 4px 10px; border-left: 2px solid #c8f135; background: #f9f9f9; border-radius: 0 3px 3px 0; }
+    .cmt-author { font-size: 11px; font-weight: 700; color: #333; margin-bottom: 2px; }
+    .cmt-text { font-size: 12px; color: #444; white-space: pre-wrap; line-height: 1.4; }
 
     /* ═══ MISC ═══ */
-    .no-data { text-align: center; padding: 14px; color: #999; font-size: 12px; background: #f9f9f9; border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px; margin-bottom: 10px; }
-    .no-overdue { text-align: center; padding: 14px; color: #27ae60; font-weight: 700; background: #f0fff6; border: 1px solid #b2dfdb; border-top: none; border-radius: 0 0 6px 6px; margin-bottom: 10px; }
+    .no-data { text-align: center; padding: 16px; color: #999; font-size: 14px; background: #f9f9f9; border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px; margin-bottom: 12px; }
+    .no-overdue { text-align: center; padding: 16px; color: #27ae60; font-weight: 700; background: #f0fff6; border: 1px solid #b2dfdb; border-top: none; border-radius: 0 0 6px 6px; margin-bottom: 12px; }
 
     /* ═══ PRINT ═══ */
     @media print {
-      @page { size: legal landscape; margin: 10mm 12mm; }
-      body { padding: 0; }
+      @page { size: A3 landscape; margin: 10mm 14mm; }
+      body { padding: 0; font-size: 14px; }
       .section-head { page-break-after: avoid; }
       .table-wrap { page-break-inside: auto; }
       tr { page-break-inside: avoid; }
@@ -7474,15 +7474,15 @@ function tt_generatePDFReport() {
       const cat = tt_findCat(t.category);
       const cmts = ttCommentHtml(t.comments);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
-        <td style="padding:3px 7px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
-        <td style="padding:3px 7px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
-        <td style="padding:3px 7px">${cat.label}</td>
-        <td style="padding:3px 7px">${t.assignedTo||'—'}</td>
-        <td style="padding:3px 7px;text-align:center">${t.date}</td>
-        <td style="padding:3px 7px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
-        <td style="padding:3px 7px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
-        <td style="padding:3px 7px">${doneStatus(t)}</td>
-        <td style="padding:3px 7px;text-align:center">${leadtime(t)}</td>
+        <td style="padding:6px 10px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
+        <td style="padding:6px 10px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
+        <td style="padding:6px 10px">${cat.label}</td>
+        <td style="padding:6px 10px">${t.assignedTo||'—'}</td>
+        <td style="padding:6px 10px;text-align:center">${t.date}</td>
+        <td style="padding:6px 10px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
+        <td style="padding:6px 10px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
+        <td style="padding:6px 10px">${doneStatus(t)}</td>
+        <td style="padding:6px 10px;text-align:center">${leadtime(t)}</td>
       </tr>`;
     }).join('');
 
@@ -7498,12 +7498,12 @@ function tt_generatePDFReport() {
   const assigneeRows = Object.keys(assigneeMap).map(name => {
     const r=assigneeMap[name]; const rA=r.total?Math.round(r.done/r.total*100):0;
     return `<tr style="border-bottom:1px solid #eee">
-      <td style="padding:3px 7px;font-weight:600">${name}</td>
-      <td style="padding:3px 7px;text-align:center">${r.total}</td>
-      <td style="padding:3px 7px;text-align:center;color:#2ecc71;font-weight:600">${r.done}</td>
-      <td style="padding:3px 7px;text-align:center;color:#c0392b">${r.total-r.done}</td>
-      <td style="padding:3px 7px;text-align:center;color:#e74c3c;font-weight:600">${r.overdue}</td>
-      <td style="padding:3px 7px;text-align:center;color:#0984e3;font-weight:700">${rA}%</td>
+      <td style="padding:6px 10px;font-weight:600">${name}</td>
+      <td style="padding:6px 10px;text-align:center">${r.total}</td>
+      <td style="padding:6px 10px;text-align:center;color:#2ecc71;font-weight:600">${r.done}</td>
+      <td style="padding:6px 10px;text-align:center;color:#c0392b">${r.total-r.done}</td>
+      <td style="padding:6px 10px;text-align:center;color:#e74c3c;font-weight:600">${r.overdue}</td>
+      <td style="padding:6px 10px;text-align:center;color:#0984e3;font-weight:700">${rA}%</td>
     </tr>`;
   }).join('');
 
@@ -7516,11 +7516,11 @@ function tt_generatePDFReport() {
     return { label:`${cat.icon||''} ${cat.label}`, total:ct.length, done:cd, pending:ct.length-cd, rate:cr, color:cat.color };
   });
   const catRows = catData.map(c => `<tr style="border-bottom:1px solid #eee">
-    <td style="padding:3px 7px">${c.label}</td>
-    <td style="padding:3px 7px;text-align:center">${c.total}</td>
-    <td style="padding:3px 7px;text-align:center;color:#2ecc71;font-weight:600">${c.done}</td>
-    <td style="padding:3px 7px;text-align:center;color:#c0392b">${c.pending}</td>
-    <td style="padding:3px 7px;text-align:center;color:#0984e3;font-weight:700">${c.rate}%</td>
+    <td style="padding:6px 10px">${c.label}</td>
+    <td style="padding:6px 10px;text-align:center">${c.total}</td>
+    <td style="padding:6px 10px;text-align:center;color:#2ecc71;font-weight:600">${c.done}</td>
+    <td style="padding:6px 10px;text-align:center;color:#c0392b">${c.pending}</td>
+    <td style="padding:6px 10px;text-align:center;color:#0984e3;font-weight:700">${c.rate}%</td>
   </tr>`).join('');
 
   // ── Overdue rows ──
@@ -7533,12 +7533,12 @@ function tt_generatePDFReport() {
       const days=Math.floor((new Date(todayKey)-new Date(ref))/86400000);
       const cmts = ttCommentHtml(t.comments);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
-        <td style="padding:3px 7px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
-        <td style="padding:3px 7px">${t.assignedTo||'—'}</td>
-        <td style="padding:3px 7px">${cat.label}</td>
-        <td style="padding:3px 7px;text-align:center">${t.date}</td>
-        <td style="padding:3px 7px;text-align:center;color:#e17055;font-weight:700">${t.dueDate||'—'}</td>
-        <td style="padding:3px 7px;text-align:center;color:#e74c3c;font-weight:700">${days} day${days!==1?'s':''}</td>
+        <td style="padding:6px 10px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
+        <td style="padding:6px 10px">${t.assignedTo||'—'}</td>
+        <td style="padding:6px 10px">${cat.label}</td>
+        <td style="padding:6px 10px;text-align:center">${t.date}</td>
+        <td style="padding:6px 10px;text-align:center;color:#e17055;font-weight:700">${t.dueDate||'—'}</td>
+        <td style="padding:6px 10px;text-align:center;color:#e74c3c;font-weight:700">${days} day${days!==1?'s':''}</td>
       </tr>`;
     }).join('');
 
@@ -7573,15 +7573,15 @@ function tt_generatePDFReport() {
       const cmts = ttCommentHtml(t.comments);
       const lt   = calcPendingLeadtime(t);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
-        <td style="padding:3px 7px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
-        <td style="padding:3px 7px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
-        <td style="padding:3px 7px">${cat.label}</td>
-        <td style="padding:3px 7px">${t.assignedTo||'—'}</td>
-        <td style="padding:3px 7px;text-align:center">${t.date}</td>
-        <td style="padding:3px 7px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
-        <td style="padding:3px 7px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
-        <td style="padding:3px 7px;color:${isOv?'#e74c3c':'#c0392b'};font-weight:700">${isOv?'⚠️ Pending':'⏳ Ongoing'}</td>
-        <td style="padding:3px 7px;text-align:center">${lt}</td>
+        <td style="padding:6px 10px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
+        <td style="padding:6px 10px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
+        <td style="padding:6px 10px">${cat.label}</td>
+        <td style="padding:6px 10px">${t.assignedTo||'—'}</td>
+        <td style="padding:6px 10px;text-align:center">${t.date}</td>
+        <td style="padding:6px 10px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
+        <td style="padding:6px 10px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
+        <td style="padding:6px 10px;color:${isOv?'#e74c3c':'#c0392b'};font-weight:700">${isOv?'⚠️ Pending':'⏳ Ongoing'}</td>
+        <td style="padding:6px 10px;text-align:center">${lt}</td>
       </tr>`;
     }).join('');
   // ── Done rows ──
@@ -7593,15 +7593,15 @@ function tt_generatePDFReport() {
       const cmts = ttCommentHtml(t.comments);
       const lt = calcPendingLeadtime(t);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
-        <td style="padding:3px 7px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
-        <td style="padding:3px 7px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
-        <td style="padding:3px 7px">${cat.label}</td>
-        <td style="padding:3px 7px">${t.assignedTo||'—'}</td>
-        <td style="padding:3px 7px;text-align:center">${t.date}</td>
-        <td style="padding:3px 7px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
-        <td style="padding:3px 7px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
-        <td style="padding:3px 7px;color:#2ecc71;font-weight:700">${t.doneAt ? fmtDate(t.doneAt) : '—'}</td>
-        <td style="padding:3px 7px;text-align:center">${lt}</td>
+        <td style="padding:6px 10px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
+        <td style="padding:6px 10px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
+        <td style="padding:6px 10px">${cat.label}</td>
+        <td style="padding:6px 10px">${t.assignedTo||'—'}</td>
+        <td style="padding:6px 10px;text-align:center">${t.date}</td>
+        <td style="padding:6px 10px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
+        <td style="padding:6px 10px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
+        <td style="padding:6px 10px;color:#2ecc71;font-weight:700">${t.doneAt ? fmtDate(t.doneAt) : '—'}</td>
+        <td style="padding:6px 10px;text-align:center">${lt}</td>
       </tr>`;
     }).join('');
 
@@ -7615,14 +7615,14 @@ function tt_generatePDFReport() {
       const statusColor = t.done ? '#2ecc71' : tt_isOverdue(t) ? '#e74c3c' : '#c0392b';
       const statusText  = t.done ? `✓ Done${t.doneAt ? `<br><span style="font-size:9px;color:#555">${fmtDate(t.doneAt)}</span>` : ''}` : tt_isOverdue(t) ? '⚠️ Pending' : '⏳ Ongoing';
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
-        <td style="padding:3px 7px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
-        <td style="padding:3px 7px;white-space:pre-wrap;line-height:1.35">${t.notes||'—'}</td>
-        <td style="padding:3px 7px">${t.assignedTo||'—'}</td>
-        <td style="padding:3px 7px;text-align:center">${t.date}</td>
-        <td style="padding:3px 7px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
-        <td style="padding:3px 7px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
-        <td style="padding:3px 7px;color:${statusColor};font-weight:700">${statusText}</td>
-        <td style="padding:3px 7px;text-align:center">${lt}</td>
+        <td style="padding:6px 10px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
+        <td style="padding:6px 10px;white-space:pre-wrap;line-height:1.35">${t.notes||'—'}</td>
+        <td style="padding:6px 10px">${t.assignedTo||'—'}</td>
+        <td style="padding:6px 10px;text-align:center">${t.date}</td>
+        <td style="padding:6px 10px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
+        <td style="padding:6px 10px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
+        <td style="padding:6px 10px;color:${statusColor};font-weight:700">${statusText}</td>
+        <td style="padding:6px 10px;text-align:center">${lt}</td>
       </tr>`;
     }).join('');
 
@@ -7638,18 +7638,18 @@ function tt_generatePDFReport() {
       const statusColor = t.done ? '#2ecc71' : tt_isOverdue(t) ? '#e74c3c' : '#c0392b';
       const statusText  = t.done ? `✓ Done${t.doneAt ? `<br><span style="font-size:9px;color:#555">${fmtDate(t.doneAt)}</span>` : ''}` : tt_isOverdue(t) ? '⚠️ Pending' : '⏳ Ongoing';
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
-        <td style="padding:3px 7px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
-        <td style="padding:3px 7px">${cat.label}</td>
-        <td style="padding:3px 7px;white-space:pre-wrap;line-height:1.35">${t.notes||'—'}</td>
-        <td style="padding:3px 7px">${t.companyName||'—'}</td>
-        <td style="padding:3px 7px">${t.quotationNumber||'—'}</td>
-        <td style="padding:3px 7px">${t.amount||'—'}</td>
-        <td style="padding:3px 7px">${t.assignedTo||'—'}</td>
-        <td style="padding:3px 7px;text-align:center">${t.date}</td>
-        <td style="padding:3px 7px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
-        <td style="padding:3px 7px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
-        <td style="padding:3px 7px;color:${statusColor};font-weight:700">${statusText}</td>
-        <td style="padding:3px 7px;text-align:center">${lt}</td>
+        <td style="padding:6px 10px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
+        <td style="padding:6px 10px">${cat.label}</td>
+        <td style="padding:6px 10px;white-space:pre-wrap;line-height:1.35">${t.notes||'—'}</td>
+        <td style="padding:6px 10px">${t.companyName||'—'}</td>
+        <td style="padding:6px 10px">${t.quotationNumber||'—'}</td>
+        <td style="padding:6px 10px">${t.amount||'—'}</td>
+        <td style="padding:6px 10px">${t.assignedTo||'—'}</td>
+        <td style="padding:6px 10px;text-align:center">${t.date}</td>
+        <td style="padding:6px 10px;text-align:center;color:${t.dueDate?'#e17055':'#999'};font-weight:${t.dueDate?'700':'400'}">${t.dueDate||'—'}</td>
+        <td style="padding:6px 10px;text-align:center;text-transform:capitalize">${t.priority||'normal'}</td>
+        <td style="padding:6px 10px;color:${statusColor};font-weight:700">${statusText}</td>
+        <td style="padding:6px 10px;text-align:center">${lt}</td>
       </tr>`;
     }).join('');
 
@@ -7662,154 +7662,51 @@ function tt_generatePDFReport() {
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"><\/script>
   <style>
     /* ═══ PAGE SETUP ═══ */
-    @page {
-      size: legal landscape;
-      margin: 12mm 14mm;
-    }
+    @page { size: A3 landscape; margin: 12mm 16mm; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
       font-family: 'Segoe UI', Arial, sans-serif;
-      font-size: 12px;
+      font-size: 14px;
       color: #1a1a1a;
       background: #fff;
       width: 100%;
     }
-
-    body {
-      padding: 20px 24px;
-    }
+    body { padding: 22px 28px; }
 
     /* Force colors to print */
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 
     /* ═══ REPORT HEADER ═══ */
     .report-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 3px solid #0a0a0f;
-      padding-bottom: 10px;
-      margin-bottom: 4px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 3px solid #0a0a0f; padding-bottom: 12px; margin-bottom: 6px;
     }
-    .report-side {
-      font-size: 10px;
-      color: #666;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      min-width: 160px;
-    }
+    .report-side { font-size: 12px; color: #666; letter-spacing: 0.06em; text-transform: uppercase; min-width: 180px; }
     .report-side.right { text-align: right; }
-    .report-title {
-      flex: 1;
-      text-align: center;
-      font-size: 19px;
-      font-weight: 800;
-      color: #0a0a0f;
-      line-height: 1.2;
-    }
-    .badge {
-      display: inline-block;
-      background: #0a0a0f;
-      color: #c8f135;
-      border-radius: 4px;
-      padding: 2px 10px;
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      margin-left: 8px;
-      vertical-align: middle;
-    }
-    .meta {
-      text-align: center;
-      font-size: 11px;
-      color: #555;
-      margin: 5px 0 14px;
-    }
+    .report-title { flex: 1; text-align: center; font-size: 22px; font-weight: 800; color: #0a0a0f; line-height: 1.2; }
+    .badge { display: inline-block; background: #0a0a0f; color: #c8f135; border-radius: 4px; padding: 3px 12px; font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; margin-left: 10px; vertical-align: middle; }
+    .meta { text-align: center; font-size: 13px; color: #555; margin: 6px 0 16px; }
 
     /* ═══ STAT CARDS ═══ */
-    .stats {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-    }
-    .stat {
-      background: #f7f7f7;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 10px 20px;
-      text-align: center;
-      min-width: 100px;
-    }
-    .stat-val {
-      font-size: 24px;
-      font-weight: 800;
-      line-height: 1.1;
-    }
-    .stat-label {
-      font-size: 9px;
-      color: #888;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      margin-top: 3px;
-    }
+    .stats { display: flex; gap: 12px; justify-content: center; margin-bottom: 14px; flex-wrap: wrap; }
+    .stat { background: #f7f7f7; border: 1px solid #ddd; border-radius: 8px; padding: 12px 24px; text-align: center; min-width: 110px; }
+    .stat-val { font-size: 28px; font-weight: 800; line-height: 1.1; }
+    .stat-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.07em; margin-top: 4px; }
 
     /* ═══ SECTION HEADINGS ═══ */
     .section-head {
-      background: #0a0a0f !important;
-      color: #ffffff !important;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      padding: 7px 14px;
-      border-radius: 6px 6px 0 0;
-      margin-top: 18px;
-      margin-bottom: 0;
-      display: block;
+      background: #0a0a0f !important; color: #ffffff !important;
+      font-size: 14px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+      padding: 8px 16px; border-radius: 6px 6px 0 0; margin-top: 16px; margin-bottom: 0; display: block;
     }
 
     /* ═══ CHARTS ═══ */
-    .charts-wrap {
-      border: 1px solid #ddd;
-      border-top: none;
-      border-radius: 0 0 6px 6px;
-      background: #fafafa;
-      padding: 14px 12px;
-      margin-bottom: 10px;
-    }
-    .charts-row {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
-      align-items: start;
-    }
-    .chart-box {
-      background: #fff;
-      border: 1px solid #e8e8e8;
-      border-radius: 6px;
-      padding: 12px;
-      text-align: center;
-      overflow: hidden;
-      min-width: 0;
-      max-width: 100%;
-    }
-    .chart-title {
-      font-size: 10px;
-      font-weight: 700;
-      color: #444;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      margin-bottom: 8px;
-    }
-    .chart-box canvas {
-      display: block;
-      max-width: 100% !important;
-      height: auto !important;
-    }
+    .charts-wrap { border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px; background: #fafafa; padding: 16px 14px; margin-bottom: 12px; }
+    .charts-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: start; }
+    .chart-box { background: #fff; border: 1px solid #e8e8e8; border-radius: 6px; padding: 14px; text-align: center; overflow: hidden; min-width: 0; max-width: 100%; }
+    .chart-title { font-size: 12px; font-weight: 700; color: #444; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; }
+    .chart-box canvas { display: block; max-width: 100% !important; height: auto !important; }
     @media print {
       .charts-wrap { page-break-inside: avoid; }
       .charts-row { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; }
@@ -7818,73 +7715,31 @@ function tt_generatePDFReport() {
     }
 
     /* ═══ TABLES ═══ */
-    .table-wrap {
-      border: 1px solid #ddd;
-      border-top: none;
-      border-radius: 0 0 6px 6px;
-      overflow: hidden;
-      margin-bottom: 10px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 11px;
-    }
-    thead tr {
-      background: #1e1e2e !important;
-    }
-    thead th {
-      color: #ffffff !important;
-      padding: 6px 8px;
-      font-size: 10px;
-      font-weight: 700;
-      letter-spacing: 0.03em;
-      border-right: 1px solid #3a3a55;
-      white-space: nowrap;
-    }
+    .table-wrap { border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px; overflow: hidden; margin-bottom: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    thead tr { background: #1e1e2e !important; }
+    thead th { color: #ffffff !important; padding: 8px 10px; font-size: 13px; font-weight: 700; letter-spacing: 0.03em; border-right: 1px solid #3a3a55; white-space: nowrap; }
     thead th:last-child { border-right: none; }
     thead th.num { text-align: center; }
     thead th.left { text-align: left; }
     tbody tr { border-bottom: 1px solid #ebebeb; }
     tbody tr:nth-child(even) { background: #f6f6fb; }
-    tbody td {
-      padding: 4px 8px;
-      vertical-align: top;
-      font-size: 11px;
-      border-right: 1px solid #ebebeb;
-      line-height: 1.35;
-    }
+    tbody td { padding: 6px 10px; vertical-align: top; font-size: 14px; border-right: 1px solid #ebebeb; line-height: 1.4; }
     tbody td:last-child { border-right: none; }
     tbody td.num { text-align: center; }
-    /* compact comment blocks */
-    .cmt-block { margin-top: 4px; padding: 3px 6px 3px 8px; border-left: 2px solid #c8f135; background: #f9f9f9; border-radius: 0 3px 3px 0; }
-    .cmt-author { font-size: 9px; font-weight: 700; color: #333; margin-bottom: 1px; }
-    .cmt-text { font-size: 10px; color: #444; white-space: pre-wrap; line-height: 1.3; }
+    /* comment blocks */
+    .cmt-block { margin-top: 5px; padding: 4px 8px 4px 10px; border-left: 2px solid #c8f135; background: #f9f9f9; border-radius: 0 3px 3px 0; }
+    .cmt-author { font-size: 11px; font-weight: 700; color: #333; margin-bottom: 2px; }
+    .cmt-text { font-size: 12px; color: #444; white-space: pre-wrap; line-height: 1.4; }
 
     /* ═══ MISC ═══ */
-    .no-data {
-      text-align: center; padding: 14px;
-      color: #999; font-size: 12px;
-      background: #f9f9f9;
-      border: 1px solid #ddd;
-      border-top: none;
-      border-radius: 0 0 6px 6px;
-      margin-bottom: 10px;
-    }
-    .no-overdue {
-      text-align: center; padding: 14px;
-      color: #27ae60; font-weight: 700;
-      background: #f0fff6;
-      border: 1px solid #b2dfdb;
-      border-top: none;
-      border-radius: 0 0 6px 6px;
-      margin-bottom: 10px;
-    }
+    .no-data { text-align: center; padding: 16px; color: #999; font-size: 14px; background: #f9f9f9; border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px; margin-bottom: 12px; }
+    .no-overdue { text-align: center; padding: 16px; color: #27ae60; font-weight: 700; background: #f0fff6; border: 1px solid #b2dfdb; border-top: none; border-radius: 0 0 6px 6px; margin-bottom: 12px; }
 
     /* ═══ PRINT RULES ═══ */
     @media print {
-      @page { size: legal landscape; margin: 10mm 12mm; }
-      body { padding: 0; }
+      @page { size: A3 landscape; margin: 10mm 14mm; }
+      body { padding: 0; font-size: 14px; }
       .section-head { page-break-after: avoid; }
       .table-wrap, .charts-wrap { page-break-inside: auto; }
       tr { page-break-inside: avoid; }
