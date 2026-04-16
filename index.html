@@ -1701,6 +1701,15 @@
         <span>Progress this month</span>
         <span id="progressPct">0%</span>
       </div>
+
+      <!-- Pending Tasks List -->
+      <div style="margin-top:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <h3 style="font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted);margin:0">⏳ Ongoing Tasks</h3>
+          <span id="pendingListCount" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:0.6rem;color:var(--text-muted);font-family:'DM Mono',monospace">0</span>
+        </div>
+        <div id="pendingTaskList" style="display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto"></div>
+      </div>
     </div>
 
     <div class="sidebar-section">
@@ -2013,6 +2022,15 @@
       <div class="progress-label">
         <span>Progress this month</span>
         <span id="tt_progressPct">0%</span>
+      </div>
+
+      <!-- Pending Tasks List -->
+      <div style="margin-top:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <h3 style="font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted);margin:0">⏳ Ongoing Tasks</h3>
+          <span id="tt_pendingListCount" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:0.6rem;color:var(--text-muted);font-family:'DM Mono',monospace">0</span>
+        </div>
+        <div id="tt_pendingTaskList" style="display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto"></div>
       </div>
     </div>
     <div class="sidebar-section">
@@ -3143,6 +3161,37 @@ function renderStats() {
   document.getElementById('statPending').textContent = monthPending;
   document.getElementById('progressBar').style.width = pct + '%';
   document.getElementById('progressPct').textContent = pct + '%';
+
+  // ── Pending Tasks List ──
+  const pendingTasks = tasks.filter(t => !t.done).sort((a,b) => a.date.localeCompare(b.date));
+  const countEl = document.getElementById('pendingListCount');
+  const listEl  = document.getElementById('pendingTaskList');
+  if (countEl) countEl.textContent = pendingTasks.length;
+  if (listEl) {
+    if (!pendingTasks.length) {
+      listEl.innerHTML = `<div style="font-size:0.72rem;color:var(--text-muted);text-align:center;padding:8px 0">🎉 No ongoing tasks!</div>`;
+    } else {
+      listEl.innerHTML = '';
+      pendingTasks.forEach(t => {
+        const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
+        const todayKey = today();
+        const isOv = (t.dueDate || t.date) < todayKey;
+        const item = document.createElement('div');
+        item.style.cssText = `background:var(--surface);border:1px solid ${isOv?'rgba(255,107,107,0.3)':'var(--border)'};border-left:3px solid ${cat.color};border-radius:6px;padding:5px 8px;cursor:pointer;transition:background 0.15s`;
+        item.onmouseenter = () => item.style.background = 'var(--surface2)';
+        item.onmouseleave = () => item.style.background = 'var(--surface)';
+        item.innerHTML = `
+          <div style="font-family:'Syne',sans-serif;font-weight:600;font-size:0.72rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px">${t.title}</div>
+          <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+            <span style="font-size:0.6rem;background:${cat.color}20;color:${cat.color};border-radius:3px;padding:1px 5px">${cat.icon||''}${cat.label}</span>
+            <span style="font-size:0.6rem;color:${isOv?'#ff6b6b':'var(--text-muted)'};font-weight:${isOv?'700':'400'}">📅 ${t.dueDate||t.date}${isOv?' ⚠️':''}</span>
+            ${t.assignedTo?`<span style="font-size:0.6rem;color:var(--text-muted)">👤 ${t.assignedTo}</span>`:''}
+          </div>`;
+        item.onclick = () => selectDay(t.date);
+        listEl.appendChild(item);
+      });
+    }
+  }
 }
 
 // ─── CATEGORIES ───
@@ -5723,9 +5772,9 @@ function checkOverdueTasks() {
   const todayKey = today();
   const overdue = tasks.filter(t => !t.done && t.date < todayKey);
   overdue.forEach(t => {
-    const alreadyNotified = inAppNotifs.some(n => n.body && n.body.includes(t.title) && n.title.includes('Overdue'));
+    const alreadyNotified = inAppNotifs.some(n => n.body && n.body.includes(t.title) && n.title.includes('Pending'));
     if (!alreadyNotified) {
-      addInAppNotif(`⚠️ Overdue Task`, `"${t.title}" was due on ${t.date}`, t.date);
+      addInAppNotif(`⚠️ Pending Task`, `"${t.title}" was due on ${t.date}`, t.date);
     }
   });
 }
@@ -6491,6 +6540,37 @@ function tt_renderStats() {
   setW('tt_progressBar', pct + '%'); set('tt_progressPct', pct + '%');
   set('tt_mStatTotal', tt_tasks.length); set('tt_mStatDone', done); set('tt_mStatMonth', mt.length); set('tt_mStatPending', pending);
   setW('tt_mProgressBar', pct + '%'); set('tt_mProgressPct', pct + '%');
+
+  // ── Pending Tasks List ──
+  const pendingTasks = tt_tasks.filter(t => !t.done).sort((a,b) => a.date.localeCompare(b.date));
+  const countEl = document.getElementById('tt_pendingListCount');
+  const listEl  = document.getElementById('tt_pendingTaskList');
+  if (countEl) countEl.textContent = pendingTasks.length;
+  if (listEl) {
+    if (!pendingTasks.length) {
+      listEl.innerHTML = `<div style="font-size:0.72rem;color:var(--text-muted);text-align:center;padding:8px 0">🎉 No ongoing tasks!</div>`;
+    } else {
+      listEl.innerHTML = '';
+      pendingTasks.forEach(t => {
+        const cat = tt_findCat(t.category);
+        const todayKey = today();
+        const isOv = tt_isOverdue(t);
+        const item = document.createElement('div');
+        item.style.cssText = `background:var(--surface);border:1px solid ${isOv?'rgba(255,107,107,0.3)':'var(--border)'};border-left:3px solid ${cat.color};border-radius:6px;padding:5px 8px;cursor:pointer;transition:background 0.15s`;
+        item.onmouseenter = () => item.style.background = 'var(--surface2)';
+        item.onmouseleave = () => item.style.background = 'var(--surface)';
+        item.innerHTML = `
+          <div style="font-family:'Syne',sans-serif;font-weight:600;font-size:0.72rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px">${t.title}</div>
+          <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+            <span style="font-size:0.6rem;background:${cat.color}20;color:${cat.color};border-radius:3px;padding:1px 5px">${cat.icon||''}${cat.label}</span>
+            <span style="font-size:0.6rem;color:${isOv?'#ff6b6b':'var(--text-muted)'};font-weight:${isOv?'700':'400'}">📅 ${t.dueDate||t.date}${isOv?' ⚠️':''}</span>
+            ${t.assignedTo?`<span style="font-size:0.6rem;color:var(--text-muted)">👤 ${t.assignedTo}</span>`:''}
+          </div>`;
+        item.onclick = () => tt_selectDay(t.date);
+        listEl.appendChild(item);
+      });
+    }
+  }
 }
 
 function tt_renderCategories() {
@@ -8106,9 +8186,9 @@ function initTrackingTab() {
   // Overdue check
   setTimeout(()=>{
     tt_tasks.filter(t=>tt_isOverdue(t)).forEach(t=>{
-      const already=tt_inAppNotifs.some(n=>n.body&&n.body.includes(t.title)&&n.title.includes('Overdue'));
+      const already=tt_inAppNotifs.some(n=>n.body&&n.body.includes(t.title)&&n.title.includes('Pending'));
       const ref = tt_overdueRef(t);
-      if(!already)tt_addInAppNotif(`⚠️ Overdue Task`,`"${t.title}" was due on ${ref}`,t.date);
+      if(!already)tt_addInAppNotif(`⚠️ Pending Task`,`"${t.title}" was due on ${ref}`,t.date);
     });
   }, 2500);
 }
