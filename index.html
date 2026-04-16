@@ -1615,6 +1615,7 @@
       <button class="view-tab active" id="vtMonth" onclick="switchView('month')">📅 Month</button>
       <button class="view-tab" id="vtWeek" onclick="switchView('week')">📆 Week</button>
       <button class="view-tab" id="vtAgenda" onclick="switchView('agenda')">📋 Agenda</button>
+      <button class="view-tab" id="vtSearch" onclick="openSearch()">🔍 Search</button>
     </div>
 
     <!-- In-app notification bell -->
@@ -1939,6 +1940,40 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <!-- SheetJS for Excel export -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<!-- SOCMED SEARCH MODAL -->
+<div class="modal-overlay" id="searchOverlay" style="z-index:800">
+  <div class="modal" style="max-width:580px;width:95vw">
+    <div class="modal-title">
+      <span>🔍 Search Tasks</span>
+      <button class="modal-close" onclick="closeSearch()">✕</button>
+    </div>
+    <div class="form-group">
+      <input class="form-input" id="searchInput" type="text" placeholder="Search by title, notes, assignee, category..."
+        autocomplete="off" style="font-size:0.95rem;padding:12px 16px" oninput="doSearch()" />
+    </div>
+    <!-- Filters -->
+    <div style="display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap">
+      <select id="searchStatus" onchange="doSearch()" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.75rem;outline:none">
+        <option value="">All Status</option>
+        <option value="ongoing">⏳ Ongoing</option>
+        <option value="pending">⚠️ Pending</option>
+        <option value="done">✅ Done</option>
+      </select>
+      <select id="searchAssignee" onchange="doSearch()" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.75rem;outline:none">
+        <option value="">All Assignees</option>
+      </select>
+      <select id="searchCat" onchange="doSearch()" style="background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.75rem;outline:none">
+        <option value="">All Categories</option>
+      </select>
+      <button onclick="clearSearch()" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 12px;color:var(--text-muted);font-family:'DM Mono',monospace;font-size:0.75rem;cursor:pointer">✕ Clear</button>
+    </div>
+    <div id="searchCount" style="font-size:0.72rem;color:var(--text-muted);margin-bottom:8px;font-family:'DM Mono',monospace"></div>
+    <div id="searchResults" style="max-height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
+      <div style="text-align:center;padding:2rem;color:var(--text-muted);font-size:0.82rem">Type to search tasks...</div>
+    </div>
+  </div>
+</div>
 
 </div><!-- end #appTabCalendar -->
 
@@ -4776,6 +4811,8 @@ function bindAllEvents() {
   document.getElementById('vtMonth')?.addEventListener('click', () => switchView('month'));
   document.getElementById('vtWeek')?.addEventListener('click', () => switchView('week'));
   document.getElementById('vtAgenda')?.addEventListener('click', () => switchView('agenda'));
+  document.getElementById('searchOverlay')?.addEventListener('click', e => { if(e.target===document.getElementById('searchOverlay')) closeSearch(); });
+  document.getElementById('searchInput')?.addEventListener('keydown', e => { if(e.key==='Escape') closeSearch(); });
 
   // Analytics — only bind buttons inside SocMed tab
   document.querySelector('[onclick="openAnalytics()"]')?.removeAttribute('onclick');
@@ -5458,10 +5495,117 @@ function switchView(view) {
     const tab = document.getElementById(`vt${v.charAt(0).toUpperCase()+v.slice(1)}`);
     if (tab) tab.classList.toggle('active', v === view);
   });
+  document.getElementById('vtSearch')?.classList.remove('active');
   if (view === 'month') renderCalendar();
   if (view === 'week') renderWeekView();
   if (view === 'agenda') renderAgendaView();
 }
+
+// ── SocMed Search ──
+function openSearch() {
+  ['vtMonth','vtWeek','vtAgenda','vtSearch'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+  document.getElementById('vtSearch')?.classList.add('active');
+  // Populate assignee dropdown
+  const assigneeSel = document.getElementById('searchAssignee');
+  const names = [...new Set(tasks.map(t => t.assignedTo).filter(Boolean))].sort();
+  assigneeSel.innerHTML = '<option value="">All Assignees</option>' + names.map(n => `<option value="${n}">${n}</option>`).join('');
+  // Populate category dropdown
+  const catSel = document.getElementById('searchCat');
+  const allCats = [...CATEGORIES, ...SOCIAL_PLATFORMS];
+  catSel.innerHTML = '<option value="">All Categories</option>' + allCats.map(c => `<option value="${c.id}">${c.icon||''} ${c.label}</option>`).join('');
+  document.getElementById('searchOverlay').classList.add('open');
+  document.getElementById('searchInput').focus();
+  doSearch();
+}
+function closeSearch() {
+  document.getElementById('searchOverlay').classList.remove('open');
+  const v = currentView || 'month';
+  ['vtMonth','vtWeek','vtAgenda','vtSearch'].forEach(id => document.getElementById(id)?.classList.remove('active'));
+  document.getElementById(v==='month'?'vtMonth':v==='week'?'vtWeek':'vtAgenda')?.classList.add('active');
+}
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchStatus').value = '';
+  document.getElementById('searchAssignee').value = '';
+  document.getElementById('searchCat').value = '';
+  doSearch();
+}
+function doSearch() {
+  const query    = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+  const status   = document.getElementById('searchStatus')?.value || '';
+  const assignee = document.getElementById('searchAssignee')?.value || '';
+  const catId    = document.getElementById('searchCat')?.value || '';
+  const todayKey = today();
+
+  let results = tasks.filter(t => {
+    if (status === 'done'    && !t.done) return false;
+    if (status === 'ongoing' && (t.done || (t.dueDate && t.dueDate < todayKey))) return false;
+    if (status === 'pending' && (t.done || !t.dueDate || t.dueDate >= todayKey)) return false;
+    if (assignee && t.assignedTo !== assignee) return false;
+    if (catId && t.category !== catId) return false;
+    if (query) {
+      const cat = CATEGORIES.find(c => c.id === t.category) || SOCIAL_PLATFORMS.find(p => p.id === t.category) || CATEGORIES[CATEGORIES.length-1];
+      const haystack = [t.title, t.notes, t.assignedTo, cat?.label, t.dueDate, t.date].join(' ').toLowerCase();
+      if (!haystack.includes(query)) return false;
+    }
+    return true;
+  }).sort((a,b) => a.date.localeCompare(b.date));
+
+  const countEl = document.getElementById('searchCount');
+  const listEl  = document.getElementById('searchResults');
+  if (countEl) countEl.textContent = results.length ? `${results.length} task${results.length!==1?'s':''} found` : '';
+
+  if (!results.length) {
+    listEl.innerHTML = `<div style="text-align:center;padding:2rem;color:var(--text-muted);font-size:0.82rem">
+      ${query||status||assignee||catId ? '😕 No tasks match your search.' : 'Type to search tasks...'}
+    </div>`;
+    return;
+  }
+
+  listEl.innerHTML = '';
+  results.forEach(t => {
+    const cat = CATEGORIES.find(c => c.id === t.category) || SOCIAL_PLATFORMS.find(p => p.id === t.category) || CATEGORIES[CATEGORIES.length-1];
+    const isOv = !t.done && t.dueDate && t.dueDate < todayKey;
+    const statusTag = t.done
+      ? `<span style="font-size:0.6rem;background:rgba(46,204,113,0.15);color:#2ecc71;border-radius:3px;padding:1px 6px;font-weight:700">✅ Done</span>`
+      : isOv
+        ? `<span style="font-size:0.6rem;background:rgba(231,76,60,0.15);color:#e74c3c;border-radius:3px;padding:1px 6px;font-weight:700">⚠️ Pending</span>`
+        : `<span style="font-size:0.6rem;background:rgba(116,185,255,0.15);color:#74b9ff;border-radius:3px;padding:1px 6px;font-weight:700">⏳ Ongoing</span>`;
+
+    const item = document.createElement('div');
+    item.style.cssText = `background:var(--surface);border:1px solid ${isOv?'rgba(231,76,60,0.3)':'var(--border)'};border-left:3px solid ${cat?.color||'#c8f135'};border-radius:8px;padding:10px 14px;cursor:pointer;transition:background 0.15s`;
+    item.onmouseenter = () => item.style.background = 'var(--surface2)';
+    item.onmouseleave = () => item.style.background = 'var(--surface)';
+    item.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px">
+        <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.title}</div>
+        ${statusTag}
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <span style="font-size:0.65rem;background:${cat?.color||'#c8f135'}20;color:${cat?.color||'#c8f135'};border-radius:3px;padding:1px 6px">${cat?.icon||''}${cat?.label||''}</span>
+        <span style="font-size:0.65rem;color:var(--text-muted)">📅 ${t.date}</span>
+        ${t.dueDate ? `<span style="font-size:0.65rem;color:${isOv?'#e74c3c':'#e17055'}">⏰ Due: ${t.dueDate}</span>` : ''}
+        ${t.assignedTo ? `<span style="font-size:0.65rem;color:var(--text-muted)">👤 ${t.assignedTo}</span>` : ''}
+        ${t.notes ? `<span style="font-size:0.65rem;color:var(--text-muted);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px">${t.notes.slice(0,60)}${t.notes.length>60?'…':''}</span>` : ''}
+      </div>`;
+    item.onclick = () => {
+      closeSearch();
+      switchView('month');
+      const taskDate = new Date(t.date + 'T12:00:00');
+      currentDate = new Date(taskDate.getFullYear(), taskDate.getMonth(), 1);
+      renderCalendar();
+      renderStats();
+      renderCategories();
+      selectDay(t.date);
+      setTimeout(() => openTaskDetail(tasks.indexOf(t)), 300);
+    };
+    listEl.appendChild(item);
+  });
+}
+window.openSearch  = openSearch;
+window.closeSearch = closeSearch;
+window.clearSearch = clearSearch;
+window.doSearch    = doSearch;
 
 // ── CATEGORY FILTER BAR ──
 function renderCatFilterBar() {
