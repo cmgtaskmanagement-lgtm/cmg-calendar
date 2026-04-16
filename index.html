@@ -3161,29 +3161,35 @@ function renderStats() {
   document.getElementById('progressBar').style.width = pct + '%';
   document.getElementById('progressPct').textContent = pct + '%';
 
-  // ── Pending Tasks List ──
-  const pendingTasks = tasks.filter(t => !t.done).sort((a,b) => a.date.localeCompare(b.date));
+  // ── Ongoing & Pending Tasks List ──
+  const todayKey = today();
+  const ongoingTasks = tasks.filter(t => !t.done && (!t.dueDate || t.dueDate >= todayKey)).sort((a,b) => a.date.localeCompare(b.date));
+  const pendingTasks = tasks.filter(t => !t.done && t.dueDate && t.dueDate < todayKey).sort((a,b) => a.dueDate.localeCompare(b.dueDate));
+  const allIncompleteTasks = [...pendingTasks, ...ongoingTasks]; // Pending first
   const countEl = document.getElementById('pendingListCount');
   const listEl  = document.getElementById('pendingTaskList');
-  if (countEl) countEl.textContent = pendingTasks.length;
+  if (countEl) countEl.textContent = allIncompleteTasks.length;
   if (listEl) {
-    if (!pendingTasks.length) {
+    if (!allIncompleteTasks.length) {
       listEl.innerHTML = `<div style="font-size:0.72rem;color:var(--text-muted);text-align:center;padding:8px 0">🎉 No ongoing tasks!</div>`;
     } else {
       listEl.innerHTML = '';
-      pendingTasks.forEach(t => {
+      allIncompleteTasks.forEach(t => {
         const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
-        const todayKey = today();
-        const isOv = (t.dueDate || t.date) < todayKey;
+        const isOv = t.dueDate && t.dueDate < todayKey;
+        const statusLabel = isOv ? '⚠️ Pending' : '⏳ Ongoing';
         const item = document.createElement('div');
         item.style.cssText = `background:var(--surface);border:1px solid ${isOv?'rgba(255,107,107,0.3)':'var(--border)'};border-left:3px solid ${cat.color};border-radius:6px;padding:5px 8px;cursor:pointer;transition:background 0.15s`;
         item.onmouseenter = () => item.style.background = 'var(--surface2)';
         item.onmouseleave = () => item.style.background = 'var(--surface)';
         item.innerHTML = `
-          <div style="font-family:'Syne',sans-serif;font-weight:600;font-size:0.72rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px">${t.title}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:2px">
+            <div style="font-family:'Syne',sans-serif;font-weight:600;font-size:0.72rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${t.title}</div>
+            <span style="font-size:0.58rem;color:${isOv?'#ff6b6b':'#74b9ff'};font-weight:700;flex-shrink:0">${statusLabel}</span>
+          </div>
           <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
             <span style="font-size:0.6rem;background:${cat.color}20;color:${cat.color};border-radius:3px;padding:1px 5px">${cat.icon||''}${cat.label}</span>
-            <span style="font-size:0.6rem;color:${isOv?'#ff6b6b':'var(--text-muted)'};font-weight:${isOv?'700':'400'}">📅 ${t.dueDate||t.date}${isOv?' ⚠️':''}</span>
+            <span style="font-size:0.6rem;color:${isOv?'#ff6b6b':'var(--text-muted)'}">📅 ${t.dueDate||t.date}</span>
             ${t.assignedTo?`<span style="font-size:0.6rem;color:var(--text-muted)">👤 ${t.assignedTo}</span>`:''}
           </div>`;
         item.onclick = () => selectDay(t.date);
@@ -3421,9 +3427,16 @@ const STAT_CONFIG = {
     const y = currentDate.getFullYear(), m = currentDate.getMonth();
     return tasks.filter(t => { const d = new Date(t.date); return d.getFullYear()===y && d.getMonth()===m; });
   }},
-  pending:   { icon: '⏳', label: 'Ongoing Tasks This Month',      color: '#c0392b', bg: 'rgba(192,57,43,0.12)',    filter: () => {
+  pending:   { icon: '⚠️', label: 'Pending Tasks (Past Due)', color: '#e74c3c', bg: 'rgba(231,76,60,0.12)', filter: () => {
+    const todayKey = today();
+    // Pending = not done AND due date is set AND past today
+    return tasks.filter(t => !t.done && t.dueDate && t.dueDate < todayKey).sort((a,b)=>(a.dueDate||a.date).localeCompare(b.dueDate||b.date));
+  }},
+  ongoing:   { icon: '⏳', label: 'Ongoing Tasks This Month', color: '#c0392b', bg: 'rgba(192,57,43,0.12)', filter: () => {
     const y = currentDate.getFullYear(), m = currentDate.getMonth();
-    return tasks.filter(t => { const d = new Date(t.date); return !t.done && d.getFullYear()===y && d.getMonth()===m; });
+    const todayKey = today();
+    // Ongoing = not done AND (no due date OR due date is today or future)
+    return tasks.filter(t => { const d = new Date(t.date); return !t.done && d.getFullYear()===y && d.getMonth()===m && (!t.dueDate || t.dueDate >= todayKey); });
   }},
 };
 
@@ -6540,29 +6553,35 @@ function tt_renderStats() {
   set('tt_mStatTotal', tt_tasks.length); set('tt_mStatDone', done); set('tt_mStatMonth', mt.length); // tt_mStatPending now shows label
   setW('tt_mProgressBar', pct + '%'); set('tt_mProgressPct', pct + '%');
 
-  // ── Pending Tasks List ──
-  const pendingTasks = tt_tasks.filter(t => !t.done).sort((a,b) => a.date.localeCompare(b.date));
+  // ── Ongoing & Pending Tasks List ──
+  const todayKey2 = today();
+  const ttOngoingTasks = tt_tasks.filter(t => !t.done && (!t.dueDate || t.dueDate >= todayKey2)).sort((a,b) => a.date.localeCompare(b.date));
+  const ttPendingTasks = tt_tasks.filter(t => !t.done && t.dueDate && t.dueDate < todayKey2).sort((a,b) => a.dueDate.localeCompare(b.dueDate));
+  const ttAllIncomplete = [...ttPendingTasks, ...ttOngoingTasks]; // Pending first
   const countEl = document.getElementById('tt_pendingListCount');
   const listEl  = document.getElementById('tt_pendingTaskList');
-  if (countEl) countEl.textContent = pendingTasks.length;
+  if (countEl) countEl.textContent = ttAllIncomplete.length;
   if (listEl) {
-    if (!pendingTasks.length) {
+    if (!ttAllIncomplete.length) {
       listEl.innerHTML = `<div style="font-size:0.72rem;color:var(--text-muted);text-align:center;padding:8px 0">🎉 No ongoing tasks!</div>`;
     } else {
       listEl.innerHTML = '';
-      pendingTasks.forEach(t => {
+      ttAllIncomplete.forEach(t => {
         const cat = tt_findCat(t.category);
-        const todayKey = today();
-        const isOv = tt_isOverdue(t);
+        const isOv = t.dueDate && t.dueDate < todayKey2;
+        const statusLabel = isOv ? '⚠️ Pending' : '⏳ Ongoing';
         const item = document.createElement('div');
         item.style.cssText = `background:var(--surface);border:1px solid ${isOv?'rgba(255,107,107,0.3)':'var(--border)'};border-left:3px solid ${cat.color};border-radius:6px;padding:5px 8px;cursor:pointer;transition:background 0.15s`;
         item.onmouseenter = () => item.style.background = 'var(--surface2)';
         item.onmouseleave = () => item.style.background = 'var(--surface)';
         item.innerHTML = `
-          <div style="font-family:'Syne',sans-serif;font-weight:600;font-size:0.72rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:2px">${t.title}</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:2px">
+            <div style="font-family:'Syne',sans-serif;font-weight:600;font-size:0.72rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${t.title}</div>
+            <span style="font-size:0.58rem;color:${isOv?'#ff6b6b':'#74b9ff'};font-weight:700;flex-shrink:0">${statusLabel}</span>
+          </div>
           <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
             <span style="font-size:0.6rem;background:${cat.color}20;color:${cat.color};border-radius:3px;padding:1px 5px">${cat.icon||''}${cat.label}</span>
-            <span style="font-size:0.6rem;color:${isOv?'#ff6b6b':'var(--text-muted)'};font-weight:${isOv?'700':'400'}">📅 ${t.dueDate||t.date}${isOv?' ⚠️':''}</span>
+            <span style="font-size:0.6rem;color:${isOv?'#ff6b6b':'var(--text-muted)'}">📅 ${t.dueDate||t.date}</span>
             ${t.assignedTo?`<span style="font-size:0.6rem;color:var(--text-muted)">👤 ${t.assignedTo}</span>`:''}
           </div>`;
         item.onclick = () => tt_selectDay(t.date);
@@ -6835,7 +6854,8 @@ function tt_openStatModal(type) {
     all:       { icon:'📋', label:'All Tasks',            color:'#c8f135', filter:()=>[...tt_tasks] },
     completed: { icon:'✅', label:'Completed This Month', color:'#2ecc71', filter:()=>{ const y=tt_currentDate.getFullYear(),m=tt_currentDate.getMonth(); return tt_tasks.filter(t=>{const d=new Date(t.date);return t.done&&d.getFullYear()===y&&d.getMonth()===m;}); } },
     month:     { icon:'📅', label:"This Month's Tasks",  color:'#74b9ff', filter:()=>{ const y=tt_currentDate.getFullYear(),m=tt_currentDate.getMonth(); return tt_tasks.filter(t=>{const d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m;}); } },
-    pending:   { icon:'⏳', label:'Ongoing Tasks This Month',  color:'#c0392b', filter:()=>{ const y=tt_currentDate.getFullYear(),m=tt_currentDate.getMonth(); return tt_tasks.filter(t=>{const d=new Date(t.date);return !t.done&&d.getFullYear()===y&&d.getMonth()===m;}); } },
+    pending:   { icon:'⚠️', label:'Pending Tasks (Past Due)', color:'#e74c3c', filter:()=>{ const todayKey=today(); return tt_tasks.filter(t=>!t.done&&t.dueDate&&t.dueDate<todayKey).sort((a,b)=>(a.dueDate||a.date).localeCompare(b.dueDate||b.date)); } },
+    ongoing:   { icon:'⏳', label:'Ongoing Tasks This Month', color:'#c0392b', filter:()=>{ const y=tt_currentDate.getFullYear(),m=tt_currentDate.getMonth(),todayKey=today(); return tt_tasks.filter(t=>{const d=new Date(t.date);return !t.done&&d.getFullYear()===y&&d.getMonth()===m&&(!t.dueDate||t.dueDate>=todayKey);}); } },
   };
   const cfg = configs[type]; if (!cfg) return;
   const filtered = cfg.filter().sort((a,b)=>a.date.localeCompare(b.date));
