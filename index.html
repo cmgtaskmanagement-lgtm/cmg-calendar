@@ -1690,8 +1690,7 @@
           <div class="stat-label">This Month</div>
         </div>
         <div class="stat-card red" onclick="openStatModal('pending')" title="View pending tasks this month">
-          <div class="stat-val" id="statPending">0</div>
-          <div class="stat-label">Ongoing</div>
+          <div class="stat-val" id="statPending" style="font-size:1rem;line-height:1.2">Pending<br>Tasks</div>
         </div>
       </div>
       <div class="progress-wrap" style="margin-top:12px">
@@ -1871,7 +1870,7 @@
       <div class="stat-card" onclick="openStatModal('all')"><div class="stat-val" id="mStatTotal">0</div><div class="stat-label">Total Tasks</div></div>
       <div class="stat-card green" onclick="openStatModal('completed')"><div class="stat-val" id="mStatDone">0</div><div class="stat-label">Completed</div></div>
       <div class="stat-card blue" onclick="openStatModal('month')"><div class="stat-val" id="mStatMonth">0</div><div class="stat-label">This Month</div></div>
-      <div class="stat-card red" onclick="openStatModal('pending')"><div class="stat-val" id="mStatPending">0</div><div class="stat-label">Ongoing</div></div>
+      <div class="stat-card red" onclick="openStatModal('pending')"><div class="stat-val" id="mStatPending" style="font-size:1rem;line-height:1.2">Pending<br>Tasks</div></div>
     </div>
     <div class="progress-wrap"><div class="progress-bar" id="mProgressBar" style="width:0%"></div></div>
     <div class="progress-label"><span>Progress this month</span><span id="mProgressPct">0%</span></div>
@@ -2014,7 +2013,7 @@
         <div class="stat-card"       onclick="tt_openStatModal('all')"       title="View all tasks"><div class="stat-val" id="tt_statTotal">0</div><div class="stat-label">Total Tasks</div></div>
         <div class="stat-card green" onclick="tt_openStatModal('completed')" title="View completed"><div class="stat-val" id="tt_statDone">0</div><div class="stat-label">Completed</div></div>
         <div class="stat-card blue"  onclick="tt_openStatModal('month')"     title="This month"><div class="stat-val" id="tt_statMonth">0</div><div class="stat-label">This Month</div></div>
-        <div class="stat-card red"   onclick="tt_openStatModal('pending')"   title="View pending"><div class="stat-val" id="tt_statPending">0</div><div class="stat-label">Ongoing</div></div>
+        <div class="stat-card red"   onclick="tt_openStatModal('pending')"   title="View pending"><div class="stat-val" id="tt_statPending" style="font-size:1rem;line-height:1.2">Pending<br>Tasks</div></div>
       </div>
       <div class="progress-wrap" style="margin-top:12px">
         <div class="progress-bar" id="tt_progressBar" style="width:0%"></div>
@@ -2142,7 +2141,7 @@
       <div class="stat-card" onclick="tt_openStatModal('all')"><div class="stat-val" id="tt_mStatTotal">0</div><div class="stat-label">Total Tasks</div></div>
       <div class="stat-card green" onclick="tt_openStatModal('completed')"><div class="stat-val" id="tt_mStatDone">0</div><div class="stat-label">Completed</div></div>
       <div class="stat-card blue" onclick="tt_openStatModal('month')"><div class="stat-val" id="tt_mStatMonth">0</div><div class="stat-label">This Month</div></div>
-      <div class="stat-card red" onclick="tt_openStatModal('pending')"><div class="stat-val" id="tt_mStatPending">0</div><div class="stat-label">Ongoing</div></div>
+      <div class="stat-card red" onclick="tt_openStatModal('pending')"><div class="stat-val" id="tt_mStatPending" style="font-size:1rem;line-height:1.2">Pending<br>Tasks</div></div>
     </div>
     <div class="progress-wrap"><div class="progress-bar" id="tt_mProgressBar" style="width:0%"></div></div>
     <div class="progress-label"><span>Progress this month</span><span id="tt_mProgressPct">0%</span></div>
@@ -3158,7 +3157,7 @@ function renderStats() {
   document.getElementById('statTotal').textContent = tasks.length;
   document.getElementById('statDone').textContent = monthDone;
   document.getElementById('statMonth').textContent = monthTasks.length;
-  document.getElementById('statPending').textContent = monthPending;
+  // statPending card now shows label, not count
   document.getElementById('progressBar').style.width = pct + '%';
   document.getElementById('progressPct').textContent = pct + '%';
 
@@ -5192,7 +5191,7 @@ function renderMobStats() {
   document.getElementById('mStatTotal').textContent = tasks.length;
   document.getElementById('mStatDone').textContent = monthDone;
   document.getElementById('mStatMonth').textContent = monthTasks.length;
-  document.getElementById('mStatPending').textContent = monthPending;
+  // mStatPending card now shows label, not count
   document.getElementById('mProgressBar').style.width = pct + '%';
   document.getElementById('mProgressPct').textContent = pct + '%';
 
@@ -6536,9 +6535,9 @@ function tt_renderStats() {
   const pct = mt.length ? Math.round(done/mt.length*100) : 0;
   const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
   const setW = (id, v) => { const el = document.getElementById(id); if (el) el.style.width = v; };
-  set('tt_statTotal', tt_tasks.length); set('tt_statDone', done); set('tt_statMonth', mt.length); set('tt_statPending', pending);
+  set('tt_statTotal', tt_tasks.length); set('tt_statDone', done); set('tt_statMonth', mt.length); // tt_statPending now shows label
   setW('tt_progressBar', pct + '%'); set('tt_progressPct', pct + '%');
-  set('tt_mStatTotal', tt_tasks.length); set('tt_mStatDone', done); set('tt_mStatMonth', mt.length); set('tt_mStatPending', pending);
+  set('tt_mStatTotal', tt_tasks.length); set('tt_mStatDone', done); set('tt_mStatMonth', mt.length); // tt_mStatPending now shows label
   setW('tt_mProgressBar', pct + '%'); set('tt_mProgressPct', pct + '%');
 
   // ── Pending Tasks List ──
