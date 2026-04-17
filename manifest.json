@@ -1,7 +1,7 @@
 {
-  "name": "CMG Task Management",
+  "name": "CMG Task Management. Copyright © 2026 — Dubeon Corporation-CMG. All Rights Reserved",
   "short_name": "CMG Tasks",
-  "description": "CMG SocMed Activities & Task Tracking Calendar",
+  "description": "CMG Task Management — Dubeon Corporation-CMG © 2026",
   "start_url": "/cmg-calendar/",
   "scope": "/cmg-calendar/",
   "display": "standalone",
