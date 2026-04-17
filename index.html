@@ -76,54 +76,63 @@
     background: rgba(10,10,15,0.92);
     backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border);
-    padding: 0 2rem;
+    padding: 0 1.25rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 64px;
+    height: 56px;
+    gap: 12px;
   }
 
   .logo {
     font-family: 'Barlow Condensed', sans-serif;
     font-weight: 800;
-    font-size: 1.5rem;
+    font-size: 1rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     display: flex;
     align-items: center;
     gap: 8px;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .logo-dot { 
-    width: 10px; height: 10px; 
+    width: 8px; height: 8px; 
     background: var(--accent); 
     border-radius: 50%;
-    box-shadow: 0 0 12px var(--accent);
+    box-shadow: 0 0 10px var(--accent);
     animation: pulse 2s infinite;
+    flex-shrink: 0;
   }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
 
   .header-right {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 6px;
+    flex: 1;
+    justify-content: flex-end;
+    min-width: 0;
   }
 
   .month-nav {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 6px 12px;
+    padding: 5px 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .month-nav button {
     background: none;
     border: none;
     color: var(--text-muted);
     cursor: pointer;
-    font-size: 1rem;
-    padding: 2px 6px;
+    font-size: 0.9rem;
+    padding: 2px 5px;
     border-radius: 4px;
     transition: color 0.2s, background 0.2s;
   }
@@ -142,13 +151,15 @@
     color: #0a0a0f;
     border: none;
     border-radius: 8px;
-    padding: 8px 18px;
+    padding: 7px 14px;
     font-family: 'Syne', sans-serif;
     font-weight: 700;
-    font-size: 0.85rem;
+    font-size: 0.78rem;
     cursor: pointer;
     letter-spacing: 0.02em;
     transition: transform 0.15s, box-shadow 0.15s;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
   .btn-add:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(200,241,53,0.35); }
 
@@ -158,7 +169,7 @@
     z-index: 1;
     display: grid;
     grid-template-columns: 260px 1fr 280px;
-    height: calc(100vh - 64px - 40px);
+    height: calc(100vh - 56px - 40px);
     overflow: hidden;
   }
 
@@ -1097,19 +1108,20 @@
 
   /* User info chip in header */
   .user-chip {
-    display: flex; align-items: center; gap: 8px;
+    display: flex; align-items: center; gap: 6px;
     background: var(--surface); border: 1px solid var(--border);
-    border-radius: 8px; padding: 6px 12px;
-    font-size: 0.78rem; color: var(--text-dim);
+    border-radius: 8px; padding: 5px 10px;
+    font-size: 0.72rem; color: var(--text-dim);
     font-family: 'DM Mono', monospace;
+    white-space: nowrap; flex-shrink: 0;
   }
-  .user-chip-dot { width: 7px; height: 7px; border-radius: 50%; background: #2ecc71; flex-shrink: 0; }
+  .user-chip-dot { width: 6px; height: 6px; border-radius: 50%; background: #2ecc71; flex-shrink: 0; }
   .btn-logout {
     background: none; border: 1px solid var(--border);
-    border-radius: 8px; padding: 7px 13px;
+    border-radius: 8px; padding: 5px 10px;
     color: var(--text-muted); cursor: pointer;
-    font-family: 'DM Mono', monospace; font-size: 0.75rem;
-    transition: all 0.2s;
+    font-family: 'DM Mono', monospace; font-size: 0.72rem;
+    transition: all 0.2s; white-space: nowrap; flex-shrink: 0;
   }
   .btn-logout:hover { border-color: var(--accent2); color: var(--accent2); }
   /* ─── MOBILE BOTTOM NAV ─── */
@@ -1610,7 +1622,7 @@
 <header>
   <div class="logo">
     <div class="logo-dot"></div>
-    CMG SocMed Activities &amp; Events Calendar  </div>
+    CMG SocMed Calendar  </div>
   <div class="header-right">
     <button onclick="openAnalytics()" style="
       background: var(--surface);
@@ -2004,7 +2016,7 @@
   <div class="header-right">
     <button onclick="tt_openAnalytics()" style="
       background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
-      padding: 7px 13px; color: var(--text-muted); cursor: pointer; transition: all 0.2s;
+      padding: 5px 10px; color: var(--text-muted); cursor: pointer; transition: all 0.2s;
       display: flex; align-items: center; gap: 6px;
       font-family: 'DM Mono', monospace; font-size: 0.75rem;
     ">📊 <span>Analytics</span></button>
@@ -2029,7 +2041,7 @@
     </div>
     <button id="tt_notifBtn" title="Enable Desktop Alerts" style="
       background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
-      padding: 7px 13px; color: var(--text-muted); cursor: pointer; transition: all 0.2s;
+      padding: 5px 10px; color: var(--text-muted); cursor: pointer; transition: all 0.2s;
       display: flex; align-items: center; gap: 6px; font-family: 'DM Mono', monospace; font-size: 0.75rem;
     ">🔔 <span id="tt_notifLabel">Enable Alerts</span></button>
     <div class="month-nav">
