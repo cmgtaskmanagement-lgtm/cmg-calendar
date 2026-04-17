@@ -4425,8 +4425,8 @@ function generatePDFReport() {
     return `<span style="color:${color};font-weight:600">${count} day${count!==1?'s':''}${suffix}</span>`;
   };
 
-  // ── Ongoing rows (not done AND no due date OR due date >= today) ──
-  const ongoingRows = filtered
+  // ── Ongoing rows — ALL current tasks (not period-filtered) ──
+  const ongoingRows = tasks
     .filter(t => !t.done && (!t.dueDate || t.dueDate >= todayKey))
     .sort((a,b) => a.date.localeCompare(b.date))
     .map(t => {
@@ -4446,8 +4446,8 @@ function generatePDFReport() {
       </tr>`;
     }).join('');
 
-  // ── Pending rows (not done AND due date is set AND due date < today) ──
-  const pendingRows = filtered
+  // ── Pending rows — ALL current tasks (not period-filtered) ──
+  const pendingRows = tasks
     .filter(t => !t.done && t.dueDate && t.dueDate < todayKey)
     .sort((a,b) => a.dueDate.localeCompare(b.dueDate))
     .map(t => {
@@ -4627,10 +4627,10 @@ function generatePDFReport() {
   <div class="section-head">📱 Platform Breakdown</div>
   <div class="table-wrap"><table><thead><tr><th class="left">Platform</th><th class="num">Total</th><th class="num">Completed</th><th class="num">Pending</th><th class="num">Rate</th></tr></thead><tbody>${platRows}</tbody></table></div>
 
-  <div class="section-head">⏳ Ongoing Tasks</div>
+  <div class="section-head">⏳ Ongoing Tasks <span style="font-size:11px;font-weight:400;opacity:0.7;text-transform:none;letter-spacing:0">(All current — as of ${todayKey})</span></div>
   ${ongoingRows ? `<div class="table-wrap"><table><thead><tr>${TASK_TH}</tr></thead><tbody>${ongoingRows}</tbody></table></div>` : '<div class="no-data">No ongoing tasks for this period. 🎉</div>'}
 
-  <div class="section-head">⚠️ Pending Tasks</div>
+  <div class="section-head">⚠️ Pending Tasks <span style="font-size:11px;font-weight:400;opacity:0.7;text-transform:none;letter-spacing:0">(All current — as of ${todayKey})</span></div>
   ${pendingRows ? `<div class="table-wrap"><table><thead><tr>${TASK_TH}</tr></thead><tbody>${pendingRows}</tbody></table></div>` : '<div class="no-overdue">🎉 No pending tasks!</div>'}
 
   <div class="section-head">✅ Done Tasks</div>
@@ -7955,8 +7955,8 @@ function tt_generatePDFReport() {
     return `<span style="color:${color};font-weight:600">${count} day${count!==1?'s':''}${suffix}</span>`;
   };
 
-  // ── Ongoing rows (not done AND no due date OR due date >= today) ──
-  const ongoingRows = filtered
+  // ── Ongoing rows — ALL current tasks (not period-filtered) ──
+  const ongoingRows = tt_tasks
     .filter(t => !t.done && (!t.dueDate || t.dueDate >= todayKey))
     .sort((a,b) => a.date.localeCompare(b.date))
     .map(t => {
@@ -7976,8 +7976,8 @@ function tt_generatePDFReport() {
       </tr>`;
     }).join('');
 
-  // ── Pending rows (not done AND due date is set AND due date < today) ──
-  const pendingRows = filtered
+  // ── Pending rows — ALL current tasks (not period-filtered) ──
+  const pendingRows = tt_tasks
     .filter(t => !t.done && t.dueDate && t.dueDate < todayKey)
     .sort((a,b) => a.dueDate.localeCompare(b.dueDate))
     .map(t => {
@@ -8210,7 +8210,7 @@ function tt_generatePDFReport() {
     <tbody>${catRows}</tbody>
   </table></div>` : '<div class="no-data">No category data for this period.</div>'}
 
-  <div class="section-head">⏳ Ongoing Tasks</div>
+  <div class="section-head">⏳ Ongoing Tasks <span style="font-size:11px;font-weight:400;opacity:0.7;text-transform:none;letter-spacing:0">(All current — as of ${todayKey})</span></div>
   ${ongoingRows ? `<div class="table-wrap"><table>
     <thead><tr>
       <th class="left">Title &amp; Comments</th>
@@ -8226,7 +8226,7 @@ function tt_generatePDFReport() {
     <tbody>${ongoingRows}</tbody>
   </table></div>` : '<div class="no-data">No ongoing tasks for this period. 🎉</div>'}
 
-  <div class="section-head">⚠️ Pending Tasks</div>
+  <div class="section-head">⚠️ Pending Tasks <span style="font-size:11px;font-weight:400;opacity:0.7;text-transform:none;letter-spacing:0">(All current — as of ${todayKey})</span></div>
   ${pendingRows ? `<div class="table-wrap"><table>
     <thead><tr>
       <th class="left">Title &amp; Comments</th>
