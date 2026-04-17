@@ -4,6 +4,21 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CMG SocMed Activities &amp; Events Calendar</title>
+
+<!-- PWA Meta Tags -->
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#c8f135">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CMG Tasks">
+<meta name="description" content="CMG SocMed Activities & Task Tracking Calendar">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="152x152" href="icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
+<meta name="msapplication-TileImage" content="icons/icon-144.png">
+<meta name="msapplication-TileColor" content="#0a0a0f">
+
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&family=Fraunces:ital,wght@0,300;0,600;1,300&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -2809,6 +2824,16 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db   = firebase.firestore();
 const auth = firebase.auth();
+
+// ── Firebase Offline Persistence (PWA support) ──
+db.enablePersistence({ synchronizeTabs: true })
+  .catch(err => {
+    if (err.code === 'failed-precondition') {
+      console.warn('[Firebase] Offline persistence unavailable: multiple tabs open.');
+    } else if (err.code === 'unimplemented') {
+      console.warn('[Firebase] Offline persistence not supported in this browser.');
+    }
+  });
 
 // ── CONSTANTS ──
 const ADMIN_EMAIL = "cmgadmin@dubeon.com"; // internal admin marker
@@ -8486,5 +8511,135 @@ document.addEventListener('DOMContentLoaded', () => {
   // nothing needed here — initTrackingTab is called lazily on first tab switch
 });
 </script>
+
+<!-- ═══════════════════════════════════════════════════════
+     PWA — Install Prompt Banner
+════════════════════════════════════════════════════════ -->
+<div id="pwaInstallBanner" style="
+  display:none; position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+  background:#1a1a24; border:1px solid #c8f135; border-radius:12px;
+  padding:14px 20px; z-index:9999; box-shadow:0 8px 32px rgba(0,0,0,0.5);
+  display:none; align-items:center; gap:14px; font-family:'DM Mono',monospace;
+  max-width:460px; width:90vw; animation: slideUp 0.3s ease;
+">
+  <img src="icons/icon-72.png" width="40" height="40" style="border-radius:8px;flex-shrink:0" onerror="this.style.display='none'">
+  <div style="flex:1;min-width:0">
+    <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;color:#fff;margin-bottom:2px">📲 Install CMG Tasks</div>
+    <div style="font-size:0.7rem;color:#9090aa">Install as an app for quick offline access</div>
+  </div>
+  <button id="pwaInstallBtn" style="
+    background:#c8f135;color:#0a0a0f;border:none;border-radius:8px;
+    padding:8px 16px;font-family:'Syne',sans-serif;font-weight:700;
+    font-size:0.78rem;cursor:pointer;white-space:nowrap;flex-shrink:0
+  ">Install</button>
+  <button onclick="document.getElementById('pwaInstallBanner').style.display='none'" style="
+    background:none;border:none;color:#666;cursor:pointer;font-size:1.1rem;
+    padding:4px;flex-shrink:0;line-height:1
+  ">✕</button>
+</div>
+
+<!-- PWA — Update Available Banner -->
+<div id="pwaUpdateBanner" style="
+  display:none; position:fixed; top:16px; left:50%; transform:translateX(-50%);
+  background:#1a1a24; border:1px solid #74b9ff; border-radius:12px;
+  padding:12px 20px; z-index:9999; box-shadow:0 8px 32px rgba(0,0,0,0.5);
+  align-items:center; gap:14px; font-family:'DM Mono',monospace;
+  max-width:420px; width:90vw;
+">
+  <div style="flex:1;font-size:0.78rem;color:#74b9ff;font-family:'Syne',sans-serif;font-weight:600">
+    🔄 A new version is available!
+  </div>
+  <button onclick="pwaApplyUpdate()" style="
+    background:#74b9ff;color:#0a0a0f;border:none;border-radius:8px;
+    padding:7px 14px;font-family:'Syne',sans-serif;font-weight:700;
+    font-size:0.75rem;cursor:pointer;white-space:nowrap
+  ">Update Now</button>
+  <button onclick="document.getElementById('pwaUpdateBanner').style.display='none'" style="
+    background:none;border:none;color:#666;cursor:pointer;font-size:1rem;padding:2px
+  ">✕</button>
+</div>
+
+<style>
+  @keyframes slideUp {
+    from { opacity:0; transform:translateX(-50%) translateY(20px); }
+    to   { opacity:1; transform:translateX(-50%) translateY(0); }
+  }
+</style>
+
+<script>
+// ═══ PWA Service Worker Registration ═══
+let swRegistration = null;
+let newWorker = null;
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/cmg-calendar/service-worker.js')
+      .then(reg => {
+        swRegistration = reg;
+        console.log('[PWA] Service Worker registered:', reg.scope);
+
+        // Check for updates
+        reg.addEventListener('updatefound', () => {
+          newWorker = reg.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // New version available — show update banner
+              document.getElementById('pwaUpdateBanner').style.display = 'flex';
+            }
+          });
+        });
+      })
+      .catch(err => console.warn('[PWA] Service Worker registration failed:', err));
+
+    // Reload page when new SW takes over
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
+  });
+}
+
+// ═══ PWA Install Prompt ═══
+let deferredInstallPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  // Show install banner after 3 seconds
+  setTimeout(() => {
+    const banner = document.getElementById('pwaInstallBanner');
+    if (banner) banner.style.display = 'flex';
+  }, 3000);
+});
+
+document.getElementById('pwaInstallBtn')?.addEventListener('click', () => {
+  if (!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then(choice => {
+    if (choice.outcome === 'accepted') {
+      console.log('[PWA] User accepted install');
+      document.getElementById('pwaInstallBanner').style.display = 'none';
+    }
+    deferredInstallPrompt = null;
+  });
+});
+
+// Hide install banner if already installed
+window.addEventListener('appinstalled', () => {
+  document.getElementById('pwaInstallBanner').style.display = 'none';
+  deferredInstallPrompt = null;
+  console.log('[PWA] App installed successfully!');
+});
+
+// ═══ Apply Update ═══
+function pwaApplyUpdate() {
+  if (newWorker) {
+    newWorker.postMessage({ type: 'SKIP_WAITING' });
+  } else if (swRegistration && swRegistration.waiting) {
+    swRegistration.waiting.postMessage({ type: 'SKIP_WAITING' });
+  }
+  document.getElementById('pwaUpdateBanner').style.display = 'none';
+}
+</script>
+
 </body>
 </html>
