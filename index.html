@@ -4570,58 +4570,59 @@ function generatePDFReport() {
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>CMG ${periodLabel} Report — ${rangeLabel}</title>
   <style>
-    /* ═══ PAGE SETUP ═══ */
-    @page { size: A3 landscape; margin: 12mm 16mm; }
+    /* ═══ PAGE SETUP — Responsive to any paper size ═══ */
+    @page { margin: 12mm 14mm; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; color: #1a1a1a; background: #fff; width: 100%; }
-    body { padding: 22px 28px; }
+    html, body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; color: #1a1a1a; background: #fff; width: 100%; }
+    body { padding: 16px 20px; }
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 
     /* ═══ REPORT HEADER ═══ */
-    .report-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #0a0a0f; padding-bottom: 12px; margin-bottom: 6px; }
-    .report-side { font-size: 12px; color: #666; letter-spacing: 0.06em; text-transform: uppercase; min-width: 180px; }
+    .report-header { display: flex; align-items: center; justify-content: space-between; border-bottom: 3px solid #0a0a0f; padding-bottom: 10px; margin-bottom: 6px; }
+    .report-side { font-size: 11px; color: #666; letter-spacing: 0.06em; text-transform: uppercase; min-width: 140px; }
     .report-side.right { text-align: right; }
-    .report-title { flex: 1; text-align: center; font-size: 22px; font-weight: 800; color: #0a0a0f; line-height: 1.2; }
-    .badge { display: inline-block; background: #0a0a0f; color: #c8f135; border-radius: 4px; padding: 3px 12px; font-size: 12px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; margin-left: 10px; vertical-align: middle; }
-    .meta { text-align: center; font-size: 13px; color: #555; margin: 6px 0 16px; }
+    .report-title { flex: 1; text-align: center; font-size: 20px; font-weight: 800; color: #0a0a0f; line-height: 1.2; }
+    .badge { display: inline-block; background: #0a0a0f; color: #c8f135; border-radius: 4px; padding: 2px 10px; font-size: 11px; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; margin-left: 8px; vertical-align: middle; }
+    .meta { text-align: center; font-size: 12px; color: #555; margin: 5px 0 12px; }
 
     /* ═══ STAT CARDS ═══ */
-    .stats { display: flex; gap: 12px; justify-content: center; margin-bottom: 14px; flex-wrap: wrap; }
-    .stat { background: #f7f7f7; border: 1px solid #ddd; border-radius: 8px; padding: 12px 24px; text-align: center; min-width: 110px; }
-    .stat-val { font-size: 28px; font-weight: 800; line-height: 1.1; }
-    .stat-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.07em; margin-top: 4px; }
+    .stats { display: flex; gap: 10px; justify-content: center; margin-bottom: 12px; flex-wrap: wrap; }
+    .stat { background: #f7f7f7; border: 1px solid #ddd; border-radius: 8px; padding: 10px 20px; text-align: center; flex: 1; min-width: 80px; }
+    .stat-val { font-size: 24px; font-weight: 800; line-height: 1.1; }
+    .stat-label { font-size: 10px; color: #888; text-transform: uppercase; letter-spacing: 0.07em; margin-top: 3px; }
 
     /* ═══ SECTION HEADINGS ═══ */
-    .section-head { background: #0a0a0f !important; color: #ffffff !important; font-size: 14px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 8px 16px; border-radius: 6px 6px 0 0; margin-top: 14px; margin-bottom: 0; display: block; }
+    .section-head { background: #0a0a0f !important; color: #ffffff !important; font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 7px 14px; border-radius: 6px 6px 0 0; margin-top: 12px; margin-bottom: 0; display: block; }
 
     /* ═══ TABLES ═══ */
-    .table-wrap { border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px; overflow: hidden; margin-bottom: 12px; }
-    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    .table-wrap { border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px; overflow: hidden; margin-bottom: 10px; width: 100%; }
+    table { width: 100%; border-collapse: collapse; font-size: 11px; table-layout: auto; }
     thead tr { background: #1e1e2e !important; }
-    thead th { color: #ffffff !important; padding: 8px 10px; font-size: 13px; font-weight: 700; letter-spacing: 0.03em; border-right: 1px solid #3a3a55; white-space: nowrap; }
+    thead th { color: #ffffff !important; padding: 6px 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.03em; border-right: 1px solid #3a3a55; white-space: nowrap; }
     thead th:last-child { border-right: none; }
     thead th.num { text-align: center; }
     thead th.left { text-align: left; }
     tbody tr { border-bottom: 1px solid #ebebeb; }
     tbody tr:nth-child(even) { background: #f6f6fb; }
-    tbody td { padding: 6px 10px; vertical-align: top; font-size: 14px; border-right: 1px solid #ebebeb; line-height: 1.4; }
+    tbody td { padding: 4px 8px; vertical-align: top; font-size: 11px; border-right: 1px solid #ebebeb; line-height: 1.35; word-break: break-word; }
     tbody td:last-child { border-right: none; }
-    tbody td.num { text-align: center; }
+    tbody td.num { text-align: center; white-space: nowrap; }
     /* comment blocks */
-    .cmt-block { margin-top: 5px; padding: 4px 8px 4px 10px; border-left: 2px solid #c8f135; background: #f9f9f9; border-radius: 0 3px 3px 0; }
-    .cmt-author { font-size: 11px; font-weight: 700; color: #333; margin-bottom: 2px; }
-    .cmt-text { font-size: 12px; color: #444; white-space: pre-wrap; line-height: 1.4; }
+    .cmt-block { margin-top: 4px; padding: 3px 6px 3px 8px; border-left: 2px solid #c8f135; background: #f9f9f9; border-radius: 0 3px 3px 0; }
+    .cmt-author { font-size: 9px; font-weight: 700; color: #333; margin-bottom: 1px; }
+    .cmt-text { font-size: 10px; color: #444; white-space: pre-wrap; line-height: 1.3; }
 
     /* ═══ MISC ═══ */
-    .no-data { text-align: center; padding: 16px; color: #999; font-size: 14px; background: #f9f9f9; border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px; margin-bottom: 12px; }
-    .no-overdue { text-align: center; padding: 16px; color: #27ae60; font-weight: 700; background: #f0fff6; border: 1px solid #b2dfdb; border-top: none; border-radius: 0 0 6px 6px; margin-bottom: 12px; }
+    .no-data { text-align: center; padding: 12px; color: #999; font-size: 12px; background: #f9f9f9; border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px; margin-bottom: 10px; }
+    .no-overdue { text-align: center; padding: 12px; color: #27ae60; font-weight: 700; background: #f0fff6; border: 1px solid #b2dfdb; border-top: none; border-radius: 0 0 6px 6px; margin-bottom: 10px; }
 
-    /* ═══ PRINT ═══ */
+    /* ═══ PRINT — No fixed paper size, adapts to user selection ═══ */
     @media print {
-      @page { size: A3 landscape; margin: 10mm 14mm; }
-      body { padding: 0; font-size: 14px; }
+      @page { margin: 10mm 12mm; }
+      body { padding: 0; }
       .section-head { page-break-after: avoid; }
-      .table-wrap { page-break-inside: auto; }
+      .table-wrap { page-break-inside: auto; width: 100%; }
+      table { font-size: 11px; width: 100%; }
       tr { page-break-inside: avoid; }
     }
   </style></head><body>
@@ -8113,19 +8114,20 @@ function tt_generatePDFReport() {
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>CMG Task Tracking — ${periodLabel} Report</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"><\/script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"><\/script>
   <style>
     /* ═══ PAGE SETUP ═══ */
-    @page { size: A3 landscape; margin: 12mm 16mm; }
+    @page { margin: 12mm 14mm; }
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     html, body {
       font-family: 'Segoe UI', Arial, sans-serif;
-      font-size: 14px;
+      font-size: 13px;
       color: #1a1a1a;
       background: #fff;
       width: 100%;
     }
-    body { padding: 22px 28px; }
+    body { padding: 16px 20px; }
 
     /* Force colors to print */
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -8173,13 +8175,13 @@ function tt_generatePDFReport() {
     .table-wrap { border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px; overflow: hidden; margin-bottom: 12px; }
     table { width: 100%; border-collapse: collapse; font-size: 14px; }
     thead tr { background: #1e1e2e !important; }
-    thead th { color: #ffffff !important; padding: 8px 10px; font-size: 13px; font-weight: 700; letter-spacing: 0.03em; border-right: 1px solid #3a3a55; white-space: nowrap; }
+    thead th { color: #ffffff !important; padding: 6px 8px; font-size: 10px; font-weight: 700; letter-spacing: 0.03em; border-right: 1px solid #3a3a55; white-space: nowrap; }
     thead th:last-child { border-right: none; }
     thead th.num { text-align: center; }
     thead th.left { text-align: left; }
     tbody tr { border-bottom: 1px solid #ebebeb; }
     tbody tr:nth-child(even) { background: #f6f6fb; }
-    tbody td { padding: 6px 10px; vertical-align: top; font-size: 14px; border-right: 1px solid #ebebeb; line-height: 1.4; }
+    tbody td { padding: 4px 8px; vertical-align: top; font-size: 11px; border-right: 1px solid #ebebeb; line-height: 1.4; }
     tbody td:last-child { border-right: none; }
     tbody td.num { text-align: center; }
     /* comment blocks */
@@ -8193,7 +8195,7 @@ function tt_generatePDFReport() {
 
     /* ═══ PRINT RULES ═══ */
     @media print {
-      @page { size: A3 landscape; margin: 10mm 14mm; }
+      @page { margin: 10mm 12mm; }
       body { padding: 0; font-size: 14px; }
       .section-head { page-break-after: avoid; }
       .table-wrap, .charts-wrap { page-break-inside: auto; }
@@ -8366,7 +8368,20 @@ function tt_generatePDFReport() {
         options: {
           responsive: false,
           animation: false,
-          plugins: { legend: { position: 'bottom', labels: { font: { size: 13, family: FONT.family }, padding: 12, boxWidth: 14 } } }
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { size: 13, family: FONT.family }, padding: 12, boxWidth: 14 } },
+            datalabels: {
+              color: '#fff',
+              font: { size: 13, weight: 'bold', family: FONT.family },
+              formatter: (value, ctx) => {
+                if (value === 0) return '';
+                const total = ctx.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                const pct = Math.round(value / total * 100);
+                return `${value}\n(${pct}%)`;
+              },
+              textAlign: 'center'
+            }
+          }
         }
       });
 
@@ -8386,7 +8401,16 @@ function tt_generatePDFReport() {
             x: { stacked: true, ticks: { font: { size: 13, family: FONT.family } }, grid: { color: '#eee' } },
             y: { stacked: true, beginAtZero: true, ticks: { font: { size: 13, family: FONT.family } }, grid: { color: '#eee' } }
           },
-          plugins: { legend: { position: 'bottom', labels: { font: { size: 13, family: FONT.family }, padding: 12, boxWidth: 14 } } }
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { size: 13, family: FONT.family }, padding: 12, boxWidth: 14 } },
+            datalabels: {
+              color: '#fff',
+              font: { size: 12, weight: 'bold', family: FONT.family },
+              anchor: 'center',
+              align: 'center',
+              formatter: value => value > 0 ? value : ''
+            }
+          }
         }
       });
 
@@ -8407,12 +8431,23 @@ function tt_generatePDFReport() {
             x: { stacked: true, beginAtZero: true, ticks: { font: { size: 12, family: FONT.family } }, grid: { color: '#eee' } },
             y: { stacked: true, ticks: { font: { size: 12, family: FONT.family } }, grid: { color: '#eee' } }
           },
-          plugins: { legend: { position: 'bottom', labels: { font: { size: 13, family: FONT.family }, padding: 12, boxWidth: 14 } } }
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { size: 13, family: FONT.family }, padding: 12, boxWidth: 14 } },
+            datalabels: {
+              color: '#fff',
+              font: { size: 12, weight: 'bold', family: FONT.family },
+              anchor: 'center',
+              align: 'center',
+              formatter: value => value > 0 ? value : ''
+            }
+          }
         }
       });
     }
 
     window.addEventListener('load', function() {
+      // Register datalabels plugin globally
+      Chart.register(ChartDataLabels);
       buildCharts();
       setTimeout(function() { window.print(); }, 2000);
     });
