@@ -2839,12 +2839,18 @@ const auth = firebase.auth();
 
 // ── Firebase Offline Persistence (PWA support) ──
 db.enablePersistence({ synchronizeTabs: true })
+  .then(() => {
+    console.log('[Firebase] Offline persistence enabled.');
+  })
   .catch(err => {
     if (err.code === 'failed-precondition') {
-      console.warn('[Firebase] Offline persistence unavailable: multiple tabs open.');
+      console.warn('[Firebase] Offline persistence unavailable: multiple tabs open. Continuing without offline support.');
     } else if (err.code === 'unimplemented') {
-      console.warn('[Firebase] Offline persistence not supported in this browser.');
+      console.warn('[Firebase] Offline persistence not supported in this browser. Continuing without offline support.');
+    } else {
+      console.warn('[Firebase] Persistence error:', err.code, '— Continuing without offline support.');
     }
+    // Persistence failure does NOT block data loading — app continues normally
   });
 
 // ── CONSTANTS ──
@@ -6367,8 +6373,11 @@ function switchAppTab(tab) {
       window._trackingInited = true;
       initTrackingTab();
     } else {
+      // Re-render on every switch to ensure data is fresh
+      tt_renderCalendar();
+      tt_renderStats();
       tt_renderCategories();
-      // tt_renderCatFilterBar(); // hidden
+      tt_renderMaterialLinks();
     }
   }
 }
