@@ -4432,7 +4432,7 @@ function generatePDFReport() {
     .map(t => {
       const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
       const cmts = commentsHtml(t);
-      const lt   = calcPendingLeadtime(t);
+      const lt   = calcActualLeadtime(t);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
         <td style="padding:6px 10px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
         <td style="padding:6px 10px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
@@ -4531,7 +4531,7 @@ function generatePDFReport() {
       const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
       const cmts = commentsHtml(t);
       const doneDate = t.doneAt ? fmtDate(t.doneAt) : '—';
-      const lt = calcPendingLeadtime(t);
+      const lt = calcDoneLeadtime(t);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
         <td style="padding:6px 10px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
         <td style="padding:6px 10px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
@@ -7955,6 +7955,26 @@ function tt_generatePDFReport() {
     return `<span style="color:${color};font-weight:600">${count} day${count!==1?'s':''}${suffix}</span>`;
   };
 
+  // Leadtime for Done Tasks: Scheduled → doneAt, excluding Sundays
+  const calcDoneLeadtime = t => {
+    const start = t.date;
+    const end   = t.doneAt ? t.doneAt.slice(0,10) : null;
+    if (!start || !end) return '—';
+    const s = new Date(start + 'T00:00:00');
+    const e = new Date(end   + 'T00:00:00');
+    if (s > e) return '—';
+    let count = 0;
+    const cur = new Date(s);
+    while (cur <= e) {
+      if (cur.getDay() !== 0) count++;
+      cur.setDate(cur.getDate() + 1);
+    }
+    count = Math.max(0, count - 1);
+    if (count === 0) return '<span style="color:#2ecc71;font-weight:700">Same day</span>';
+    const color = count <= 3 ? '#2ecc71' : count <= 7 ? '#e17055' : '#e74c3c';
+    return `<span style="color:${color};font-weight:600">${count} day${count!==1?'s':''}</span>`;
+  };
+
   // ── Ongoing rows — ALL current tasks (not period-filtered) ──
   const ongoingRows = tt_tasks
     .filter(t => !t.done && (!t.dueDate || t.dueDate >= todayKey))
@@ -7962,7 +7982,7 @@ function tt_generatePDFReport() {
     .map(t => {
       const cat = tt_findCat(t.category);
       const cmts = ttCommentHtml(t.comments);
-      const lt   = calcPendingLeadtime(t);
+      const lt   = calcActualLeadtime(t);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
         <td style="padding:6px 10px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
         <td style="padding:6px 10px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
@@ -8003,7 +8023,7 @@ function tt_generatePDFReport() {
     .map(t => {
       const cat = tt_findCat(t.category);
       const cmts = ttCommentHtml(t.comments);
-      const lt = calcPendingLeadtime(t);
+      const lt = calcDoneLeadtime(t);
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
         <td style="padding:6px 10px"><div style="font-weight:600;margin-bottom:${cmts?'2px':'0'}">${t.title}</div>${cmts?`<div>${cmts}</div>`:''}</td>
         <td style="padding:6px 10px;white-space:pre-wrap;line-height:1.6">${t.notes||'—'}</td>
@@ -8023,7 +8043,7 @@ function tt_generatePDFReport() {
     .sort((a,b) => a.date.localeCompare(b.date))
     .map(t => {
       const cmts = ttCommentHtml(t.comments);
-      const lt   = calcPendingLeadtime(t);
+      const lt   = calcDoneLeadtime(t);
       const statusColor = t.done ? '#2ecc71' : tt_isOverdue(t) ? '#e74c3c' : '#c0392b';
       const statusText  = t.done ? `✓ Done${t.doneAt ? `<br><span style="font-size:9px;color:#555">${fmtDate(t.doneAt)}</span>` : ''}` : tt_isOverdue(t) ? '⚠️ Pending' : '⏳ Ongoing';
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
@@ -8046,7 +8066,7 @@ function tt_generatePDFReport() {
     .map(t => {
       const cat  = tt_findCat(t.category);
       const cmts = ttCommentHtml(t.comments);
-      const lt   = calcPendingLeadtime(t);
+      const lt   = calcDoneLeadtime(t);
       const statusColor = t.done ? '#2ecc71' : tt_isOverdue(t) ? '#e74c3c' : '#c0392b';
       const statusText  = t.done ? `✓ Done${t.doneAt ? `<br><span style="font-size:9px;color:#555">${fmtDate(t.doneAt)}</span>` : ''}` : tt_isOverdue(t) ? '⚠️ Pending' : '⏳ Ongoing';
       return `<tr style="border-bottom:1px solid #eee;vertical-align:top">
