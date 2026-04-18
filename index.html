@@ -4291,7 +4291,7 @@ function getReportRange() {
 function updateReportPreview() {
   const { from, to } = getReportRange();
   if (!from || !to) return;
-  const filtered = tasks.filter(t => t.date >= from && t.date <= to);
+  const filtered = tasks.filter(t => t.date >= from && t.date <= to && t.category !== 'birthday');
   const done     = filtered.filter(t => t.done).length;
   const overdue  = filtered.filter(t => !t.done && t.date < today()).length;
   const rate     = filtered.length ? Math.round(done / filtered.length * 100) : 0;
@@ -4336,7 +4336,7 @@ function generatePDFReport() {
   const rangeLabel   = `${from} to ${to}`;
   const todayKey     = today();
 
-  const filtered  = tasks.filter(t => t.date >= from && t.date <= to);
+  const filtered  = tasks.filter(t => t.date >= from && t.date <= to && t.category !== 'birthday');
   const done      = filtered.filter(t => t.done).length;
   const overdue   = filtered.filter(t => !t.done && t.date < todayKey).length;
   const rate      = filtered.length ? Math.round(done / filtered.length * 100) : 0;
@@ -4448,7 +4448,7 @@ function generatePDFReport() {
 
   // ── Ongoing rows — ALL current tasks (not period-filtered) ──
   const ongoingRows = tasks
-    .filter(t => !t.done && (!t.dueDate || t.dueDate >= todayKey))
+    .filter(t => !t.done && t.category !== 'birthday' && (!t.dueDate || t.dueDate >= todayKey))
     .sort((a,b) => a.date.localeCompare(b.date))
     .map(t => {
       const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
@@ -4469,7 +4469,7 @@ function generatePDFReport() {
 
   // ── Pending rows — ALL current tasks (not period-filtered) ──
   const pendingRows = tasks
-    .filter(t => !t.done && t.dueDate && t.dueDate < todayKey)
+    .filter(t => !t.done && t.category !== 'birthday' && t.dueDate && t.dueDate < todayKey)
     .sort((a,b) => a.dueDate.localeCompare(b.dueDate))
     .map(t => {
       const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
