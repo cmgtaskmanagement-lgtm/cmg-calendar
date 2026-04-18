@@ -4487,9 +4487,9 @@ function generatePDFReport() {
       </tr>`;
     }).join('');
 
-  // ── Assignee rows ──
+  // ── Assignee rows — ALL tasks (not period-filtered) ──
   const assigneeMap = {};
-  filtered.forEach(t => {
+  tasks.forEach(t => {
     const name = t.assignedTo || 'Unassigned';
     if (!assigneeMap[name]) assigneeMap[name] = { total:0, done:0, overdue:0 };
     assigneeMap[name].total++;
@@ -4641,7 +4641,7 @@ function generatePDFReport() {
     <div class="stat"><div class="stat-val" style="color:#0984e3">${rate}%</div><div class="stat-label">Completion Rate</div></div>
   </div>
 
-  <div class="section-head">👤 By Assignee</div>
+  <div class="section-head">👤 By Assignee <span style="font-size:11px;font-weight:400;opacity:0.7;text-transform:none;letter-spacing:0">(All tasks — as of ${todayKey})</span></div>
   ${assigneeRows ? `<div class="table-wrap"><table><thead><tr><th class="left">Assignee</th><th class="num">Total</th><th class="num">Completed</th><th class="num">Pending</th><th class="num">Overdue</th><th class="num">Rate</th></tr></thead><tbody>${assigneeRows}</tbody></table></div>` : '<div class="no-data">No assignee data.</div>'}
 
   <div class="section-head">📱 Platform Breakdown</div>
@@ -7879,8 +7879,9 @@ function tt_generatePDFReport() {
     }).join('');
 
   // ── Assignee rows ──
+  // ── Assignee rows — ALL tasks (not period-filtered) ──
   const assigneeMap = {};
-  filtered.forEach(t => {
+  tt_tasks.forEach(t => {
     const n = t.assignedTo||'Unassigned';
     if (!assigneeMap[n]) assigneeMap[n]={total:0,done:0,overdue:0};
     assigneeMap[n].total++;
@@ -8225,7 +8226,7 @@ function tt_generatePDFReport() {
     </div>
   </div>
 
-  <div class="section-head">👤 By Assignee</div>
+  <div class="section-head">👤 By Assignee <span style="font-size:11px;font-weight:400;opacity:0.7;text-transform:none;letter-spacing:0">(All tasks — as of ${todayKey})</span></div>
   ${assigneeRows ? `<div class="table-wrap"><table>
     <thead><tr>
       <th class="left">Assignee</th>
