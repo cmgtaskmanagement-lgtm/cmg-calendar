@@ -5941,22 +5941,56 @@ function renderDetailComments(t) {
     return;
   }
   container.innerHTML = '';
-  comments.forEach(c => {
+  comments.forEach((c, idx) => {
     const item = document.createElement('div');
     item.className = 'comment-item';
     const initials = (c.authorName||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
-    const time = new Date(c.createdAt).toLocaleString('default',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    const time = new Date(c.createdAt||c.time).toLocaleString('default',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    const isOwner = currentUserProfile && (c.authorId === currentUserProfile.uid || c.authorName === currentUserProfile.name);
+    const editBtnHtml = isOwner ? `<button onclick="editComment('${t._id}',${idx})" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.7rem;padding:2px 6px;border-radius:4px;transition:color 0.15s" onmouseenter="this.style.color='var(--accent)'" onmouseleave="this.style.color='var(--text-muted)'">✏️ Edit</button>` : '';
     item.innerHTML = `
       <div class="comment-header">
         <div class="comment-avatar">${initials}</div>
         <span class="comment-author">${c.authorName||'Unknown'}</span>
         <span class="comment-time">${time}</span>
+        <span style="margin-left:auto">${editBtnHtml}</span>
       </div>
-      <div class="comment-text">${c.text}</div>
+      <div class="comment-text" id="cmtText_${t._id}_${idx}">${c.text}${c.editedAt ? `<span style="font-size:0.62rem;color:var(--text-muted);margin-left:6px;font-style:italic">(edited)</span>` : ""}</div>
+      <div id="cmtEdit_${t._id}_${idx}" style="display:none;margin-top:6px;display:none">
+        <textarea id="cmtInput_${t._id}_${idx}" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.78rem;outline:none;resize:vertical;min-height:60px;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">${c.text}</textarea>
+        <div style="display:flex;gap:6px;margin-top:5px;justify-content:flex-end">
+          <button onclick="cancelEditComment('${t._id}',${idx})" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 12px;color:var(--text-muted);font-family:'DM Mono',monospace;font-size:0.72rem;cursor:pointer">Cancel</button>
+          <button onclick="saveEditComment('${t._id}',${idx})" style="background:var(--accent);color:#0a0a0f;border:none;border-radius:6px;padding:5px 14px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.72rem;cursor:pointer">Save</button>
+        </div>
+      </div>
     `;
     container.appendChild(item);
   });
 }
+
+function editComment(taskId, idx) {
+  document.getElementById(`cmtText_${taskId}_${idx}`).style.display = 'none';
+  const editDiv = document.getElementById(`cmtEdit_${taskId}_${idx}`);
+  editDiv.style.display = 'block';
+  document.getElementById(`cmtInput_${taskId}_${idx}`).focus();
+}
+function cancelEditComment(taskId, idx) {
+  document.getElementById(`cmtText_${taskId}_${idx}`).style.display = 'block';
+  document.getElementById(`cmtEdit_${taskId}_${idx}`).style.display = 'none';
+}
+async function saveEditComment(taskId, idx) {
+  const newText = document.getElementById(`cmtInput_${taskId}_${idx}`).value.trim();
+  if (!newText) return;
+  const t = tasks.find(t => t._id === taskId);
+  if (!t) return;
+  const comments = [...(t.comments||[])];
+  comments[idx] = { ...comments[idx], text: newText, editedAt: new Date().toISOString() };
+  await updateTaskInDB(taskId, { comments });
+  addInAppNotif(`✏️ Comment Edited`, `${currentUserProfile?.name||'Someone'} edited a comment on "${t.title}"`, t.date);
+}
+window.editComment       = editComment;
+window.cancelEditComment = cancelEditComment;
+window.saveEditComment   = saveEditComment;
 
 async function addComment() {
   const input = document.getElementById('tdCommentInput');
@@ -7469,10 +7503,28 @@ function tt_openTaskDetail(taskId) {
   document.getElementById('tt_tdLinkInput').value='';
   // Comments
   const commentsEl = document.getElementById('tt_tdComments'); commentsEl.innerHTML='';
-  (t.comments||[]).forEach(c => {
-    const initials=(c.author||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  (t.comments||[]).forEach((c, idx) => {
+    const initials=(c.author||c.authorName||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    const timeStr = new Date(c.time||c.createdAt).toLocaleString();
+    const isOwner = currentUserProfile && (c.authorId === currentUserProfile.uid || (c.author||c.authorName) === currentUserProfile.name);
+    const editBtnHtml = isOwner ? `<button onclick="tt_editComment('${t._id}',${idx})" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:0.7rem;padding:2px 6px;border-radius:4px;transition:color 0.15s" onmouseenter="this.style.color='var(--accent)'" onmouseleave="this.style.color='var(--text-muted)'">✏️ Edit</button>` : '';
     const item=document.createElement('div'); item.className='comment-item';
-    item.innerHTML=`<div class="comment-header"><div class="comment-avatar">${initials}</div><div class="comment-author">${c.author||'Unknown'}</div><div class="comment-time">${new Date(c.time).toLocaleString()}</div></div><div class="comment-text">${c.text}</div>`;
+    item.innerHTML=`
+      <div class="comment-header">
+        <div class="comment-avatar">${initials}</div>
+        <div class="comment-author">${c.author||c.authorName||'Unknown'}</div>
+        <div class="comment-time">${timeStr}</div>
+        <span style="margin-left:auto">${editBtnHtml}</span>
+      </div>
+      <div class="comment-text" id="tt_cmtText_${t._id}_${idx}">${c.text}${c.editedAt ? `<span style="font-size:0.62rem;color:var(--text-muted);margin-left:6px;font-style:italic">(edited)</span>` : ""}</div>
+      <div id="tt_cmtEdit_${t._id}_${idx}" style="display:none;margin-top:6px">
+        <textarea id="tt_cmtInput_${t._id}_${idx}" style="width:100%;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:7px 10px;color:var(--text);font-family:'DM Mono',monospace;font-size:0.78rem;outline:none;resize:vertical;min-height:60px;transition:border-color 0.2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">${c.text}</textarea>
+        <div style="display:flex;gap:6px;margin-top:5px;justify-content:flex-end">
+          <button onclick="tt_cancelEditComment('${t._id}',${idx})" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 12px;color:var(--text-muted);font-family:'DM Mono',monospace;font-size:0.72rem;cursor:pointer">Cancel</button>
+          <button onclick="tt_saveEditComment('${t._id}',${idx})" style="background:var(--accent);color:#0a0a0f;border:none;border-radius:6px;padding:5px 14px;font-family:'Syne',sans-serif;font-weight:700;font-size:0.72rem;cursor:pointer">Save</button>
+        </div>
+      </div>
+    `;
     commentsEl.appendChild(item);
   });
   document.getElementById('tt_tdCommentInput').value='';
@@ -7519,6 +7571,31 @@ async function tt_removeLink(idx) {
   tt_addInAppNotif(`🔗 Link Removed`, `A link was removed from "${tt_currentDetailTask.title}"`, tt_currentDetailTask.date);
 }
 window.tt_removeLink = tt_removeLink;
+
+// ── Edit Comment (TT) ──
+function tt_editComment(taskId, idx) {
+  document.getElementById(`tt_cmtText_${taskId}_${idx}`).style.display = 'none';
+  document.getElementById(`tt_cmtEdit_${taskId}_${idx}`).style.display = 'block';
+  document.getElementById(`tt_cmtInput_${taskId}_${idx}`).focus();
+}
+function tt_cancelEditComment(taskId, idx) {
+  document.getElementById(`tt_cmtText_${taskId}_${idx}`).style.display = 'block';
+  document.getElementById(`tt_cmtEdit_${taskId}_${idx}`).style.display = 'none';
+}
+async function tt_saveEditComment(taskId, idx) {
+  const newText = document.getElementById(`tt_cmtInput_${taskId}_${idx}`).value.trim();
+  if (!newText) return;
+  const t = tt_tasks.find(t => t._id === taskId);
+  if (!t) return;
+  const comments = [...(t.comments||[])];
+  comments[idx] = { ...comments[idx], text: newText, editedAt: new Date().toISOString() };
+  const activity = [...(t.activity||[]), { text: `✏️ Comment edited by ${currentUserProfile?.name||'someone'}`, time: new Date().toISOString() }];
+  await tt_updateTask(taskId, { comments, activity });
+  tt_addInAppNotif(`✏️ Comment Edited`, `${currentUserProfile?.name||'Someone'} edited a comment on "${t.title}"`, t.date);
+}
+window.tt_editComment       = tt_editComment;
+window.tt_cancelEditComment = tt_cancelEditComment;
+window.tt_saveEditComment   = tt_saveEditComment;
 
 // ── Notifications ──
 function tt_addInAppNotif(title, body, date) {
