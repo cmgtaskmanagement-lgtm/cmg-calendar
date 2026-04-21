@@ -8191,7 +8191,6 @@ function tt_generatePDFReport() {
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
   <title>CMG Task Tracking — ${periodLabel} Report</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"><\/script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"><\/script>
   <style>
     /* ═══ PAGE SETUP ═══ */
     @page { size: A3 landscape; margin: 12mm 16mm; }
@@ -8430,6 +8429,7 @@ function tt_generatePDFReport() {
       const assigneeCanvas = document.getElementById('chartAssignee');
       const categoryCanvas = document.getElementById('chartCategory');
 
+      // Set explicit pixel dimensions so Chart.js has a concrete size to work with
       [statusCanvas, assigneeCanvas, categoryCanvas].forEach(c => {
         c.width  = c.parentElement.offsetWidth  || 400;
         c.height = 260;
@@ -8444,20 +8444,7 @@ function tt_generatePDFReport() {
         options: {
           responsive: false,
           animation: false,
-          plugins: {
-            legend: { position: 'bottom', labels: { font: { size: 13, family: FONT.family }, padding: 12, boxWidth: 14 } },
-            datalabels: {
-              color: '#fff',
-              font: { size: 13, weight: 'bold', family: FONT.family },
-              formatter: (value, ctx) => {
-                if (!value) return '';
-                const total = ctx.chart.data.datasets[0].data.reduce((a,b)=>a+b,0);
-                const pct = Math.round(value/total*100);
-                return `${value}\n(${pct}%)`;
-              },
-              textAlign: 'center'
-            }
-          }
+          plugins: { legend: { position: 'bottom', labels: { font: { size: 13, family: FONT.family }, padding: 12, boxWidth: 14 } } }
         }
       });
 
@@ -8477,16 +8464,7 @@ function tt_generatePDFReport() {
             x: { stacked: true, ticks: { font: { size: 13, family: FONT.family } }, grid: { color: '#eee' } },
             y: { stacked: true, beginAtZero: true, ticks: { font: { size: 13, family: FONT.family } }, grid: { color: '#eee' } }
           },
-          plugins: {
-            legend: { position: 'bottom', labels: { font: { size: 13, family: FONT.family }, padding: 12, boxWidth: 14 } },
-            datalabels: {
-              color: '#fff',
-              font: { size: 12, weight: 'bold', family: FONT.family },
-              anchor: 'center',
-              align: 'center',
-              formatter: value => value > 0 ? value : ''
-            }
-          }
+          plugins: { legend: { position: 'bottom', labels: { font: { size: 13, family: FONT.family }, padding: 12, boxWidth: 14 } } }
         }
       });
 
@@ -8507,22 +8485,12 @@ function tt_generatePDFReport() {
             x: { stacked: true, beginAtZero: true, ticks: { font: { size: 12, family: FONT.family } }, grid: { color: '#eee' } },
             y: { stacked: true, ticks: { font: { size: 12, family: FONT.family } }, grid: { color: '#eee' } }
           },
-          plugins: {
-            legend: { position: 'bottom', labels: { font: { size: 13, family: FONT.family }, padding: 12, boxWidth: 14 } },
-            datalabels: {
-              color: '#fff',
-              font: { size: 12, weight: 'bold', family: FONT.family },
-              anchor: 'center',
-              align: 'center',
-              formatter: value => value > 0 ? value : ''
-            }
-          }
+          plugins: { legend: { position: 'bottom', labels: { font: { size: 13, family: FONT.family }, padding: 12, boxWidth: 14 } } }
         }
       });
     }
 
     window.addEventListener('load', function() {
-      Chart.register(ChartDataLabels);
       buildCharts();
       setTimeout(function() { window.print(); }, 2000);
     });
