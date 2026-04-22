@@ -1587,13 +1587,13 @@
       <button class="modal-close" onclick="closeForgotPassword()">✕</button>
     </div>
     <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:1.25rem;line-height:1.6">
-      Enter your email address and we'll send you a link to reset your password.
+      Enter your <strong>username</strong> or <strong>email address</strong> and we'll send a password reset link to your email.
     </p>
     <div class="form-group">
-      <label class="form-label">Email Address</label>
+      <label class="form-label">Username or Email Address</label>
       <div class="auth-input-wrap" style="margin-bottom:0">
-        <span class="auth-input-icon">📧</span>
-        <input class="auth-input" id="forgotEmail" type="email" placeholder="your@email.com" />
+        <span class="auth-input-icon">👤</span>
+        <input class="auth-input" id="forgotEmail" type="text" placeholder="Username or email address" autocomplete="username" />
       </div>
     </div>
     <div class="auth-msg" id="forgotMsg" style="margin-bottom:0.75rem"></div>
@@ -4964,37 +4964,64 @@ function closeForgotPassword() {
   document.getElementById('forgotPasswordOverlay').classList.remove('open');
 }
 async function doForgotPassword() {
-  const email = document.getElementById('forgotEmail').value.trim();
+  const input = document.getElementById('forgotEmail').value.trim();
   const msgEl = document.getElementById('forgotMsg');
-  if (!email) {
+
+  if (!input) {
     msgEl.className = 'auth-msg error';
     msgEl.textContent = 'Please enter your email address.';
     return;
   }
-  // Look up email in Firestore users collection first
+
+  msgEl.className = 'auth-msg pending';
+  msgEl.textContent = '⏳ Processing...';
+
   try {
-    const snap = await db.collection('users').where('email', '==', email).get();
-    if (snap.empty) {
-      msgEl.className = 'auth-msg error';
-      msgEl.textContent = 'No account found with that email address.';
-      return;
+    let emailToReset = input;
+
+    // If input looks like a username (no @), look up the email from Firestore
+    if (!input.includes('@')) {
+      const snap = await db.collection('users').where('username', '==', input).get();
+      if (snap.empty) {
+        msgEl.className = 'auth-msg error';
+        msgEl.textContent = '❌ No account found with that username.';
+        return;
+      }
+      emailToReset = snap.docs[0].data().email;
+      if (!emailToReset) {
+        msgEl.className = 'auth-msg error';
+        msgEl.textContent = '❌ No email associated with this account.';
+        return;
+      }
+    } else {
+      // It's an email — check it exists in Firestore
+      const snap = await db.collection('users').where('email', '==', input).get();
+      if (snap.empty) {
+        msgEl.className = 'auth-msg error';
+        msgEl.textContent = '❌ No account found with that email address.';
+        return;
+      }
     }
-    msgEl.className = 'auth-msg pending';
-    msgEl.textContent = 'Sending reset link...';
-    await auth.sendPasswordResetEmail(email);
+
+    // Send the reset email
+    await auth.sendPasswordResetEmail(emailToReset);
     msgEl.className = 'auth-msg success';
-    msgEl.textContent = '✅ Reset link sent! Check your email inbox.';
+    msgEl.textContent = `✅ Reset link sent to ${emailToReset}! Check your inbox (and spam folder).`;
     document.getElementById('forgotEmail').value = '';
-    // Auto-close after 3 seconds
-    setTimeout(() => closeForgotPassword(), 3000);
+    // Auto-close after 4 seconds
+    setTimeout(() => closeForgotPassword(), 4000);
+
   } catch (e) {
     msgEl.className = 'auth-msg error';
     if (e.code === 'auth/invalid-email') {
-      msgEl.textContent = 'Invalid email format.';
+      msgEl.textContent = '❌ Invalid email format.';
     } else if (e.code === 'auth/user-not-found') {
-      msgEl.textContent = 'No account found with that email.';
+      msgEl.textContent = '❌ No account found with that email.';
+    } else if (e.code === 'auth/too-many-requests') {
+      msgEl.textContent = '⚠️ Too many attempts. Please try again later.';
     } else {
-      msgEl.textContent = 'Error: ' + e.message;
+      msgEl.textContent = '❌ Error: ' + (e.message || e.code || 'Unknown error');
+      console.error('[ForgotPassword] Error:', e);
     }
   }
 }
