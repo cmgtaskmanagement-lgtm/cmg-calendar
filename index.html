@@ -4969,17 +4969,17 @@ async function doForgotPassword() {
 
   if (!input) {
     msgEl.className = 'auth-msg error';
-    msgEl.textContent = 'Please enter your email address.';
+    msgEl.textContent = '❌ Please enter your username or email address.';
     return;
   }
 
   msgEl.className = 'auth-msg pending';
-  msgEl.textContent = '⏳ Processing...';
+  msgEl.textContent = '⏳ Looking up your account...';
 
   try {
     let emailToReset = input;
 
-    // If input looks like a username (no @), look up the email from Firestore
+    // If no @ — it's a username, look up the email from Firestore
     if (!input.includes('@')) {
       const snap = await db.collection('users').where('username', '==', input).get();
       if (snap.empty) {
@@ -4990,38 +4990,35 @@ async function doForgotPassword() {
       emailToReset = snap.docs[0].data().email;
       if (!emailToReset) {
         msgEl.className = 'auth-msg error';
-        msgEl.textContent = '❌ No email associated with this account.';
-        return;
-      }
-    } else {
-      // It's an email — check it exists in Firestore
-      const snap = await db.collection('users').where('email', '==', input).get();
-      if (snap.empty) {
-        msgEl.className = 'auth-msg error';
-        msgEl.textContent = '❌ No account found with that email address.';
+        msgEl.textContent = '❌ No email on record. Please contact admin.';
         return;
       }
     }
 
-    // Send the reset email
+    msgEl.textContent = '⏳ Sending reset link to ' + emailToReset + '...';
+
+    // Send directly — no continue URL to avoid domain issues
     await auth.sendPasswordResetEmail(emailToReset);
+
     msgEl.className = 'auth-msg success';
-    msgEl.textContent = `✅ Reset link sent to ${emailToReset}! Check your inbox (and spam folder).`;
+    msgEl.textContent = `✅ Reset link sent to ${emailToReset}! Check your inbox and spam folder.`;
     document.getElementById('forgotEmail').value = '';
-    // Auto-close after 4 seconds
-    setTimeout(() => closeForgotPassword(), 4000);
+    setTimeout(() => { closeForgotPassword(); msgEl.textContent = ''; }, 5000);
 
   } catch (e) {
+    console.error('[ForgotPassword]', e.code, e.message);
     msgEl.className = 'auth-msg error';
-    if (e.code === 'auth/invalid-email') {
-      msgEl.textContent = '❌ Invalid email format.';
-    } else if (e.code === 'auth/user-not-found') {
-      msgEl.textContent = '❌ No account found with that email.';
-    } else if (e.code === 'auth/too-many-requests') {
-      msgEl.textContent = '⚠️ Too many attempts. Please try again later.';
-    } else {
-      msgEl.textContent = '❌ Error: ' + (e.message || e.code || 'Unknown error');
-      console.error('[ForgotPassword] Error:', e);
+    switch (e.code) {
+      case 'auth/user-not-found':
+        msgEl.textContent = '❌ This email is not registered in the system. Please contact your admin.'; break;
+      case 'auth/invalid-email':
+        msgEl.textContent = '❌ Invalid email format. Please check and try again.'; break;
+      case 'auth/too-many-requests':
+        msgEl.textContent = '⚠️ Too many attempts. Please wait a few minutes.'; break;
+      case 'auth/network-request-failed':
+        msgEl.textContent = '❌ No internet connection. Please try again.'; break;
+      default:
+        msgEl.textContent = `❌ ${e.message || e.code}`;
     }
   }
 }
@@ -6531,8 +6528,9 @@ const TT_CATEGORIES = [
     ],
     hasChildren: true,
     children: [
-      { id: 'quotation_socmed',   label: 'Social Media Inquiry', color: '#c8f135', icon: '📱' },
-      { id: 'quotation_website',  label: 'Website Inquiry',      color: '#a8d800', icon: '🌐' },
+      { id: 'quotation_socmed',     label: 'Social Media Inquiry', color: '#c8f135', icon: '📱' },
+      { id: 'quotation_website',    label: 'Website Inquiry',      color: '#a8d800', icon: '🌐' },
+      { id: 'quotation_existing',   label: 'Existing Customer',    color: '#74b9ff', icon: '🤝' },
     ]
   },
   {
@@ -7756,7 +7754,7 @@ function tt_renderAssigneeChart() {
 function tt_renderPlatformChart() {
   if(tt_chartPlatform)tt_chartPlatform.destroy();
   // Always-show category IDs (even if zero tasks)
-  const alwaysShow = ['rfq_assist','quotation','quotation_socmed','quotation_website'];
+  const alwaysShow = ['rfq_assist','quotation','quotation_socmed','quotation_website','quotation_existing'];
   // Build flat map of all TT categories including children
   const platMap={};
   TT_CATEGORIES.forEach(cat=>{
@@ -8185,7 +8183,7 @@ function tt_generatePDFReport() {
     }).join('');
 
   // ── Quotation Generation rows ──
-  const quotationIds = ['quotation','quotation_socmed','quotation_website'];
+  const quotationIds = ['quotation','quotation_socmed','quotation_website','quotation_existing'];
   const quotationRows = filtered
     .filter(t => quotationIds.includes(t.category))
     .sort((a,b) => a.date.localeCompare(b.date))
