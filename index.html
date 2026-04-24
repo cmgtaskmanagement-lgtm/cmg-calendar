@@ -8259,17 +8259,19 @@ function tt_generatePDFReport() {
 
     /* ═══ CHARTS ═══ */
     .charts-wrap { border: 1px solid #ddd; border-top: none; border-radius: 0 0 6px 6px; background: #fafafa; padding: 16px 14px; margin-bottom: 12px; }
-    .charts-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; align-items: stretch; }
-    .chart-box { background: #fff; border: 1px solid #e8e8e8; border-radius: 6px; padding: 14px; text-align: center; overflow: hidden; min-width: 0; max-width: 100%; display: flex; flex-direction: column; }
-    .chart-title { font-size: 12px; font-weight: 700; color: #444; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; flex-shrink: 0; }
-    .chart-canvas-wrap { flex: 1; width: 100%; height: 260px; min-height: 260px; }
-    .chart-canvas-wrap canvas { display: block; width: 100% !important; height: 260px !important; }
+    .charts-row { display: grid; grid-template-columns: 240px 1fr 1fr; gap: 16px; align-items: start; }
+    .chart-box { background: #fff; border: 1px solid #e8e8e8; border-radius: 6px; padding: 14px; text-align: center; overflow: hidden; min-width: 0; max-width: 100%; display: flex; flex-direction: column; align-items: center; }
+    .chart-title { font-size: 12px; font-weight: 700; color: #444; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px; flex-shrink: 0; width: 100%; }
+    .chart-canvas-wrap { display: flex; align-items: center; justify-content: center; }
+    .chart-canvas-wrap.square { width: 210px; height: 210px; }
+    .chart-canvas-wrap.bar { width: 100%; height: 220px; }
+    .chart-canvas-wrap canvas { display: block; }
     @media print {
       .charts-wrap { page-break-inside: avoid; }
-      .charts-row { display: grid !important; grid-template-columns: repeat(3, 1fr) !important; align-items: stretch !important; }
-      .chart-box { overflow: hidden !important; max-width: 100% !important; }
-      .chart-canvas-wrap { height: 260px !important; min-height: 260px !important; }
-      .chart-canvas-wrap canvas { width: 100% !important; height: 260px !important; }
+      .charts-row { display: grid !important; grid-template-columns: 240px 1fr 1fr !important; align-items: start !important; }
+      .chart-box { overflow: hidden !important; }
+      .chart-canvas-wrap.square { width: 210px !important; height: 210px !important; }
+      .chart-canvas-wrap.bar { width: 100% !important; height: 220px !important; }
     }
 
     /* ═══ TABLES ═══ */
@@ -8323,9 +8325,9 @@ function tt_generatePDFReport() {
   <div class="section-head">📊 Visual Summary</div>
   <div class="charts-wrap">
     <div class="charts-row">
-      <div class="chart-box"><div class="chart-title">Task Status</div><div class="chart-canvas-wrap"><canvas id="chartStatus"></canvas></div></div>
-      <div class="chart-box"><div class="chart-title">By Assignee</div><div class="chart-canvas-wrap"><canvas id="chartAssignee"></canvas></div></div>
-      <div class="chart-box"><div class="chart-title">By Category</div><div class="chart-canvas-wrap"><canvas id="chartCategory"></canvas></div></div>
+      <div class="chart-box"><div class="chart-title">Task Status</div><div class="chart-canvas-wrap square"><canvas id="chartStatus"></canvas></div></div>
+      <div class="chart-box"><div class="chart-title">By Assignee</div><div class="chart-canvas-wrap bar"><canvas id="chartAssignee"></canvas></div></div>
+      <div class="chart-box"><div class="chart-title">By Category</div><div class="chart-canvas-wrap bar"><canvas id="chartCategory"></canvas></div></div>
     </div>
   </div>
 
@@ -8454,11 +8456,13 @@ function tt_generatePDFReport() {
       const assigneeCanvas = document.getElementById('chartAssignee');
       const categoryCanvas = document.getElementById('chartCategory');
 
-      // Set explicit pixel dimensions so Chart.js has a concrete size to work with
-      [statusCanvas, assigneeCanvas, categoryCanvas].forEach(c => {
-        c.width  = c.parentElement.offsetWidth  || 400;
-        c.height = 260;
-      });
+      // Set explicit pixel dimensions — square for doughnut, rectangular for bars
+      statusCanvas.width  = 210;
+      statusCanvas.height = 210;
+      assigneeCanvas.width  = assigneeCanvas.parentElement.offsetWidth || 360;
+      assigneeCanvas.height = 220;
+      categoryCanvas.width  = categoryCanvas.parentElement.offsetWidth || 360;
+      categoryCanvas.height = 220;
 
       charts.status = new Chart(statusCanvas, {
         type: 'doughnut',
