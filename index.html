@@ -2878,6 +2878,7 @@ let tasks = [];
 let currentDate = new Date();
 let selectedDate = null;
 let selectedCat = 'social';
+let selectedPlatforms = ['facebook']; // multi-select for social platforms
 let currentUser = null; // Firebase auth user
 let currentUserProfile = null; // Firestore user doc
 
@@ -3372,45 +3373,74 @@ function buildCatSelector() {
   const container = document.getElementById('catSelector');
   container.innerHTML = '';
 
-  // Top-level buttons (non-social-platform)
+  const isSocial = selectedCat === 'social' || SOCIAL_PLATFORMS.some(p => p.id === selectedCat);
+
+  // Top-level buttons
   TOP_CATS.forEach(cat => {
     const btn = document.createElement('button');
-    const isActive = cat.isSocialParent
-      ? SOCIAL_PLATFORMS.some(p => p.id === selectedCat)
-      : selectedCat === cat.id;
+    const isActive = cat.isSocialParent ? isSocial : selectedCat === cat.id;
     btn.className = 'cat-btn' + (isActive ? ' active' : '');
     if (isActive) {
-      const activeCat = cat.isSocialParent ? (SOCIAL_PLATFORMS.find(p=>p.id===selectedCat)||cat) : cat;
-      btn.style.borderColor = activeCat.color;
-      btn.style.background = activeCat.color;
+      const activeCat = cat.isSocialParent ? cat : cat;
+      btn.style.borderColor = cat.color;
+      btn.style.background = cat.color;
     }
     btn.innerHTML = (cat.icon ? `<span>${cat.icon}</span>` : '') + cat.label;
     btn.onclick = () => {
-      selectedCat = cat.isSocialParent ? 'facebook' : cat.id;
+      if (cat.isSocialParent) {
+        selectedCat = 'social';
+        if (!selectedPlatforms.length) selectedPlatforms = ['facebook'];
+      } else {
+        selectedCat = cat.id;
+        selectedPlatforms = [];
+      }
       buildCatSelector();
     };
     container.appendChild(btn);
   });
 
-  // If social selected, show platform sub-picker
-  if (SOCIAL_PLATFORMS.some(p => p.id === selectedCat)) {
+  // If social selected, show multi-select platform sub-picker
+  if (isSocial) {
     const subLabel = document.createElement('div');
     subLabel.className = 'social-sub-label';
-    subLabel.textContent = 'Choose Platform';
+    subLabel.innerHTML = 'Choose Platform(s) <span style="font-size:0.65rem;color:var(--text-muted);font-weight:400">(select multiple)</span>';
     container.appendChild(subLabel);
 
     const platformGrid = document.createElement('div');
     platformGrid.className = 'platform-selector';
     SOCIAL_PLATFORMS.forEach(p => {
       const btn = document.createElement('button');
-      btn.className = 'platform-btn' + (selectedCat === p.id ? ' active' : '');
+      const isSelected = selectedPlatforms.includes(p.id);
+      btn.className = 'platform-btn' + (isSelected ? ' active' : '');
       btn.style.color = p.color;
-      if (selectedCat === p.id) btn.style.borderColor = p.color;
-      btn.innerHTML = `<span class="platform-icon">${p.icon}</span><span class="platform-name">${p.label}</span>`;
-      btn.onclick = () => { selectedCat = p.id; buildCatSelector(); };
+      if (isSelected) {
+        btn.style.borderColor = p.color;
+        btn.style.background = p.color + '22';
+      }
+      btn.innerHTML = `<span class="platform-icon">${p.icon}</span><span class="platform-name">${p.label}</span>${isSelected ? '<span style="position:absolute;top:3px;right:3px;font-size:0.6rem;color:'+p.color+'">✓</span>' : ''}`;
+      btn.style.position = 'relative';
+      btn.onclick = () => {
+        if (selectedPlatforms.includes(p.id)) {
+          // Deselect — but keep at least one
+          if (selectedPlatforms.length > 1) {
+            selectedPlatforms = selectedPlatforms.filter(id => id !== p.id);
+          }
+        } else {
+          selectedPlatforms = [...selectedPlatforms, p.id];
+        }
+        buildCatSelector();
+      };
       platformGrid.appendChild(btn);
     });
     container.appendChild(platformGrid);
+
+    // Show selected count
+    if (selectedPlatforms.length > 1) {
+      const countEl = document.createElement('div');
+      countEl.style.cssText = 'font-size:0.7rem;color:var(--accent);margin-top:4px;font-family:"DM Mono",monospace';
+      countEl.textContent = `✓ ${selectedPlatforms.length} platforms selected`;
+      container.appendChild(countEl);
+    }
   }
 }
 
@@ -3431,7 +3461,8 @@ function openEditModal(idx) {
   document.getElementById('taskApproval').value = t.approval || '';
   document.getElementById('taskDueDate').value = t.dueDate || '';
   if (document.getElementById('taskAssignee')) document.getElementById('taskAssignee').value = t.assignedTo || '';
-  selectedCat = t.category;
+  selectedCat = SOCIAL_PLATFORMS.some(p => p.id === t.category) ? 'social' : t.category;
+  selectedPlatforms = t.platforms || (SOCIAL_PLATFORMS.some(p => p.id === t.category) ? [t.category] : []);
   buildCatSelector();
   document.getElementById('modalOverlay').classList.add('open');
 }
@@ -3449,6 +3480,8 @@ document.getElementById('openModal').onclick = () => {
   document.getElementById('taskDueDate').value = '';
   document.getElementById('modalOverlay').classList.add('open');
   document.getElementById('taskDate').value = selectedDate || today();
+  selectedCat = 'social';
+  selectedPlatforms = ['facebook'];
   buildCatSelector();
 };
 
@@ -3467,9 +3500,11 @@ document.getElementById('saveTask').onclick = async () => {
   const date  = document.getElementById('taskDate').value;
   if (!title || !date) { alert('Please fill in title and date.'); return; }
 
+  const isSocial = selectedCat === 'social' || SOCIAL_PLATFORMS.some(p => p.id === selectedCat);
   const taskData = {
     title, date,
-    category: selectedCat,
+    category: isSocial ? (selectedPlatforms[0] || 'facebook') : selectedCat,
+    platforms: isSocial ? [...selectedPlatforms] : [],
     time:     document.getElementById('taskTime').value,
     remind:   document.getElementById('taskRemind').value,
     notes:    document.getElementById('taskNotes').value.trim(),
@@ -3874,10 +3909,13 @@ function renderPlatformChart() {
   SOCIAL_PLATFORMS.forEach(p => { platMap[p.id] = { label: p.label, icon: p.icon, color: p.color, total: 0, done: 0 }; });
 
   tasks.forEach(t => {
-    if (platMap[t.category]) {
-      platMap[t.category].total++;
-      if (t.done) platMap[t.category].done++;
-    }
+    const plats = (t.platforms && t.platforms.length) ? t.platforms : [t.category];
+    plats.forEach(pid => {
+      if (platMap[pid]) {
+        platMap[pid].total++;
+        if (t.done) platMap[pid].done++;
+      }
+    });
   });
 
   const platforms = Object.values(platMap).filter(p => p.total > 0);
@@ -5876,9 +5914,17 @@ function openTaskDetail(idx) {
   currentDetailTaskId = t._id;
 
   const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
+
+  // Build platform tags — show all platforms if multi-select
+  const plats = (t.platforms && t.platforms.length > 1) ? t.platforms : [t.category];
+  const platformTags = plats.map(pid => {
+    const p = CATEGORIES.find(c => c.id === pid) || cat;
+    return `<span class="task-tag" style="background:${p.color}20;color:${p.color}">${p.icon||''}${p.label}</span>`;
+  }).join('');
+
   document.getElementById('tdTitle').textContent = t.title;
   document.getElementById('tdMeta').innerHTML = `
-    <span class="task-tag" style="background:${cat.color}20;color:${cat.color}">${cat.icon||''}${cat.label}</span>
+    ${platformTags}
     ${t.time?`<span class="task-time">⏰ ${t.time}</span>`:''}
     ${t.priority==='high'?`<span class="task-tag" style="background:#ff6b6b20;color:#ff6b6b">HIGH</span>`:''}
     ${buildDoneTag(t)}
@@ -6467,7 +6513,7 @@ const TT_CATEGORIES = [
   {
     id: 'printing',
     label: 'Printing',
-    color: '#fd79a8',
+    color: '#e84393',
     icon: '🖨️',
     subFields: []
   },
@@ -6498,7 +6544,7 @@ const TT_CATEGORIES = [
   {
     id: 'ppt_request',
     label: 'PPT Request',
-    color: '#e17055',
+    color: '#e056a0',
     icon: '📊',
     subFields: []
   },
@@ -6528,9 +6574,9 @@ const TT_CATEGORIES = [
     ],
     hasChildren: true,
     children: [
-      { id: 'quotation_socmed',     label: 'Social Media Inquiry', color: '#c8f135', icon: '📱' },
-      { id: 'quotation_website',    label: 'Website Inquiry',      color: '#a8d800', icon: '🌐' },
-      { id: 'quotation_existing',   label: 'Existing Customer',    color: '#74b9ff', icon: '🤝' },
+      { id: 'quotation_socmed',     label: 'Social Media Inquiry', color: '#ffeaa7', icon: '📱' },
+      { id: 'quotation_website',    label: 'Website Inquiry',      color: '#55efc4', icon: '🌐' },
+      { id: 'quotation_existing',   label: 'Existing Customer',    color: '#81ecec', icon: '🤝' },
     ]
   },
   {
@@ -6548,7 +6594,7 @@ const TT_CATEGORIES = [
   {
     id: 'tt_others',
     label: 'Others',
-    color: '#fd79a8',
+    color: '#ff7675',
     icon: '📌',
     subFields: []
   },
@@ -6588,6 +6634,9 @@ let tt_tasks = [];
 let tt_currentDate = new Date();
 let tt_selectedDate = null;
 let tt_selectedCat = 'emailer';
+let tt_selectedChildren = []; // multi-select for children that support it
+
+const TT_MULTI_SELECT_PARENTS = ['quotation']; // parents whose children support multi-select
 let tt_editingTaskId = null;
 let tt_currentView = 'month';
 let tt_weekOffset = 0;
@@ -7215,17 +7264,25 @@ function tt_buildCatSelector() {
   container.innerHTML = '';
 
   TT_CATEGORIES.forEach(cat => {
-    // Determine if this cat or any child is selected
     const childIds = cat.children ? cat.children.map(c => c.id) : [];
-    const isActive = tt_selectedCat === cat.id || childIds.includes(tt_selectedCat);
+    const isMulti = TT_MULTI_SELECT_PARENTS.includes(cat.id);
+    const isActive = isMulti
+      ? (tt_selectedCat === cat.id || (tt_selectedChildren.length && tt_selectedChildren.every(id => childIds.includes(id))))
+      : (tt_selectedCat === cat.id || childIds.includes(tt_selectedCat));
     const activeCat = isActive ? tt_findCat(tt_selectedCat) : null;
 
     const btn = document.createElement('button');
-    btn.className = 'cat-btn' + (isActive && !childIds.includes(tt_selectedCat) ? ' active' : (isActive ? ' active' : ''));
-    if (isActive) { btn.style.borderColor = activeCat.color; btn.style.background = activeCat.color; btn.style.color = '#0a0a0f'; }
+    btn.className = 'cat-btn' + (isActive ? ' active' : '');
+    if (isActive) { btn.style.borderColor = activeCat?.color||cat.color; btn.style.background = activeCat?.color||cat.color; btn.style.color = '#0a0a0f'; }
     btn.innerHTML = `${cat.icon||''} ${cat.label}`;
     btn.onclick = () => {
-      tt_selectedCat = cat.children ? cat.children[0].id : cat.id;
+      if (isMulti) {
+        tt_selectedCat = cat.id;
+        tt_selectedChildren = cat.children ? [cat.children[0].id] : [];
+      } else {
+        tt_selectedCat = cat.children ? cat.children[0].id : cat.id;
+        tt_selectedChildren = [];
+      }
       tt_buildCatSelector();
       tt_updateSubFields();
     };
@@ -7233,25 +7290,50 @@ function tt_buildCatSelector() {
   });
 
   // If selected cat has children, show child picker
-  const parentCat = tt_findParentCat(tt_selectedCat);
+  const parentCat = tt_findParentCat(tt_selectedCat) || (TT_MULTI_SELECT_PARENTS.includes(tt_selectedCat) ? TT_CATEGORIES.find(c => c.id === tt_selectedCat) : null);
   if (parentCat && parentCat.children) {
+    const isMulti = TT_MULTI_SELECT_PARENTS.includes(parentCat.id);
     const subLabel = document.createElement('div');
     subLabel.className = 'social-sub-label';
-    subLabel.textContent = `Choose ${parentCat.label} Type`;
+    subLabel.innerHTML = `Choose ${parentCat.label} Type${isMulti ? ' <span style="font-size:0.65rem;color:var(--text-muted);font-weight:400">(select multiple)</span>' : ''}`;
     container.appendChild(subLabel);
 
     const grid = document.createElement('div');
     grid.className = 'platform-selector';
     parentCat.children.forEach(ch => {
+      const isSelected = isMulti ? tt_selectedChildren.includes(ch.id) : tt_selectedCat === ch.id;
       const btn = document.createElement('button');
-      btn.className = 'platform-btn' + (tt_selectedCat === ch.id ? ' active' : '');
+      btn.className = 'platform-btn' + (isSelected ? ' active' : '');
       btn.style.color = ch.color;
-      if (tt_selectedCat === ch.id) btn.style.borderColor = ch.color;
-      btn.innerHTML = `<span class="platform-icon">${ch.icon||'•'}</span><span class="platform-name">${ch.label}</span>`;
-      btn.onclick = () => { tt_selectedCat = ch.id; tt_buildCatSelector(); tt_updateSubFields(); };
+      btn.style.position = 'relative';
+      if (isSelected) { btn.style.borderColor = ch.color; btn.style.background = ch.color + '22'; }
+      btn.innerHTML = `<span class="platform-icon">${ch.icon||'•'}</span><span class="platform-name">${ch.label}</span>${isSelected && isMulti ? '<span style="position:absolute;top:3px;right:3px;font-size:0.6rem;color:'+ch.color+'">✓</span>' : ''}`;
+      btn.onclick = () => {
+        if (isMulti) {
+          if (tt_selectedChildren.includes(ch.id)) {
+            if (tt_selectedChildren.length > 1) tt_selectedChildren = tt_selectedChildren.filter(id => id !== ch.id);
+          } else {
+            tt_selectedChildren = [...tt_selectedChildren, ch.id];
+          }
+          tt_selectedCat = parentCat.id;
+        } else {
+          tt_selectedCat = ch.id;
+          tt_selectedChildren = [];
+        }
+        tt_buildCatSelector();
+        tt_updateSubFields();
+      };
       grid.appendChild(btn);
     });
     container.appendChild(grid);
+
+    // Show selected count for multi
+    if (isMulti && tt_selectedChildren.length > 1) {
+      const countEl = document.createElement('div');
+      countEl.style.cssText = 'font-size:0.7rem;color:var(--accent);margin-top:4px;font-family:"DM Mono",monospace';
+      countEl.textContent = `✓ ${tt_selectedChildren.length} types selected`;
+      container.appendChild(countEl);
+    }
   }
 }
 
@@ -7319,6 +7401,14 @@ function tt_openEditModal(taskId) {
   if (document.getElementById('tt_taskAssignee')) document.getElementById('tt_taskAssignee').value = t.assignedTo || '';
   // Set category — default to emailer if unknown
   tt_selectedCat = tt_getAllCatIds().includes(t.category) ? t.category : 'emailer';
+  // Load multi-select children if applicable
+  const parentCat = tt_findParentCat(tt_selectedCat);
+  if (parentCat && TT_MULTI_SELECT_PARENTS.includes(parentCat.id)) {
+    tt_selectedCat = parentCat.id;
+    tt_selectedChildren = t.children && t.children.length ? [...t.children] : [t.category];
+  } else {
+    tt_selectedChildren = [];
+  }
   tt_buildCatSelector();
   tt_updateSubFields();
   // Populate sub-fields after they're rendered
@@ -8588,6 +8678,7 @@ function initTrackingTab() {
   document.getElementById('tt_openModal').onclick = () => {
     tt_editingTaskId = null;
     tt_selectedCat = 'emailer';
+    tt_selectedChildren = [];
     document.getElementById('tt_modalTitleText').textContent = 'New Task';
     document.getElementById('tt_saveTask').textContent = 'Add to Calendar';
     document.getElementById('tt_taskTitle').value = '';
@@ -8612,9 +8703,11 @@ function initTrackingTab() {
     const date  = document.getElementById('tt_taskDate').value;
     if (!title || !date) { alert('Please fill in title and date.'); return; }
     const subFieldData = tt_collectSubFields();
+    const isMultiChild = TT_MULTI_SELECT_PARENTS.includes(tt_selectedCat) && tt_selectedChildren.length > 0;
     const taskData = {
       title, date,
-      category:   tt_selectedCat,
+      category:   isMultiChild ? tt_selectedChildren[0] : tt_selectedCat,
+      children:   isMultiChild ? [...tt_selectedChildren] : [],
       time:       document.getElementById('tt_taskTime').value,
       remind:     document.getElementById('tt_taskRemind').value,
       notes:      document.getElementById('tt_taskNotes').value.trim(),
