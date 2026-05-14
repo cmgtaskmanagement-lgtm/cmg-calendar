@@ -1733,7 +1733,7 @@
       <!-- Pending Tasks List -->
       <div style="margin-top:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-          <h3 style="font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted);margin:0">⏳ Ongoing Tasks</h3>
+          <h3 style="font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted);margin:0">📅 Today's Tasks</h3>
           <span id="pendingListCount" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:0.6rem;color:var(--text-muted);font-family:'DM Mono',monospace">0</span>
         </div>
         <div id="pendingTaskList" style="display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto"></div>
@@ -2090,7 +2090,7 @@
       <!-- Pending Tasks List -->
       <div style="margin-top:14px">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-          <h3 style="font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted);margin:0">⏳ Ongoing Tasks</h3>
+          <h3 style="font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--text-muted);margin:0">📅 Today's Tasks</h3>
           <span id="tt_pendingListCount" style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:0.6rem;color:var(--text-muted);font-family:'DM Mono',monospace">0</span>
         </div>
         <div id="tt_pendingTaskList" style="display:flex;flex-direction:column;gap:4px;max-height:200px;overflow-y:auto"></div>
@@ -3281,20 +3281,25 @@ function renderStats() {
   document.getElementById('progressBar').style.width = pct + '%';
   document.getElementById('progressPct').textContent = pct + '%';
 
-  // ── Ongoing & Pending Tasks List ──
+  // ── Today's Tasks List ──
   const todayKey = today();
-  const ongoingTasks = tasks.filter(t => !t.done && (!t.dueDate || t.dueDate >= todayKey)).sort((a,b) => a.date.localeCompare(b.date));
-  const pendingTasks = tasks.filter(t => !t.done && t.dueDate && t.dueDate < todayKey).sort((a,b) => a.dueDate.localeCompare(b.dueDate));
-  const allIncompleteTasks = [...pendingTasks, ...ongoingTasks]; // Pending first
+  const todayTasks = tasks
+    .filter(t => t.date === todayKey && !t.done)
+    .sort((a,b) => (a.time||'').localeCompare(b.time||''));
+  const todayPending = tasks
+    .filter(t => t.date === todayKey && !t.done && t.dueDate && t.dueDate < todayKey)
+    .sort((a,b) => a.dueDate.localeCompare(b.dueDate));
+  const todayAll = [...todayPending, ...todayTasks.filter(t => !(t.dueDate && t.dueDate < todayKey))];
+
   const countEl = document.getElementById('pendingListCount');
   const listEl  = document.getElementById('pendingTaskList');
-  if (countEl) countEl.textContent = allIncompleteTasks.length;
+  if (countEl) countEl.textContent = todayAll.length;
   if (listEl) {
-    if (!allIncompleteTasks.length) {
-      listEl.innerHTML = `<div style="font-size:0.72rem;color:var(--text-muted);text-align:center;padding:8px 0">🎉 No ongoing tasks!</div>`;
+    if (!todayAll.length) {
+      listEl.innerHTML = `<div style="font-size:0.72rem;color:var(--text-muted);text-align:center;padding:8px 0">🎉 No tasks for today!</div>`;
     } else {
       listEl.innerHTML = '';
-      allIncompleteTasks.forEach(t => {
+      todayAll.forEach(t => {
         const cat = CATEGORIES.find(c => c.id === t.category) || CATEGORIES[CATEGORIES.length-1];
         const isOv = t.dueDate && t.dueDate < todayKey;
         const statusLabel = isOv ? '⚠️ Pending' : '⏳ Ongoing';
@@ -3309,7 +3314,7 @@ function renderStats() {
           </div>
           <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
             <span style="font-size:0.6rem;background:${cat.color}20;color:${cat.color};border-radius:3px;padding:1px 5px">${cat.icon||''}${cat.label}</span>
-            <span style="font-size:0.6rem;color:${isOv?'#ff6b6b':'var(--text-muted)'}">📅 ${t.dueDate||t.date}</span>
+            ${t.time?`<span style="font-size:0.6rem;color:var(--accent)">⏰ ${t.time}</span>`:''}
             ${t.assignedTo?`<span style="font-size:0.6rem;color:var(--text-muted)">👤 ${t.assignedTo}</span>`:''}
           </div>`;
         item.onclick = () => selectDay(t.date);
@@ -6967,20 +6972,23 @@ function tt_renderStats() {
   set('tt_mStatTotal', tt_tasks.length); set('tt_mStatDone', done); set('tt_mStatMonth', mt.length); set('tt_mStatPending', ttPendCount);
   setW('tt_mProgressBar', pct + '%'); set('tt_mProgressPct', pct + '%');
 
-  // ── Ongoing & Pending Tasks List ──
+  // ── Today's Tasks List ──
   const todayKey2 = today();
-  const ttOngoingTasks = tt_tasks.filter(t => !t.done && (!t.dueDate || t.dueDate >= todayKey2)).sort((a,b) => a.date.localeCompare(b.date));
-  const ttPendingTasks = tt_tasks.filter(t => !t.done && t.dueDate && t.dueDate < todayKey2).sort((a,b) => a.dueDate.localeCompare(b.dueDate));
-  const ttAllIncomplete = [...ttPendingTasks, ...ttOngoingTasks]; // Pending first
+  const ttTodayAll = tt_tasks.filter(t => t.date === todayKey2 && !t.done)
+    .sort((a,b) => (a.time||'').localeCompare(b.time||''));
+  const ttTodayPending = ttTodayAll.filter(t => t.dueDate && t.dueDate < todayKey2);
+  const ttTodayOngoing = ttTodayAll.filter(t => !(t.dueDate && t.dueDate < todayKey2));
+  const ttTodaySorted = [...ttTodayPending, ...ttTodayOngoing];
+
   const countEl = document.getElementById('tt_pendingListCount');
   const listEl  = document.getElementById('tt_pendingTaskList');
-  if (countEl) countEl.textContent = ttAllIncomplete.length;
+  if (countEl) countEl.textContent = ttTodaySorted.length;
   if (listEl) {
-    if (!ttAllIncomplete.length) {
-      listEl.innerHTML = `<div style="font-size:0.72rem;color:var(--text-muted);text-align:center;padding:8px 0">🎉 No ongoing tasks!</div>`;
+    if (!ttTodaySorted.length) {
+      listEl.innerHTML = `<div style="font-size:0.72rem;color:var(--text-muted);text-align:center;padding:8px 0">🎉 No tasks for today!</div>`;
     } else {
       listEl.innerHTML = '';
-      ttAllIncomplete.forEach(t => {
+      ttTodaySorted.forEach(t => {
         const cat = tt_findCat(t.category);
         const isOv = t.dueDate && t.dueDate < todayKey2;
         const statusLabel = isOv ? '⚠️ Pending' : '⏳ Ongoing';
@@ -6995,7 +7003,7 @@ function tt_renderStats() {
           </div>
           <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
             <span style="font-size:0.6rem;background:${cat.color}20;color:${cat.color};border-radius:3px;padding:1px 5px">${cat.icon||''}${cat.label}</span>
-            <span style="font-size:0.6rem;color:${isOv?'#ff6b6b':'var(--text-muted)'}">📅 ${t.dueDate||t.date}</span>
+            ${t.time?`<span style="font-size:0.6rem;color:var(--accent)">⏰ ${t.time}</span>`:''}
             ${t.assignedTo?`<span style="font-size:0.6rem;color:var(--text-muted)">👤 ${t.assignedTo}</span>`:''}
           </div>`;
         item.onclick = () => tt_selectDay(t.date);
