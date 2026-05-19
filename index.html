@@ -722,6 +722,21 @@
   }
   .form-select option { background: var(--bg); }
 
+  /* ── Date picker icon — visible on dark background ── */
+  input[type="date"]::-webkit-calendar-picker-indicator,
+  input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(2) saturate(0);
+    opacity: 0.85;
+    cursor: pointer;
+    border-radius: 3px;
+    padding: 2px;
+    transition: opacity 0.2s;
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator:hover,
+  input[type="time"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+  }
+
   .cat-selector {
     display: flex;
     gap: 8px;
